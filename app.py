@@ -140,8 +140,8 @@ def main():
                     df = data_processor.load_excel_file(uploaded_file)
                     data_source = "custom uploaded file"
                 else:
-                    # Load default data
-                    df = data_processor.load_default_data()
+                    # Load default data with provider-specific sheet selection
+                    df = data_processor.load_default_data(provider_code)
                     data_source = "default 2024 TSM dataset"
                 
                 if df is None or df.empty:
