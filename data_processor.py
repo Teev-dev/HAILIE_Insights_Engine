@@ -275,9 +275,77 @@ class TSMDataProcessor:
         
         return quality_report
     
-    def load_default_data(self) -> Optional[pd.DataFrame]:
+    def load_table_coverage(self) -> Optional[pd.DataFrame]:
+        """
+        Load and parse the Table Coverage sheet to identify provider types
+        """
+        try:
+            if not os.path.exists(self.default_data_path):
+                return None
+            
+            # Read the Table_Coverage sheet with proper header row
+            coverage_df = pd.read_excel(self.default_data_path, sheet_name='Table_Coverage', skiprows=3)
+            
+            # Clean the column names
+            coverage_df.columns = ['landlord_name', 'landlord_code', 'landlord_type', 
+                                 'tsm24_lcra_perception', 'tsm24_lcho_perception', 
+                                 'tsm24_combined_perception', 'tsm24_management_info',
+                                 'tsm24_perception_not_inc', 'tsm24_man_info_not_inc']
+            
+            # Clean the data
+            coverage_df['landlord_code'] = coverage_df['landlord_code'].astype(str).str.strip()
+            coverage_df = coverage_df.dropna(subset=['landlord_code'])
+            coverage_df = coverage_df[coverage_df['landlord_code'] != '']
+            
+            st.info(f"📋 Loaded Table Coverage data for {len(coverage_df)} providers")
+            
+            return coverage_df
+            
+        except Exception as e:
+            st.warning(f"⚠️ Could not load Table Coverage sheet: {str(e)}")
+            return None
+
+    def get_provider_type_and_sheet(self, provider_code: str) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Determine the provider type and appropriate TSM24 sheet for a given provider code
+        Returns (provider_type, sheet_name) tuple
+        """
+        coverage_df = self.load_table_coverage()
+        if coverage_df is None:
+            return None, None
+        
+        # Find the provider in the coverage data
+        provider_row = coverage_df[coverage_df['landlord_code'] == provider_code]
+        
+        if provider_row.empty:
+            st.warning(f"⚠️ Provider code '{provider_code}' not found in Table Coverage")
+            return None, None
+        
+        provider_row = provider_row.iloc[0]
+        provider_type = provider_row['landlord_type']
+        
+        # Determine which TSM24 sheet to use based on available data
+        if provider_row['tsm24_combined_perception'] == 'Yes':
+            selected_sheet = 'TSM24_Combined_Perception'
+            sheet_type = 'Combined'
+        elif provider_row['tsm24_lcra_perception'] == 'Yes':
+            selected_sheet = 'TSM24_LCRA_Perception'
+            sheet_type = 'LCRA'
+        elif provider_row['tsm24_lcho_perception'] == 'Yes':
+            selected_sheet = 'TSM24_LCHO_Perception'
+            sheet_type = 'LCHO'
+        else:
+            # Fallback - no perception data available
+            st.warning(f"⚠️ No perception data available for provider '{provider_code}' in any TSM24 sheet")
+            return provider_type, None
+        
+        st.success(f"✅ Provider '{provider_code}' found in {selected_sheet} (Type: {provider_type}, Data: {sheet_type})")
+        return provider_type, selected_sheet
+
+    def load_default_data(self, provider_code: Optional[str] = None) -> Optional[pd.DataFrame]:
         """
         Load the default 2024 TSM data file
+        If provider_code is provided, use the appropriate TSM24 sheet for that provider type
         """
         try:
             if not os.path.exists(self.default_data_path):
@@ -294,47 +362,65 @@ class TSMDataProcessor:
             
             # Try to find the main data sheet
             main_df = None
+            selected_sheet = None
             
-            # Priority order for sheet selection
-            priority_keywords = ['data', 'tsm', 'satisfaction', 'provider', 'main', 'results']
-            
-            # First, try sheets with priority keywords
-            for keyword in priority_keywords:
-                matching_sheets = [sheet for sheet in sheet_names if keyword.lower() in sheet.lower()]
-                if matching_sheets:
+            # If provider code is provided, try to determine the appropriate sheet
+            if provider_code:
+                provider_type, target_sheet = self.get_provider_type_and_sheet(provider_code)
+                if target_sheet and target_sheet in sheet_names:
                     try:
-                        main_df = pd.read_excel(self.default_data_path, sheet_name=matching_sheets[0])
-                        st.success(f"✅ Using default data sheet: '{matching_sheets[0]}'")
-                        break
+                        main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet)
+                        selected_sheet = target_sheet
+                        st.success(f"✅ Using provider-specific sheet: '{target_sheet}' for provider '{provider_code}'")
                     except Exception as e:
-                        st.warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
-                        continue
+                        st.warning(f"⚠️ Could not read provider-specific sheet '{target_sheet}': {str(e)}")
+                        st.info("🔄 Falling back to general sheet selection...")
             
-            # If no priority sheet worked, try the largest sheet
+            # If no provider-specific sheet was loaded, use general logic
             if main_df is None:
-                largest_sheet = None
-                max_rows = 0
+                # Priority order for sheet selection
+                priority_keywords = ['data', 'tsm', 'satisfaction', 'provider', 'main', 'results']
                 
-                for sheet_name in sheet_names:
-                    try:
-                        temp_df = pd.read_excel(self.default_data_path, sheet_name=sheet_name, nrows=1)
-                        sheet_df = pd.read_excel(self.default_data_path, sheet_name=sheet_name)
-                        
-                        if len(sheet_df) > max_rows:
-                            max_rows = len(sheet_df)
-                            largest_sheet = sheet_name
-                            main_df = sheet_df
+                # First, try sheets with priority keywords
+                for keyword in priority_keywords:
+                    matching_sheets = [sheet for sheet in sheet_names if keyword.lower() in sheet.lower()]
+                    if matching_sheets:
+                        try:
+                            main_df = pd.read_excel(self.default_data_path, sheet_name=matching_sheets[0])
+                            selected_sheet = matching_sheets[0]
+                            st.success(f"✅ Using default data sheet: '{matching_sheets[0]}'")
+                            break
+                        except Exception as e:
+                            st.warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
+                            continue
+                
+                # If no priority sheet worked, try the largest sheet
+                if main_df is None:
+                    largest_sheet = None
+                    max_rows = 0
+                    
+                    for sheet_name in sheet_names:
+                        try:
+                            temp_df = pd.read_excel(self.default_data_path, sheet_name=sheet_name, nrows=1)
+                            sheet_df = pd.read_excel(self.default_data_path, sheet_name=sheet_name)
                             
-                    except Exception:
-                        continue
+                            if len(sheet_df) > max_rows:
+                                max_rows = len(sheet_df)
+                                largest_sheet = sheet_name
+                                main_df = sheet_df
+                                
+                        except Exception:
+                            continue
+                    
+                    if main_df is not None:
+                        selected_sheet = largest_sheet
+                        st.info(f"📊 Using largest default data sheet: '{largest_sheet}' ({max_rows} rows)")
                 
-                if main_df is not None:
-                    st.info(f"📊 Using largest default data sheet: '{largest_sheet}' ({max_rows} rows)")
-            
-            # Last resort: use first sheet
-            if main_df is None:
-                main_df = pd.read_excel(self.default_data_path, sheet_name=sheet_names[0])
-                st.warning(f"⚠️ Using first sheet from default data: '{sheet_names[0]}'")
+                # Last resort: use first sheet
+                if main_df is None:
+                    main_df = pd.read_excel(self.default_data_path, sheet_name=sheet_names[0])
+                    selected_sheet = sheet_names[0]
+                    st.warning(f"⚠️ Using first sheet from default data: '{sheet_names[0]}'")
             
             return main_df
             
