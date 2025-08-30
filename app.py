@@ -96,11 +96,41 @@ def main():
     # Sidebar for settings and optional file upload
     with st.sidebar:
         st.header("🏢 Provider Settings")
-        provider_code = st.text_input(
-            "Your Provider Code", 
+        
+        # Initialize data processor to get provider options
+        data_processor = TSMDataProcessor()
+        provider_options = data_processor.get_provider_options()
+        
+        provider_code = None
+        
+        if provider_options:
+            # Provider search dropdown with autocomplete
+            st.subheader("🔍 Search by Provider Name")
+            selected_provider = st.selectbox(
+                "Select your provider",
+                options=["Select a provider..."] + list(provider_options.keys()),
+                index=0,
+                help="Search and select your housing provider from the dropdown"
+            )
+            
+            if selected_provider != "Select a provider...":
+                provider_code = provider_options[selected_provider]
+                st.success(f"✅ Selected: {provider_code}")
+            
+            st.markdown("**OR**")
+        
+        # Fallback text input for provider code
+        text_provider_code = st.text_input(
+            "Enter Provider Code Directly", 
             placeholder="e.g., H1234",
-            help="Enter your housing provider's unique identifier"
+            help="Enter your housing provider's unique identifier if not found above"
         )
+        
+        # Use text input if provided, otherwise use dropdown selection
+        if text_provider_code:
+            provider_code = text_provider_code
+            if provider_options:
+                st.info("💡 Using manually entered provider code")
         
         # Analysis options
         st.header("⚙️ Analysis Options")
@@ -128,9 +158,8 @@ def main():
     # Main content area
     if provider_code:
         try:
-            # Initialize processors
+            # Initialize processors (data_processor already initialized for provider options)
             with st.spinner("🔄 Processing TSM data..."):
-                data_processor = TSMDataProcessor()
                 analytics = TSMAnalytics()
                 dashboard = ExecutiveDashboard()
                 

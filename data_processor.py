@@ -402,6 +402,31 @@ class TSMDataProcessor:
             st.warning(f"⚠️ Could not load Table Coverage sheet: {str(e)}")
             return None
 
+    def get_provider_options(self) -> Optional[Dict[str, str]]:
+        """
+        Get a dictionary of provider options for dropdown selection
+        Returns {"Provider Name (Code)": "Code"} mapping
+        """
+        try:
+            coverage_df = self.load_table_coverage()
+            if coverage_df is None:
+                return None
+            
+            # Create a mapping of display names to codes
+            provider_options = {}
+            for _, row in coverage_df.iterrows():
+                name = str(row['landlord_name']).strip()
+                code = str(row['landlord_code']).strip()
+                if name and code and name != 'nan' and code != 'nan':
+                    display_name = f"{name} ({code})"
+                    provider_options[display_name] = code
+            
+            return provider_options
+            
+        except Exception as e:
+            st.warning(f"⚠️ Could not load provider options: {str(e)}")
+            return None
+
     def get_provider_type_and_sheet(self, provider_code: str) -> Tuple[Optional[str], Optional[str]]:
         """
         Determine the provider type and appropriate TSM24 sheet for a given provider code
