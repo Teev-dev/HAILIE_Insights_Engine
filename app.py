@@ -156,7 +156,7 @@ def main():
                     return
                 
                 # Check if provider exists
-                if provider_code not in cleaned_data.get('provider_code', []):
+                if provider_code not in cleaned_data['provider_code'].values:
                     st.error(f"❌ Provider code '{provider_code}' not found in the dataset. Please check the code and try again.")
                     return
             

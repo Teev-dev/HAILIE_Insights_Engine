@@ -5,6 +5,8 @@ from typing import Dict, List, Optional, Tuple
 import openpyxl
 from io import BytesIO
 import os
+import traceback
+import re
 
 class TSMDataProcessor:
     """
@@ -101,8 +103,12 @@ class TSMDataProcessor:
                 st.error("❌ Could not identify provider code column")
                 return None
             
+            st.info(f"📌 Found provider code column: '{provider_col}'")
+            
             # Try to identify provider name column
             name_col = self._identify_name_column(df)
+            if name_col:
+                st.info(f"📌 Found provider name column: '{name_col}'")
             
             # Try to identify TP columns
             tp_columns = self._identify_tp_columns(df)
@@ -133,6 +139,16 @@ class TSMDataProcessor:
                 relevant_cols.append('provider_name')
             relevant_cols.extend(tp_columns.values())
             
+            # Debug: Check what columns we're trying to select
+            with st.expander("🔍 Debug: Column Selection", expanded=False):
+                st.write(f"Trying to select columns: {relevant_cols}")
+                st.write(f"Available columns after rename: {list(cleaned_df.columns)[:20]}...")
+                missing_cols = [col for col in relevant_cols if col not in cleaned_df.columns]
+                if missing_cols:
+                    st.warning(f"Missing columns: {missing_cols}")
+            
+            # Make sure all columns exist before selecting
+            relevant_cols = [col for col in relevant_cols if col in cleaned_df.columns]
             cleaned_df = cleaned_df[relevant_cols]
             
             # Clean provider codes
@@ -141,6 +157,7 @@ class TSMDataProcessor:
             # Remove rows with missing provider codes
             cleaned_df = cleaned_df.dropna(subset=['provider_code'])
             cleaned_df = cleaned_df[cleaned_df['provider_code'] != '']
+            cleaned_df = cleaned_df[cleaned_df['provider_code'] != 'nan']
             
             # Convert TP columns to numeric
             for tp_code in tp_columns.values():
@@ -149,7 +166,8 @@ class TSMDataProcessor:
             
             # Remove rows with all missing TP values
             tp_cols_present = [col for col in tp_columns.values() if col in cleaned_df.columns]
-            cleaned_df = cleaned_df.dropna(subset=tp_cols_present, how='all')
+            if tp_cols_present:
+                cleaned_df = cleaned_df.dropna(subset=tp_cols_present, how='all')
             
             st.info(f"✅ Cleaned dataset: {len(cleaned_df)} providers with satisfaction data")
             
@@ -157,6 +175,7 @@ class TSMDataProcessor:
             
         except Exception as e:
             st.error(f"❌ Error cleaning data: {str(e)}")
+            st.error(f"Full traceback: {traceback.format_exc()}")
             return None
     
     def _identify_provider_column(self, df: pd.DataFrame) -> Optional[str]:
@@ -236,7 +255,6 @@ class TSMDataProcessor:
             # We need to extract the TP code from parentheses
             
             # First check for TP codes in parentheses (TSM24 format)
-            import re
             tp_match = re.search(r'\(TP(\d{1,2})\)', col_str)
             if tp_match:
                 tp_num = int(tp_match.group(1))
