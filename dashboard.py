@@ -166,7 +166,7 @@ class ExecutiveDashboard:
                     xaxis={'tickangle': -45}
                 )
                 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
                 
                 # Performance table
                 st.markdown("#### 📋 Detailed Breakdown")
@@ -183,7 +183,7 @@ class ExecutiveDashboard:
                     })
                 
                 table_df = pd.DataFrame(table_data)
-                st.dataframe(table_df, use_container_width=True)
+                st.dataframe(table_df, width='stretch')
         
         with tab2:
             st.markdown("#### 🔗 Correlation with Overall Satisfaction (TP01)")
@@ -230,7 +230,7 @@ class ExecutiveDashboard:
                         showlegend=False
                     )
                     
-                    st.plotly_chart(fig_corr, use_container_width=True)
+                    st.plotly_chart(fig_corr, width='stretch')
                     
                     # Correlation insights
                     st.markdown("##### 📈 Key Correlation Insights")
@@ -246,11 +246,19 @@ class ExecutiveDashboard:
                     # Detailed correlation table
                     st.markdown("##### 📊 Correlation Statistics")
                     
-                    display_df = corr_df[['Measure', 'Description', 'Correlation', 'P-Value', 'Sample Size']].copy()
-                    display_df.loc[:, 'Correlation'] = display_df['Correlation'].apply(lambda x: f"{x:.3f}")
-                    display_df.loc[:, 'P-Value'] = display_df['P-Value'].apply(lambda x: f"{x:.4f}")
+                    # Create display dataframe with formatted values
+                    display_data = []
+                    for _, row in corr_df.iterrows():
+                        display_data.append({
+                            'Measure': row['Measure'],
+                            'Description': row['Description'],
+                            'Correlation': f"{row['Correlation']:.3f}",
+                            'P-Value': f"{row['P-Value']:.4f}",
+                            'Sample Size': row['Sample Size']
+                        })
+                    display_df = pd.DataFrame(display_data)
                     
-                    st.dataframe(display_df, use_container_width=True)
+                    st.dataframe(display_df, width='stretch')
                 else:
                     st.warning("Insufficient data to calculate correlations with TP01")
             else:
@@ -321,7 +329,7 @@ class ExecutiveDashboard:
                         yaxis=dict(range=[0, 100])
                     )
                     
-                    st.plotly_chart(fig_matrix, use_container_width=True)
+                    st.plotly_chart(fig_matrix, width='stretch')
                     
                     # Top 3 priorities
                     if 'top_3_priorities' in priority_data:
