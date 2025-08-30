@@ -137,6 +137,7 @@ class TSMAnalytics:
                     if row_scores:
                         peer_scores.append(np.mean(row_scores))
             
+            peer_avg = 0  # Initialize peer_avg
             if peer_scores:
                 peer_avg = np.mean(peer_scores)
                 relative_performance = avg_score - peer_avg
@@ -181,7 +182,7 @@ class TSMAnalytics:
                 'momentum_color': momentum_color,
                 'relative_performance': relative_performance,
                 'provider_avg': avg_score,
-                'peer_avg': peer_avg if peer_scores else 0,
+                'peer_avg': peer_avg,
                 'score_volatility': score_std
             }
             
@@ -190,7 +191,7 @@ class TSMAnalytics:
     
     def identify_priority(self, df: pd.DataFrame, provider_code: str) -> Dict:
         """
-        Identify single highest-priority improvement area through correlation analysis
+        Identify highest-priority improvement area through comprehensive correlation analysis with TP01
         """
         try:
             if provider_code not in df['provider_code'].values:
@@ -199,8 +200,8 @@ class TSMAnalytics:
             provider_row = df[df['provider_code'] == provider_code].iloc[0]
             tp_cols = [col for col in df.columns if col.startswith('TP')]
             
-            # Calculate correlations between measures across all providers
-            correlations = {}
+            # Calculate correlations between all measures and TP01 across all providers
+            correlations_with_tp01 = {}
             provider_scores = {}
             
             # Get provider's scores
@@ -211,9 +212,41 @@ class TSMAnalytics:
             if not provider_scores:
                 return {"error": "No valid scores found for priority analysis"}
             
-            # Calculate peer percentiles for each measure
+            # Calculate correlations of each measure with TP01 (overall satisfaction)
+            if 'TP01' in df.columns:
+                tp01_scores = df['TP01'].dropna()
+                
+                for tp_col in tp_cols:
+                    if tp_col != 'TP01' and tp_col in df.columns:
+                        measure_scores = df[tp_col].dropna()
+                        
+                        # Get common indices for correlation
+                        common_indices = tp01_scores.index.intersection(measure_scores.index)
+                        
+                        if len(common_indices) > 5:  # Need sufficient data for correlation
+                            try:
+                                corr_coef, p_value = pearsonr(
+                                    tp01_scores.loc[common_indices],
+                                    measure_scores.loc[common_indices]
+                                )
+                                correlations_with_tp01[tp_col] = {
+                                    'correlation': corr_coef,
+                                    'p_value': p_value,
+                                    'strength': abs(corr_coef),
+                                    'sample_size': len(common_indices)
+                                }
+                            except:
+                                correlations_with_tp01[tp_col] = {
+                                    'correlation': 0,
+                                    'p_value': 1,
+                                    'strength': 0,
+                                    'sample_size': len(common_indices)
+                                }
+            
+            # Calculate peer percentiles and improvement potential for each measure
             peer_percentiles = {}
             improvement_potential = {}
+            weighted_priorities = {}  # Combined score of improvement potential * correlation strength
             
             for tp_col in tp_cols:
                 if tp_col in provider_scores:
@@ -229,45 +262,46 @@ class TSMAnalytics:
                         
                         # Calculate improvement potential (inverse of percentile)
                         improvement_potential[tp_col] = 100 - percentile
+                        
+                        # Calculate weighted priority (improvement potential * correlation with TP01)
+                        if tp_col in correlations_with_tp01:
+                            correlation_weight = correlations_with_tp01[tp_col]['strength']
+                        else:
+                            correlation_weight = 0.5  # Default moderate correlation if not available
+                        
+                        # Weighted priority considers both improvement potential and correlation with overall satisfaction
+                        weighted_priorities[tp_col] = improvement_potential[tp_col] * (0.5 + 0.5 * correlation_weight)
             
-            # Find the measure with highest improvement potential
-            if improvement_potential:
-                priority_measure = max(improvement_potential.keys(), key=lambda k: improvement_potential[k])
+            # Find the measure with highest weighted priority
+            if weighted_priorities:
+                # Sort measures by weighted priority
+                sorted_priorities = sorted(weighted_priorities.items(), key=lambda x: x[1], reverse=True)
+                priority_measure = sorted_priorities[0][0]
                 priority_potential = improvement_potential[priority_measure]
                 
-                # Calculate correlation with overall satisfaction (TP01)
-                correlation_strength = 0
-                if 'TP01' in provider_scores and priority_measure != 'TP01':
-                    tp01_scores = df['TP01'].dropna()
-                    priority_scores = df[priority_measure].dropna()
-                    
-                    # Get common indices
-                    common_indices = tp01_scores.index.intersection(priority_scores.index)
-                    
-                    if len(common_indices) > 5:  # Need sufficient data for correlation
-                        try:
-                            corr_coef, _ = pearsonr(
-                                tp01_scores.loc[common_indices],
-                                priority_scores.loc[common_indices]
-                            )
-                            correlation_strength = abs(corr_coef) * 100
-                        except:
-                            correlation_strength = 50  # Default moderate correlation
+                # Get correlation info for the priority measure
+                correlation_info = correlations_with_tp01.get(priority_measure, {
+                    'correlation': 0,
+                    'strength': 0,
+                    'p_value': 1
+                })
                 
-                # Determine priority level
-                if priority_potential > 75:
+                # Determine priority level based on weighted priority score
+                weighted_score = weighted_priorities[priority_measure]
+                if weighted_score > 60:
                     priority_level = "Critical"
                     priority_color = "#EF4444"
-                elif priority_potential > 50:
+                elif weighted_score > 40:
                     priority_level = "High"
                     priority_color = "#F59E0B"
-                elif priority_potential > 25:
+                elif weighted_score > 20:
                     priority_level = "Medium"
                     priority_color = "#84CC16"
                 else:
                     priority_level = "Low"
                     priority_color = "#22C55E"
                 
+                # Build comprehensive priority analysis
                 return {
                     'measure': priority_measure,
                     'measure_name': self.tp_descriptions.get(priority_measure, priority_measure),
@@ -276,8 +310,23 @@ class TSMAnalytics:
                     'current_score': provider_scores[priority_measure],
                     'priority_level': priority_level,
                     'priority_color': priority_color,
-                    'correlation_strength': correlation_strength,
-                    'all_potentials': improvement_potential
+                    'correlation_with_tp01': correlation_info.get('correlation', 0),
+                    'correlation_strength': correlation_info.get('strength', 0) * 100,
+                    'correlation_p_value': correlation_info.get('p_value', 1),
+                    'weighted_priority_score': weighted_score,
+                    'all_potentials': improvement_potential,
+                    'all_correlations': correlations_with_tp01,
+                    'all_weighted_priorities': weighted_priorities,
+                    'top_3_priorities': [
+                        {
+                            'measure': m,
+                            'name': self.tp_descriptions.get(m, m),
+                            'weighted_score': s,
+                            'improvement_potential': improvement_potential.get(m, 0),
+                            'correlation': correlations_with_tp01.get(m, {}).get('correlation', 0)
+                        }
+                        for m, s in sorted_priorities[:3]
+                    ]
                 }
             else:
                 return {"error": "Could not calculate improvement priorities"}
