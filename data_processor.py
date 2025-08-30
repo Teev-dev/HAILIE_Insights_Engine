@@ -168,6 +168,7 @@ class TSMDataProcessor:
             'rsh_code', 'rsh code', 'rshcode',
             'org_code', 'org code', 'orgcode',
             'organisation_code', 'organisation code',
+            'landlord_code', 'landlord code', 'landlordcode',  # TSM24 sheets use 'Landlord code'
             'code', 'id', 'provider_id', 'provider id'
         ]
         
@@ -180,6 +181,12 @@ class TSMDataProcessor:
         for col in df.columns:
             col_lower = str(col).lower().strip()
             if 'provider' in col_lower and 'code' in col_lower:
+                return col
+        
+        # Look for columns with 'landlord' and 'code' in name (TSM24 format)
+        for col in df.columns:
+            col_lower = str(col).lower().strip()
+            if 'landlord' in col_lower and 'code' in col_lower:
                 return col
         
         # Look for columns that look like codes (short strings/numbers)
@@ -201,7 +208,8 @@ class TSMDataProcessor:
             'provider_name', 'provider name', 'providername',
             'organisation_name', 'organisation name', 'organisationname',
             'org_name', 'org name', 'orgname',
-            'name', 'organisation', 'provider'
+            'landlord_name', 'landlord name', 'landlordname',  # TSM24 sheets use 'Landlord name'
+            'name', 'organisation', 'provider', 'landlord'
         ]
         
         for col in df.columns:
@@ -217,27 +225,60 @@ class TSMDataProcessor:
         """
         tp_columns = {}
         
+        # Log for debugging
+        tp_pattern_found = []
+        
         for col in df.columns:
             col_str = str(col).upper().strip()
             
-            # Direct match (e.g., "TP01", "TP02", etc.)
+            # For TSM24 sheets, columns have descriptions like:
+            # "Proportion of respondents who report... (TP01)"
+            # We need to extract the TP code from parentheses
+            
+            # First check for TP codes in parentheses (TSM24 format)
+            import re
+            tp_match = re.search(r'\(TP(\d{1,2})\)', col_str)
+            if tp_match:
+                tp_num = int(tp_match.group(1))
+                if 1 <= tp_num <= 12:
+                    tp_code = f"TP{tp_num:02d}"
+                    # Only use columns that are main satisfaction measures (not response counts)
+                    if 'PROPORTION' in col_str and 'SATISFIED' in col_str:
+                        tp_columns[col] = tp_code
+                        tp_pattern_found.append(f"{tp_code}: {col[:60]}...")
+                        continue
+            
+            # Direct match (e.g., "TP01", "TP02", etc.) for other sheet formats
             for tp_code in self.tp_codes:
                 if tp_code in col_str:
-                    tp_columns[col] = tp_code
+                    # Avoid duplicate entries
+                    if col not in tp_columns:
+                        tp_columns[col] = tp_code
+                        tp_pattern_found.append(f"{tp_code}: {col[:60]}...")
                     break
             
             # Look for patterns like "TP 01", "TP-01", "TP_01"
-            for i in range(1, 13):
-                patterns = [
-                    f"TP {i:02d}", f"TP-{i:02d}", f"TP_{i:02d}",
-                    f"TP {i}", f"TP-{i}", f"TP_{i}"
-                ]
-                
-                for pattern in patterns:
-                    if pattern in col_str:
-                        tp_code = f"TP{i:02d}"
-                        tp_columns[col] = tp_code
-                        break
+            if col not in tp_columns:
+                for i in range(1, 13):
+                    patterns = [
+                        f"TP {i:02d}", f"TP-{i:02d}", f"TP_{i:02d}",
+                        f"TP {i}", f"TP-{i}", f"TP_{i}"
+                    ]
+                    
+                    for pattern in patterns:
+                        if pattern in col_str:
+                            tp_code = f"TP{i:02d}"
+                            if col not in tp_columns:
+                                tp_columns[col] = tp_code
+                                tp_pattern_found.append(f"{tp_code}: {col[:60]}...")
+                            break
+        
+        # Log what we found
+        if tp_pattern_found:
+            with st.expander("🔍 Debug: TP Column Detection", expanded=False):
+                st.write(f"Found {len(tp_columns)} TP columns:")
+                for pattern in tp_pattern_found[:12]:
+                    st.write(f"  - {pattern}")
         
         return tp_columns
     
@@ -369,9 +410,31 @@ class TSMDataProcessor:
                 provider_type, target_sheet = self.get_provider_type_and_sheet(provider_code)
                 if target_sheet and target_sheet in sheet_names:
                     try:
-                        main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet)
-                        selected_sheet = target_sheet
-                        st.success(f"✅ Using provider-specific sheet: '{target_sheet}' for provider '{provider_code}'")
+                        # TSM24 sheets have a specific structure:
+                        # Row 0: Sheet title
+                        # Row 1: Navigation 
+                        # Row 2: Headers (including TP measures)
+                        # Row 3+: Data
+                        if target_sheet.startswith('TSM24_'):
+                            st.info(f"📖 Reading TSM24 sheet with special structure: '{target_sheet}'")
+                            # Read with row 2 as header
+                            main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet, header=2)
+                            selected_sheet = target_sheet
+                            st.success(f"✅ Using provider-specific TSM24 sheet: '{target_sheet}' for provider '{provider_code}'")
+                            
+                            # Log column info for debugging
+                            with st.expander("🔍 Debug: Column Analysis", expanded=False):
+                                st.write(f"Total columns loaded: {len(main_df.columns)}")
+                                tp_cols = [col for col in main_df.columns if 'TP' in str(col).upper()]
+                                st.write(f"Columns containing 'TP': {len(tp_cols)}")
+                                if tp_cols:
+                                    st.write("Sample TP columns found:")
+                                    for col in tp_cols[:5]:
+                                        st.write(f"  - {col[:80]}...")
+                        else:
+                            main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet)
+                            selected_sheet = target_sheet
+                            st.success(f"✅ Using provider-specific sheet: '{target_sheet}' for provider '{provider_code}'")
                     except Exception as e:
                         st.warning(f"⚠️ Could not read provider-specific sheet '{target_sheet}': {str(e)}")
                         st.info("🔄 Falling back to general sheet selection...")
