@@ -159,32 +159,29 @@ def main():
     # Main content area
     if provider_code:
         try:
-            # Create a container for processing logs
-            with st.expander("📋 Processing Details", expanded=False):
-                log_container = st.container()
-                
+            # Create a placeholder for the log container that we'll fill at the bottom
+            log_messages = []
+            
             # Store the original st functions
             original_info = st.info
             original_warning = st.warning
             original_success = st.success
             original_error = st.error
             
-            # Override st functions to write to our container
+            # Override st functions to capture messages
             def wrapped_info(msg):
-                with log_container:
-                    original_info(msg)
+                log_messages.append(('info', msg))
                     
             def wrapped_warning(msg):
-                with log_container:
-                    original_warning(msg)
+                log_messages.append(('warning', msg))
                     
             def wrapped_success(msg):
-                with log_container:
-                    original_success(msg)
+                log_messages.append(('success', msg))
                     
             def wrapped_error(msg):
-                # Show error in both main area and log container
+                # Show error in main area immediately
                 original_error(msg)
+                log_messages.append(('error', msg))
                 return
             
             # Temporarily replace st functions
@@ -260,6 +257,18 @@ def main():
             # Data quality metrics
             with st.expander("🔍 Data Quality Report", expanded=False):
                 dashboard.render_data_quality(cleaned_data, data_processor)
+            
+            # Processing details at the bottom
+            with st.expander("📋 Processing Details", expanded=False):
+                for msg_type, msg in log_messages:
+                    if msg_type == 'info':
+                        original_info(msg)
+                    elif msg_type == 'warning':
+                        original_warning(msg)
+                    elif msg_type == 'success':
+                        original_success(msg)
+                    elif msg_type == 'error':
+                        original_error(msg)
                 
         except Exception as e:
             st.error(f"❌ Error processing data: {str(e)}")
