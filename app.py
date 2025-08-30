@@ -94,6 +94,9 @@ def main():
     st.markdown('<h1 class="main-title">🏠 HAILIE Insights Engine</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Executive Dashboard for Social Housing Performance Analysis</p>', unsafe_allow_html=True)
     
+    # Initialize variables
+    show_advanced_logging = False
+    
     # Sidebar for settings and optional file upload
     with st.sidebar:
         st.header("🏢 Provider Settings")
@@ -140,6 +143,14 @@ def main():
             "Peer Group Filter",
             ["All Providers", "Similar Size", "Same Region", "Same Type"],
             help="Filter comparison providers for more relevant benchmarking"
+        )
+        
+        # Advanced options
+        st.markdown("---")
+        show_advanced_logging = st.checkbox(
+            "Show advanced logging view", 
+            value=False,
+            help="Display detailed processing logs and debugging information"
         )
         
         st.markdown("---")
@@ -258,24 +269,29 @@ def main():
             with st.expander("🔍 Data Quality Report", expanded=False):
                 dashboard.render_data_quality(cleaned_data, data_processor)
             
-            # Processing details at the bottom
-            with st.expander("📋 Processing Details", expanded=False):
-                for msg_type, msg in log_messages:
-                    if msg_type == 'info':
-                        original_info(msg)
-                    elif msg_type == 'warning':
-                        original_warning(msg)
-                    elif msg_type == 'success':
-                        original_success(msg)
-                    elif msg_type == 'error':
-                        original_error(msg)
+            # Processing details at the bottom - only show if advanced logging is enabled
+            if show_advanced_logging:
+                with st.expander("📋 Processing Details", expanded=False):
+                    if log_messages:
+                        for msg_type, msg in log_messages:
+                            if msg_type == 'info':
+                                original_info(msg)
+                            elif msg_type == 'warning':
+                                original_warning(msg)
+                            elif msg_type == 'success':
+                                original_success(msg)
+                            elif msg_type == 'error':
+                                original_error(msg)
+                    else:
+                        st.info("No processing logs to display")
                 
         except Exception as e:
             st.error(f"❌ Error processing data: {str(e)}")
             
-            # Show detailed error for debugging
-            with st.expander("🔧 Technical Details", expanded=False):
-                st.code(traceback.format_exc())
+            # Show detailed error for debugging only if advanced logging is enabled
+            if show_advanced_logging:
+                with st.expander("🔧 Technical Details", expanded=False):
+                    st.code(traceback.format_exc())
                 
     else:
         # Welcome screen - no provider code entered yet
