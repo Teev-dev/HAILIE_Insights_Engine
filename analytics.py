@@ -48,7 +48,7 @@ class TSMAnalytics:
                 tp_values = []
                 
                 for tp_col in tp_cols:
-                    if pd.notna(row[tp_col]):
+                    if pd.notna(row[tp_col]) == True:
                         tp_values.append(float(row[tp_col]))
                 
                 if tp_values:
@@ -132,7 +132,7 @@ class TSMAnalytics:
                 if row['provider_code'] != provider_code:
                     row_scores = []
                     for tp_col in tp_cols:
-                        if pd.notna(row[tp_col]):
+                        if pd.notna(row[tp_col]) == True:
                             row_scores.append(float(row[tp_col]))
                     if row_scores:
                         peer_scores.append(np.mean(row_scores))
@@ -181,7 +181,7 @@ class TSMAnalytics:
                 'momentum_color': momentum_color,
                 'relative_performance': relative_performance,
                 'provider_avg': avg_score,
-                'peer_avg': peer_avg if 'peer_avg' in locals() else None,
+                'peer_avg': peer_avg if peer_scores else 0,
                 'score_volatility': score_std
             }
             
@@ -232,7 +232,7 @@ class TSMAnalytics:
             
             # Find the measure with highest improvement potential
             if improvement_potential:
-                priority_measure = max(improvement_potential, key=improvement_potential.get)
+                priority_measure = max(improvement_potential.keys(), key=lambda k: improvement_potential[k])
                 priority_potential = improvement_potential[priority_measure]
                 
                 # Calculate correlation with overall satisfaction (TP01)
