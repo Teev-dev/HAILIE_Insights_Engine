@@ -131,13 +131,34 @@ class TSMDataProcessor:
             for original_col, tp_code in tp_columns.items():
                 column_mapping[original_col] = tp_code
             
+            # Debug: Check for duplicate mappings
+            with st.expander("🔍 Debug: Column Mapping", expanded=False):
+                st.write("Column mapping:")
+                for old, new in list(column_mapping.items())[:15]:
+                    st.write(f"  '{old[:50]}...' -> '{new}'")
+                
+                # Check for duplicate target names
+                target_names = list(column_mapping.values())
+                duplicates = [name for name in target_names if target_names.count(name) > 1]
+                if duplicates:
+                    st.warning(f"Duplicate target column names found: {set(duplicates)}")
+            
             cleaned_df = cleaned_df.rename(columns=column_mapping)
+            
+            # Check if rename created any issues
+            if cleaned_df.columns.duplicated().any():
+                st.warning("⚠️ Duplicate column names detected after renaming!")
+                duplicated_cols = cleaned_df.columns[cleaned_df.columns.duplicated()].tolist()
+                st.write(f"Duplicated columns: {duplicated_cols}")
             
             # Select only relevant columns
             relevant_cols = ['provider_code']
             if name_col:
                 relevant_cols.append('provider_name')
-            relevant_cols.extend(tp_columns.values())
+            
+            # Use unique TP column values
+            unique_tp_codes = list(set(tp_columns.values()))
+            relevant_cols.extend(unique_tp_codes)
             
             # Debug: Check what columns we're trying to select
             with st.expander("🔍 Debug: Column Selection", expanded=False):
@@ -149,6 +170,14 @@ class TSMDataProcessor:
             
             # Make sure all columns exist before selecting
             relevant_cols = [col for col in relevant_cols if col in cleaned_df.columns]
+            
+            # Handle duplicate columns if they exist
+            if cleaned_df.columns.duplicated().any():
+                # Keep only first occurrence of duplicated columns
+                cleaned_df = cleaned_df.loc[:, ~cleaned_df.columns.duplicated()]
+                st.info("ℹ️ Removed duplicate columns after renaming")
+            
+            # Now select the columns
             cleaned_df = cleaned_df[relevant_cols]
             
             # Clean provider codes
@@ -159,13 +188,22 @@ class TSMDataProcessor:
             cleaned_df = cleaned_df[cleaned_df['provider_code'] != '']
             cleaned_df = cleaned_df[cleaned_df['provider_code'] != 'nan']
             
-            # Convert TP columns to numeric
-            for tp_code in tp_columns.values():
+            # Convert TP columns to numeric - use unique codes only
+            unique_tp_codes = list(set(tp_columns.values()))
+            for tp_code in unique_tp_codes:
                 if tp_code in cleaned_df.columns:
-                    cleaned_df[tp_code] = pd.to_numeric(cleaned_df[tp_code], errors='coerce')
+                    # Make sure we're working with a Series and it's not a duplicate
+                    try:
+                        col_data = cleaned_df[tp_code]
+                        if isinstance(col_data, pd.Series):
+                            cleaned_df[tp_code] = pd.to_numeric(col_data, errors='coerce')
+                        else:
+                            st.warning(f"⚠️ Column {tp_code} is not a Series, it's a {type(col_data)}")
+                    except Exception as e:
+                        st.warning(f"⚠️ Could not convert {tp_code} to numeric: {str(e)}")
             
             # Remove rows with all missing TP values
-            tp_cols_present = [col for col in tp_columns.values() if col in cleaned_df.columns]
+            tp_cols_present = [col for col in unique_tp_codes if col in cleaned_df.columns]
             if tp_cols_present:
                 cleaned_df = cleaned_df.dropna(subset=tp_cols_present, how='all')
             
