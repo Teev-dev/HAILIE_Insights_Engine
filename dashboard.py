@@ -154,7 +154,7 @@ class ExecutiveDashboard:
                 xaxis={'tickangle': -45}
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             
             # Performance table
             st.markdown("#### 📋 Detailed Breakdown")
@@ -171,7 +171,7 @@ class ExecutiveDashboard:
                 })
             
             table_df = pd.DataFrame(table_data)
-            st.dataframe(table_df, use_container_width=True)
+            st.dataframe(table_df, width='stretch')
     
     def render_data_quality(self, df: pd.DataFrame, data_processor):
         """
@@ -217,7 +217,7 @@ class ExecutiveDashboard:
                 })
             
             completeness_df = pd.DataFrame(completeness_data)
-            st.dataframe(completeness_df, use_container_width=True)
+            st.dataframe(completeness_df, width='stretch')
         
         # Data ranges
         if quality_report.get('data_ranges'):
@@ -233,7 +233,7 @@ class ExecutiveDashboard:
                 })
             
             ranges_df = pd.DataFrame(ranges_data)
-            st.dataframe(ranges_df, use_container_width=True)
+            st.dataframe(ranges_df, width='stretch')
     
     def render_insights_summary(self, rankings: Dict, momentum: Dict, priority: Dict, provider_code: str):
         """
