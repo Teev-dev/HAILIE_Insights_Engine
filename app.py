@@ -200,8 +200,7 @@ def main():
                 # Identify priority
                 priority = analytics.identify_priority(cleaned_data, provider_code)
             
-            # Display executive dashboard
-            st.markdown("---")
+            # Display executive dashboard at the top
             dashboard.render_executive_summary(
                 provider_code, 
                 rankings, 
@@ -211,6 +210,7 @@ def main():
             )
             
             # Additional insights section
+            st.markdown("---")
             with st.expander("📋 Detailed Analysis", expanded=False):
                 dashboard.render_detailed_analysis(cleaned_data, provider_code, analytics)
             
