@@ -4,6 +4,7 @@ import streamlit as st
 from typing import Dict, List, Optional, Tuple
 import openpyxl
 from io import BytesIO
+import os
 
 class TSMDataProcessor:
     """
@@ -13,6 +14,7 @@ class TSMDataProcessor:
     def __init__(self):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]  # TP01 to TP12
         self.required_columns = ['provider_code', 'provider_name'] + self.tp_codes
+        self.default_data_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
         
     def load_excel_file(self, uploaded_file) -> Optional[pd.DataFrame]:
         """
@@ -272,3 +274,70 @@ class TSMDataProcessor:
                     }
         
         return quality_report
+    
+    def load_default_data(self) -> Optional[pd.DataFrame]:
+        """
+        Load the default 2024 TSM data file
+        """
+        try:
+            if not os.path.exists(self.default_data_path):
+                st.error(f"❌ Default data file not found: {self.default_data_path}")
+                return None
+            
+            st.info("📊 Loading default 2024 TSM data...")
+            
+            # Get all sheet names
+            xl_file = pd.ExcelFile(self.default_data_path)
+            sheet_names = xl_file.sheet_names
+            
+            st.info(f"📋 Found {len(sheet_names)} sheets in default data")
+            
+            # Try to find the main data sheet
+            main_df = None
+            
+            # Priority order for sheet selection
+            priority_keywords = ['data', 'tsm', 'satisfaction', 'provider', 'main', 'results']
+            
+            # First, try sheets with priority keywords
+            for keyword in priority_keywords:
+                matching_sheets = [sheet for sheet in sheet_names if keyword.lower() in sheet.lower()]
+                if matching_sheets:
+                    try:
+                        main_df = pd.read_excel(self.default_data_path, sheet_name=matching_sheets[0])
+                        st.success(f"✅ Using default data sheet: '{matching_sheets[0]}'")
+                        break
+                    except Exception as e:
+                        st.warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
+                        continue
+            
+            # If no priority sheet worked, try the largest sheet
+            if main_df is None:
+                largest_sheet = None
+                max_rows = 0
+                
+                for sheet_name in sheet_names:
+                    try:
+                        temp_df = pd.read_excel(self.default_data_path, sheet_name=sheet_name, nrows=1)
+                        sheet_df = pd.read_excel(self.default_data_path, sheet_name=sheet_name)
+                        
+                        if len(sheet_df) > max_rows:
+                            max_rows = len(sheet_df)
+                            largest_sheet = sheet_name
+                            main_df = sheet_df
+                            
+                    except Exception:
+                        continue
+                
+                if main_df is not None:
+                    st.info(f"📊 Using largest default data sheet: '{largest_sheet}' ({max_rows} rows)")
+            
+            # Last resort: use first sheet
+            if main_df is None:
+                main_df = pd.read_excel(self.default_data_path, sheet_name=sheet_names[0])
+                st.warning(f"⚠️ Using first sheet from default data: '{sheet_names[0]}'")
+            
+            return main_df
+            
+        except Exception as e:
+            st.error(f"❌ Error loading default data file: {str(e)}")
+            return None

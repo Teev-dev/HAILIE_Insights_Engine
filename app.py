@@ -93,37 +93,40 @@ def main():
     st.markdown('<h1 class="main-title">🏠 HAILIE Insights Engine</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitle">Executive Dashboard for Social Housing Performance Analysis</p>', unsafe_allow_html=True)
     
-    # Sidebar for file upload and settings
+    # Sidebar for settings and optional file upload
     with st.sidebar:
-        st.header("📊 Data Upload")
+        st.header("🏢 Provider Settings")
+        provider_code = st.text_input(
+            "Your Provider Code", 
+            placeholder="e.g., H1234",
+            help="Enter your housing provider's unique identifier"
+        )
+        
+        # Analysis options
+        st.header("⚙️ Analysis Options")
+        include_confidence = st.checkbox("Include confidence intervals", value=True)
+        peer_group_filter = st.selectbox(
+            "Peer Group Filter",
+            ["All Providers", "Similar Size", "Same Region", "Same Type"],
+            help="Filter comparison providers for more relevant benchmarking"
+        )
+        
+        st.markdown("---")
+        
+        # Optional custom data upload
+        st.header("📊 Custom Data (Optional)")
+        st.info("💡 Using default 2024 TSM data. Upload your own file only if you have custom data.")
         uploaded_file = st.file_uploader(
-            "Upload TSM Data (Excel file)", 
+            "Upload Custom TSM Data", 
             type=['xlsx', 'xls'],
-            help="Upload your UK government TSM data file containing TP01-TP12 satisfaction measures"
+            help="Optional: Upload your own TSM data file to override the default 2024 dataset"
         )
         
         if uploaded_file is not None:
-            st.success("✅ File uploaded successfully")
-            
-            # Provider selection
-            st.header("🏢 Provider Settings")
-            provider_code = st.text_input(
-                "Your Provider Code", 
-                placeholder="e.g., H1234",
-                help="Enter your housing provider's unique identifier"
-            )
-            
-            # Analysis options
-            st.header("⚙️ Analysis Options")
-            include_confidence = st.checkbox("Include confidence intervals", value=True)
-            peer_group_filter = st.selectbox(
-                "Peer Group Filter",
-                ["All Providers", "Similar Size", "Same Region", "Same Type"],
-                help="Filter comparison providers for more relevant benchmarking"
-            )
+            st.success("✅ Custom file uploaded - using your data instead of default")
     
     # Main content area
-    if uploaded_file is not None and provider_code:
+    if provider_code:
         try:
             # Initialize processors
             with st.spinner("🔄 Processing TSM data..."):
@@ -131,18 +134,25 @@ def main():
                 analytics = TSMAnalytics()
                 dashboard = ExecutiveDashboard()
                 
-                # Process the uploaded file
-                df = data_processor.load_excel_file(uploaded_file)
+                # Load data - either uploaded file or default
+                if uploaded_file is not None:
+                    # Process the uploaded file
+                    df = data_processor.load_excel_file(uploaded_file)
+                    data_source = "custom uploaded file"
+                else:
+                    # Load default data
+                    df = data_processor.load_default_data()
+                    data_source = "default 2024 TSM dataset"
                 
                 if df is None or df.empty:
-                    st.error("❌ Failed to load data from the uploaded file. Please check the file format.")
+                    st.error(f"❌ Failed to load data from the {data_source}. Please check the file format.")
                     return
                 
                 # Clean and validate data
                 cleaned_data = data_processor.clean_and_validate(df)
                 
                 if cleaned_data is None or cleaned_data.empty:
-                    st.error("❌ No valid TSM data found in the uploaded file. Please ensure the file contains TP01-TP12 measures.")
+                    st.error(f"❌ No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures.")
                     return
                 
                 # Check if provider exists
@@ -186,11 +196,8 @@ def main():
             with st.expander("🔧 Technical Details", expanded=False):
                 st.code(traceback.format_exc())
                 
-    elif uploaded_file is not None:
-        st.info("👆 Please enter your provider code in the sidebar to continue")
-        
     else:
-        # Welcome screen
+        # Welcome screen - no provider code entered yet
         st.markdown("""
         ### Welcome to HAILIE Insights Engine
         
@@ -205,16 +212,18 @@ def main():
         ---
         
         **To get started:**
-        1. Upload your TSM Excel data file using the sidebar
-        2. Enter your provider code
-        3. View your executive dashboard with key performance insights
+        1. Enter your provider code in the sidebar (e.g., H1234)
+        2. View your executive dashboard with key performance insights
+        3. Optionally upload custom TSM data if needed
         
         ---
         
-        **Supported Data Format:**
-        - UK government TSM datasets (Excel format)
-        - TP01-TP12 satisfaction measure codes
-        - Multi-sheet workbooks with provider data
+        **📊 Data Ready to Use:**
+        - Default 2024 TSM dataset already loaded
+        - UK government TSM datasets with TP01-TP12 satisfaction measures
+        - All housing providers across England included
+        
+        👆 **Simply enter your provider code in the sidebar to begin!**
         """)
 
 if __name__ == "__main__":
