@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, Any
+from tooltip_definitions import TooltipDefinitions
 
 class ExecutiveDashboard:
     """
@@ -14,8 +15,28 @@ class ExecutiveDashboard:
         """
         Render the main executive summary with three key metrics
         """
-        st.markdown("## 📊 Executive Summary")
-        st.markdown(f"**Provider:** {provider_code}")
+        # Get tooltip definitions
+        tooltips = TooltipDefinitions()
+        metric_tooltips = tooltips.get_metric_tooltips()
+        technical_tooltips = tooltips.get_technical_tooltips()
+        
+        col_header1, col_header2 = st.columns([3, 1])
+        with col_header1:
+            st.markdown("## 📊 Executive Summary")
+            st.markdown(f"**Provider:** {provider_code}")
+        with col_header2:
+            # Add overall help for the executive summary
+            with st.expander("ℹ️ Understanding Your Dashboard", expanded=False):
+                st.markdown("""
+                **Your dashboard shows three key insights:**
+                
+                🏆 **Your Rank**: How you compare to other housing providers
+                📈 **Your Momentum**: Your performance trend over time  
+                🎯 **Your Priority**: Most important area to focus on
+                
+                Click the help icons (?) next to each metric for detailed explanations.
+                """)
+        
         st.markdown("---")
         
         # Check for errors
@@ -45,6 +66,7 @@ class ExecutiveDashboard:
         with col1:
             quartile_class = f"quartile-{provider_ranking['quartile'].lower()}"
             
+            # Add help expandable section for ranking
             st.markdown(f"""
             <div class="metric-card {quartile_class}">
                 <p class="metric-label">🏆 YOUR RANK</p>
@@ -60,6 +82,17 @@ class ExecutiveDashboard:
                 </p>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Add expandable help section
+            with st.expander("📖 How Your Rank Works", expanded=False):
+                st.markdown(metric_tooltips['ranking']['content'])
+                st.markdown(f"""
+                **Your specific ranking details:**
+                - **Your composite score**: {provider_ranking['score']:.1f}
+                - **Your percentile**: {provider_ranking['percentile']:.1f}% (better than {provider_ranking['percentile']:.1f}% of providers)
+                - **Quartile color coding**: {provider_ranking['quartile']} performance level
+                - **Measures included**: {provider_ranking['measures_count']} out of 12 possible TSM measures
+                """)
         
         # YOUR MOMENTUM
         with col2:
@@ -93,6 +126,26 @@ class ExecutiveDashboard:
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
+            
+            # Add expandable help section for momentum
+            with st.expander("📖 How Momentum Works", expanded=False):
+                st.markdown(metric_tooltips['momentum']['content'])
+                if momentum.get('disabled', False):
+                    st.markdown("""
+                    **Current status**: Momentum analysis is temporarily disabled as it requires multiple years of TSM data.
+                    
+                    **What's coming in 2026**: When 2025 TSM data becomes available, you'll see:
+                    - Month-over-month trend analysis
+                    - Comparison with peer momentum
+                    - Early warning indicators for declining performance
+                    """)
+                else:
+                    st.markdown(f"""
+                    **Your momentum details:**
+                    - **Direction**: {momentum['momentum_text']}
+                    - **Relative performance**: {momentum['relative_performance']:+.1f} points vs peer average
+                    - **Trend strength**: {momentum.get('score_volatility', 'N/A')}
+                    """)
         
         # YOUR PRIORITY
         with col3:
@@ -125,6 +178,21 @@ class ExecutiveDashboard:
                 </p>
             </div>
             """, unsafe_allow_html=True)
+            
+            # Add expandable help section for priority
+            with st.expander("📖 How Priority Works", expanded=False):
+                st.markdown(metric_tooltips['priority']['content'])
+                st.markdown(f"""
+                **Your priority details:**
+                - **Focus area**: {priority['measure_name']} ({priority['measure']})
+                - **Current performance**: {priority['current_percentile']:.1f}th percentile
+                - **Improvement potential**: {priority['improvement_potential']:.1f}% (room to improve)
+                - **TP01 correlation**: {corr_strength:.1f}% ({corr_text.lower()} relationship with overall satisfaction)
+                - **Weighted priority score**: {priority.get('weighted_priority_score', 0):.1f}
+                - **Current score**: {priority.get('current_score', 'N/A')}
+                
+                **Why this is your priority**: This area combines high improvement potential with strong impact on overall tenant satisfaction.
+                """)
     
     def render_detailed_analysis(self, df: pd.DataFrame, provider_code: str, analytics):
         """
@@ -140,8 +208,22 @@ class ExecutiveDashboard:
             st.error(detailed_analysis["error"])
             return
         
-        # Create tabs for different views
+        # Create tabs for different views with help tooltips
         tab1, tab2, tab3 = st.tabs(["📊 Performance Comparison", "🔗 Correlation Analysis", "🎯 Priority Matrix"])
+        
+        # Add help information for the detailed analysis section
+        with st.expander("ℹ️ Understanding Detailed Analysis", expanded=False):
+            st.markdown("""
+            **This section provides three detailed views:**
+            
+            📊 **Performance Comparison**: See how you score on each satisfaction measure compared to peer averages
+            
+            🔗 **Correlation Analysis**: Understand which measures have the strongest relationship with overall satisfaction
+            
+            🎯 **Priority Matrix**: Visual guide to help prioritize which areas to focus on for maximum impact
+            
+            💡 **Tip**: Hover over charts for detailed information about each data point.
+            """)
         
         with tab1:
             # Create performance comparison chart
@@ -157,14 +239,23 @@ class ExecutiveDashboard:
                     peer_averages.append(data['peer_avg'])
                     percentiles.append(data['percentile'])
                 
-                # Create comparison chart
+                # Create comparison chart with enhanced tooltips
                 fig = go.Figure()
+                
+                # Prepare detailed data for tooltips
+                hover_data_your = []
+                hover_data_peer = []
+                for tp_code, data in detailed_analysis.items():
+                    hover_data_your.append(f"{data['description']}<br>Your Score: {data['score']:.1f}<br>Percentile: {data['percentile']:.1f}%<br>Gap from Peer Avg: {data['score'] - data['peer_avg']:+.1f}")
+                    hover_data_peer.append(f"{data['description']}<br>Peer Average: {data['peer_avg']:.1f}<br>Peer Median: {data['peer_median']:.1f}<br>Top Quartile: {data['top_quartile_threshold']:.1f}")
                 
                 fig.add_trace(go.Bar(
                     name='Your Score',
                     x=measures,
                     y=provider_scores,
-                    marker_color='#2E5BBA'
+                    marker_color='#2E5BBA',
+                    hovertemplate="<b>%{x}</b><br>%{customdata}<extra></extra>",
+                    customdata=hover_data_your
                 ))
                 
                 fig.add_trace(go.Bar(
@@ -172,11 +263,13 @@ class ExecutiveDashboard:
                     x=measures,
                     y=peer_averages,
                     marker_color='#64748B',
-                    opacity=0.7
+                    opacity=0.7,
+                    hovertemplate="<b>%{x}</b><br>%{customdata}<extra></extra>",
+                    customdata=hover_data_peer
                 ))
                 
                 fig.update_layout(
-                    title="Performance Comparison by Measure",
+                    title="Performance Comparison by Measure - Hover for Details",
                     xaxis_title="Satisfaction Measures",
                     yaxis_title="Score",
                     barmode='group',
@@ -187,8 +280,25 @@ class ExecutiveDashboard:
                 
                 st.plotly_chart(fig, width='stretch')
                 
-                # Performance table
-                st.markdown("#### 📋 Detailed Breakdown")
+                # Performance table with help
+                col_table1, col_table2 = st.columns([4, 1])
+                with col_table1:
+                    st.markdown("#### 📋 Detailed Breakdown")
+                with col_table2:
+                    with st.expander("❓ Table Help", expanded=False):
+                        st.markdown("""
+                        **Understanding the table:**
+                        
+                        📊 **Your Score**: Your actual satisfaction score for this measure
+                        
+                        📈 **Percentile**: What % of providers you perform better than
+                        
+                        👥 **Peer Average**: Average score of all providers for this measure
+                        
+                        📊 **Gap**: Difference between your score and peer average
+                        - Positive (+) = Above average
+                        - Negative (-) = Below average
+                        """)
                 
                 table_data = []
                 for tp_code, data in detailed_analysis.items():
@@ -205,7 +315,14 @@ class ExecutiveDashboard:
                 st.dataframe(table_df, width='stretch')
         
         with tab2:
-            st.markdown("#### 🔗 Correlation with Overall Satisfaction (TP01)")
+            # Add header with tooltip help
+            col_header1, col_header2 = st.columns([4, 1])
+            with col_header1:
+                st.markdown("#### 🔗 Correlation with Overall Satisfaction (TP01)")
+            with col_header2:
+                # Help tooltip for correlation
+                with st.expander("❓ What is Correlation?", expanded=False):
+                    st.markdown(tooltips.get_streamlit_help_text('correlation', technical_tooltips))
             
             if not "error" in priority_data and 'all_correlations' in priority_data:
                 correlations = priority_data['all_correlations']
@@ -231,18 +348,33 @@ class ExecutiveDashboard:
                     
                     colors = ['#22C55E' if c > 0 else '#EF4444' for c in corr_df['Correlation']]
                     
+                    # Prepare enhanced hover data for correlation chart
+                    correlation_hover_data = []
+                    for _, row in corr_df.iterrows():
+                        strength_text = "Strong" if row['Strength'] > 0.7 else "Moderate" if row['Strength'] > 0.4 else "Weak"
+                        significance = "Significant" if row['P-Value'] < 0.05 else "Not significant"
+                        correlation_hover_data.append(
+                            f"{row['Description']}<br>"
+                            f"Correlation: {row['Correlation']:.3f}<br>"
+                            f"Strength: {strength_text} ({row['Strength']:.1%})<br>"
+                            f"P-Value: {row['P-Value']:.4f} ({significance})<br>"
+                            f"Sample Size: {row['Sample Size']} providers"
+                        )
+                    
                     fig_corr.add_trace(go.Bar(
                         x=corr_df['Correlation'],
                         y=[f"{row['Measure']}\n{row['Description'][:25]}..." for _, row in corr_df.iterrows()],
                         orientation='h',
                         marker_color=colors,
                         text=[f"{c:.3f}" for c in corr_df['Correlation']],
-                        textposition='outside'
+                        textposition='outside',
+                        hovertemplate="<b>%{y}</b><br>%{customdata}<extra></extra>",
+                        customdata=correlation_hover_data
                     ))
                     
                     fig_corr.update_layout(
-                        title="Correlation of Each Measure with Overall Satisfaction (TP01)",
-                        xaxis_title="Correlation Coefficient",
+                        title="Correlation of Each Measure with Overall Satisfaction (TP01) - Hover for Details",
+                        xaxis_title="Correlation Coefficient (-1 to +1)",
                         yaxis_title="Measures",
                         height=500,
                         xaxis=dict(range=[-1, 1]),
@@ -251,8 +383,23 @@ class ExecutiveDashboard:
                     
                     st.plotly_chart(fig_corr, width='stretch')
                     
-                    # Correlation insights
-                    st.markdown("##### 📈 Key Correlation Insights")
+                    # Correlation insights with help
+                    col_insights1, col_insights2 = st.columns([4, 1])
+                    with col_insights1:
+                        st.markdown("##### 📈 Key Correlation Insights")
+                    with col_insights2:
+                        with st.expander("❓ Insights Help", expanded=False):
+                            st.markdown("""
+                            **Understanding correlations:**
+                            
+                            🟢 **Strong correlations (>0.7)**: These measures have major impact on overall satisfaction. Focus here for maximum effect.
+                            
+                            🟡 **Moderate correlations (0.4-0.7)**: Important but secondary impact areas.
+                            
+                            🔵 **Weak correlations (<0.4)**: These may be important for other reasons but have limited impact on overall satisfaction.
+                            
+                            💡 **Strategy**: Prioritize strong correlation areas when resources are limited.
+                            """)
                     
                     strong_correlations = corr_df[corr_df['Strength'] > 0.7]
                     if not strong_correlations.empty:
@@ -262,8 +409,26 @@ class ExecutiveDashboard:
                     if not weak_correlations.empty:
                         st.info(f"**Weak correlations:** {', '.join(weak_correlations['Measure'].tolist())} have minimal impact on overall satisfaction")
                     
-                    # Detailed correlation table
-                    st.markdown("##### 📊 Correlation Statistics")
+                    # Detailed correlation table with help
+                    col_stats1, col_stats2 = st.columns([4, 1])
+                    with col_stats1:
+                        st.markdown("##### 📊 Correlation Statistics")
+                    with col_stats2:
+                        with st.expander("❓ Statistics Help", expanded=False):
+                            st.markdown("""
+                            **Statistical terms explained:**
+                            
+                            📊 **Correlation**: Strength of relationship (-1 to +1)
+                            - Closer to +1 = stronger positive relationship
+                            - Closer to 0 = weaker relationship
+                            
+                            🔬 **P-Value**: Statistical significance
+                            - <0.05 = statistically significant result
+                            - >0.05 = result could be due to chance
+                            
+                            👥 **Sample Size**: Number of providers with data for this measure
+                            - Larger samples = more reliable results
+                            """)
                     
                     # Create display dataframe with formatted values
                     display_data = []
@@ -284,7 +449,29 @@ class ExecutiveDashboard:
                 st.warning("Correlation analysis not available")
         
         with tab3:
-            st.markdown("#### 🎯 Priority Matrix")
+            # Add header with tooltip help
+            col_header1, col_header2 = st.columns([4, 1])
+            with col_header1:
+                st.markdown("#### 🎯 Priority Matrix")
+            with col_header2:
+                # Help tooltip for priority matrix
+                with st.expander("❓ Priority Matrix Guide", expanded=False):
+                    st.markdown("""
+                    **How to read the Priority Matrix:**
+                    
+                    📍 **Position on chart**:
+                    - **X-axis**: Improvement potential (how much you can improve)
+                    - **Y-axis**: Correlation with overall satisfaction (impact)
+                    - **Bubble size**: Combined priority score
+                    
+                    🎯 **Quadrants**:
+                    - **Top-Right (High Priority)**: High impact + High potential 
+                    - **Top-Left (Quick Wins)**: High impact + Lower potential
+                    - **Bottom-Right (Monitor)**: Lower impact + High potential
+                    - **Bottom-Left (Low Priority)**: Lower impact + Lower potential
+                    
+                    💡 **Focus on measures in the top-right quadrant for maximum impact.**
+                    """)
             
             if not "error" in priority_data and 'all_weighted_priorities' in priority_data:
                 # Get weighted priorities and improvement potentials
@@ -306,8 +493,31 @@ class ExecutiveDashboard:
                     
                     scatter_df = pd.DataFrame(scatter_data)
                     
-                    # Create priority matrix scatter plot
+                    # Create priority matrix scatter plot with enhanced tooltips
                     fig_matrix = go.Figure()
+                    
+                    # Prepare detailed hover data
+                    matrix_hover_data = []
+                    for _, row in scatter_df.iterrows():
+                        priority_score = row['Weighted Priority']
+                        if priority_score > 60:
+                            priority_level = "Critical"
+                        elif priority_score > 40:
+                            priority_level = "High"
+                        elif priority_score > 20:
+                            priority_level = "Medium"
+                        else:
+                            priority_level = "Low"
+                        
+                        hover_text = (
+                            f"{row['Description']}<br>"
+                            f"Priority Level: {priority_level}<br>"
+                            f"Improvement Potential: {row['Improvement Potential']:.1f}%<br>"
+                            f"TP01 Correlation: {row['Correlation']:.1f}%<br>"
+                            f"Weighted Priority Score: {priority_score:.1f}<br>"
+                            f"Focus Area Ranking: {'Top 3' if priority_score >= sorted(scatter_df['Weighted Priority'], reverse=True)[2] else 'Lower Priority'}"
+                        )
+                        matrix_hover_data.append(hover_text)
                     
                     # Color based on weighted priority
                     fig_matrix.add_trace(go.Scatter(
@@ -315,18 +525,17 @@ class ExecutiveDashboard:
                         y=scatter_df['Correlation'],
                         mode='markers+text',
                         marker=dict(
-                            size=scatter_df['Weighted Priority'],
+                            size=scatter_df['Weighted Priority']*0.8+10,  # Better size scaling
                             color=scatter_df['Weighted Priority'],
                             colorscale='RdYlGn_r',
                             showscale=True,
-                            colorbar=dict(title="Priority Score")
+                            colorbar=dict(title="Priority Score"),
+                            line=dict(width=1, color='white')  # Add border for better visibility
                         ),
                         text=scatter_df['Measure'],
                         textposition="top center",
-                        hovertemplate="<b>%{text}</b><br>" +
-                                      "Improvement Potential: %{x:.1f}%<br>" +
-                                      "TP01 Correlation: %{y:.1f}%<br>" +
-                                      "<extra></extra>"
+                        hovertemplate="<b>%{text}</b><br>%{customdata}<extra></extra>",
+                        customdata=matrix_hover_data
                     ))
                     
                     # Add quadrant lines
@@ -340,19 +549,41 @@ class ExecutiveDashboard:
                     fig_matrix.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=12, color="gray"))
                     
                     fig_matrix.update_layout(
-                        title="Priority Matrix: Improvement Potential vs TP01 Correlation",
-                        xaxis_title="Improvement Potential (%)",
-                        yaxis_title="Correlation with Overall Satisfaction (%)",
+                        title="Priority Matrix: Improvement Potential vs TP01 Correlation - Hover for Details",
+                        xaxis_title="Improvement Potential (%) →",
+                        yaxis_title="Correlation with Overall Satisfaction (%) ↑",
                         height=600,
-                        xaxis=dict(range=[0, 100]),
-                        yaxis=dict(range=[0, 100])
+                        xaxis=dict(
+                            range=[0, 100],
+                            title_font=dict(size=12)
+                        ),
+                        yaxis=dict(
+                            range=[0, 100],
+                            title_font=dict(size=12)
+                        ),
+                        font=dict(size=11)
                     )
                     
                     st.plotly_chart(fig_matrix, width='stretch')
                     
-                    # Top 3 priorities
+                    # Top 3 priorities with help
                     if 'top_3_priorities' in priority_data:
-                        st.markdown("##### 🏆 Top 3 Priority Areas")
+                        col_top3_1, col_top3_2 = st.columns([4, 1])
+                        with col_top3_1:
+                            st.markdown("##### 🏆 Top 3 Priority Areas")
+                        with col_top3_2:
+                            with st.expander("❓ Priority Help", expanded=False):
+                                st.markdown("""
+                                **Your top 3 priorities are ranked by:**
+                                
+                                🎯 **Weighted priority score**: Combines improvement potential with correlation strength
+                                
+                                📈 **Improvement potential**: How much you could realistically improve
+                                
+                                🔗 **TP01 correlation**: How much impact improvement would have on overall satisfaction
+                                
+                                💡 **Action**: Start with #1 priority for maximum impact, then work down the list.
+                                """)
                         
                         for i, priority in enumerate(priority_data['top_3_priorities'], 1):
                             col1, col2, col3, col4 = st.columns([1, 3, 2, 2])
@@ -373,7 +604,25 @@ class ExecutiveDashboard:
         """
         Render data quality report
         """
-        st.markdown("### 📊 Data Quality Report")
+        # Add header with help
+        col_header1, col_header2 = st.columns([4, 1])
+        with col_header1:
+            st.markdown("### 📊 Data Quality Report")
+        with col_header2:
+            with st.expander("ℹ️ About Data Quality", expanded=False):
+                st.markdown("""
+                **Data Quality Metrics Explained:**
+                
+                📈 **Total Providers**: Number of housing providers in the dataset
+                
+                ✅ **Providers with Data**: How many providers have valid TSM data
+                
+                📋 **TP Measures Found**: Which of the 12 official measures (TP01-TP12) are available
+                
+                🎯 **Completeness**: Percentage of providers with data for each measure
+                
+                💡 **Why this matters**: Higher completeness means more reliable peer comparisons and benchmarking.
+                """)
         
         quality_report = data_processor.get_data_quality_report(df)
         
@@ -381,7 +630,10 @@ class ExecutiveDashboard:
             st.warning("No data quality information available")
             return
         
-        # Summary metrics
+        # Summary metrics with enhanced tooltips
+        st.markdown("""
+        **Quick data overview** - hover over metric names for explanations:
+        """)
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
