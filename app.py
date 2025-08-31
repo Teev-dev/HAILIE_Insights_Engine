@@ -100,46 +100,14 @@ def main():
     # Initialize variables
     show_advanced_logging = False
 
-    # Sidebar for settings and optional file upload
+    # Initialize data processor to get provider options
+    data_processor_for_options = TSMDataProcessor(silent_mode=True)
+    provider_options = data_processor_for_options.get_provider_options()
+    
+    provider_code = None
+
+    # Sidebar for analysis options and optional file upload
     with st.sidebar:
-        st.header("🏢 Provider Settings")
-
-        # Initialize data processor to get provider options (always show for provider selection)
-        data_processor_for_options = TSMDataProcessor(silent_mode=True)
-        provider_options = data_processor_for_options.get_provider_options()
-
-        provider_code = None
-
-        if provider_options:
-            # Provider search dropdown with autocomplete
-            st.subheader("🔍 Search by Provider Name")
-            selected_provider = st.selectbox(
-                "Select your provider",
-                options=["Select a provider..."] +
-                list(provider_options.keys()),
-                index=0,
-                help="Search and select your housing provider from the dropdown"
-            )
-
-            if selected_provider != "Select a provider...":
-                provider_code = provider_options[selected_provider]
-                st.success(f"✅ Selected: {provider_code}")
-
-            st.markdown("**OR**")
-
-        # Fallback text input for provider code
-        text_provider_code = st.text_input(
-            "Enter Provider Code Directly",
-            placeholder="e.g., H1234",
-            help=
-            "Enter your housing provider's unique identifier if not found above"
-        )
-
-        # Use text input if provided, otherwise use dropdown selection
-        if text_provider_code:
-            provider_code = text_provider_code
-            if provider_options:
-                st.info("💡 Using manually entered provider code")
 
         # Analysis options
         st.header("⚙️ Analysis Options")
@@ -174,6 +142,57 @@ def main():
         if uploaded_file is not None:
             st.success(
                 "✅ Custom file uploaded - using your data instead of default")
+
+    # Main provider selection section
+    st.markdown("## 🏢 Select Your Provider")
+    st.markdown("Choose your housing provider to view your performance dashboard:")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        if provider_options:
+            # Provider search dropdown with autocomplete
+            st.subheader("🔍 Search by Provider Name")
+            selected_provider = st.selectbox(
+                "Select your provider",
+                options=["Select a provider..."] + list(provider_options.keys()),
+                index=0,
+                help="Search and select your housing provider from the dropdown"
+            )
+            
+            if selected_provider != "Select a provider...":
+                provider_code = provider_options[selected_provider]
+                st.success(f"✅ Selected: {provider_code}")
+            
+            st.markdown("**OR**")
+        
+        # Fallback text input for provider code
+        text_provider_code = st.text_input(
+            "Enter Provider Code Directly",
+            placeholder="e.g., H1234",
+            help="Enter your housing provider's unique identifier if not found above"
+        )
+        
+        # Use text input if provided, otherwise use dropdown selection
+        if text_provider_code:
+            provider_code = text_provider_code
+            if provider_options:
+                st.info("💡 Using manually entered provider code")
+    
+    with col2:
+        st.markdown("### Quick Help")
+        st.markdown("""
+        **Need your provider code?**
+        - Check with your housing team
+        - Look for codes like H1234, H0001
+        - Use the search dropdown if unsure
+        
+        **Can't find your provider?**
+        - Try entering the code directly
+        - Check if it's in the dropdown list
+        """)
+
+    st.markdown("---")
 
     # Main content area
     if provider_code:
@@ -272,15 +291,15 @@ def main():
             ### How to Get Started (3 Easy Steps)
             
             **Step 1: Find Your Provider Code**
-            - Look in the sidebar on the left →
-            - Use the dropdown to search by your organization name
+            - Use the dropdown above to search by your organization name
             - OR enter your provider code directly (e.g., H1234, H0001)
             - ✅ You'll see a green checkmark when selected
             
             **Step 2: Choose Your Settings (Optional)**
+            - Use the sidebar on the left for optional settings
             - **Peer Group Filter**: Compare with similar providers only
             - **Confidence Intervals**: Shows statistical reliability
-            - Keep defaults if unsure - they simply work!
+            - Keep defaults if unsure - they work great!
             
             **Step 3: View Your Dashboard**
             - Your results appear automatically once you enter a provider code
@@ -309,7 +328,7 @@ def main():
             - Covers TP01-TP12 satisfaction measures
             - Questions? Look for help icons (?) next to settings
             
-            **Ready? Enter your provider code in the sidebar to start! →**
+            **Ready? Enter your provider code above to start! ↑**
             """)
 
         st.markdown("""
@@ -326,9 +345,9 @@ def main():
         ---
         
         **To get started:**
-        1. Enter your provider code in the sidebar (e.g., H1234)
+        1. Enter your provider code above (e.g., H1234)
         2. View your executive dashboard with key performance insights
-        3. Optionally upload custom TSM data if needed
+        3. Optionally upload custom TSM data if needed (see sidebar)
         
         ---
         
@@ -337,7 +356,7 @@ def main():
         - UK government TSM datasets with TP01-TP12 satisfaction measures
         - All housing providers across England included
         
-        👆 **Simply enter your provider code in the sidebar to begin!**
+        👆 **Simply enter your provider code above to begin!**
         """)
 
 
