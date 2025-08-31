@@ -101,9 +101,9 @@ def main():
     with st.sidebar:
         st.header("🏢 Provider Settings")
         
-        # Initialize data processor to get provider options
-        data_processor = TSMDataProcessor()
-        provider_options = data_processor.get_provider_options()
+        # Initialize data processor to get provider options (always show for provider selection)
+        data_processor_for_options = TSMDataProcessor(silent_mode=True)
+        provider_options = data_processor_for_options.get_provider_options()
         
         provider_code = None
         
@@ -170,86 +170,48 @@ def main():
     # Main content area
     if provider_code:
         try:
-            # Create a placeholder for the log container that we'll fill at the bottom
-            log_messages = []
-            
-            # Store the original st functions
-            original_info = st.info
-            original_warning = st.warning
-            original_success = st.success
-            original_error = st.error
-            
-            # Override st functions to capture messages
-            def wrapped_info(msg):
-                log_messages.append(('info', msg))
-                    
-            def wrapped_warning(msg):
-                log_messages.append(('warning', msg))
-                    
-            def wrapped_success(msg):
-                log_messages.append(('success', msg))
-                    
-            def wrapped_error(msg):
-                # Show error in main area immediately
-                original_error(msg)
-                log_messages.append(('error', msg))
-                return
-            
-            # Temporarily replace st functions
-            st.info = wrapped_info
-            st.warning = wrapped_warning
-            st.success = wrapped_success
-            st.error = wrapped_error
-            
-            try:
-                # Initialize processors (data_processor already initialized for provider options)
-                with st.spinner("🔄 Processing TSM data..."):
-                    analytics = TSMAnalytics()
-                    dashboard = ExecutiveDashboard()
-                    
-                    # Load data - either uploaded file or default
-                    if uploaded_file is not None:
-                        # Process the uploaded file
-                        df = data_processor.load_excel_file(uploaded_file)
-                        data_source = "custom uploaded file"
-                    else:
-                        # Load default data with provider-specific sheet selection
-                        df = data_processor.load_default_data(provider_code)
-                        data_source = "default 2024 TSM dataset"
-                    
-                    if df is None or df.empty:
-                        st.error(f"❌ Failed to load data from the {data_source}. Please check the file format.")
-                        return
-                    
-                    # Clean and validate data
-                    cleaned_data = data_processor.clean_and_validate(df)
-                    
-                    if cleaned_data is None or cleaned_data.empty:
-                        st.error(f"❌ No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures.")
-                        return
-                    
-                    # Check if provider exists
-                    if provider_code not in cleaned_data['provider_code'].values:
-                        st.error(f"❌ Provider code '{provider_code}' not found in the dataset. Please check the code and try again.")
-                        return
+            # Initialize processors with silent mode based on checkbox
+            with st.spinner("🔄 Processing TSM data..."):
+                data_processor = TSMDataProcessor(silent_mode=not show_advanced_logging)
+                analytics = TSMAnalytics()
+                dashboard = ExecutiveDashboard()
                 
-                # Generate analytics
-                with st.spinner("📈 Calculating performance metrics..."):
-                    # Calculate rankings
-                    rankings = analytics.calculate_rankings(cleaned_data, peer_group_filter)
-                    
-                    # Calculate momentum
-                    momentum = analytics.calculate_momentum(cleaned_data, provider_code)
-                    
-                    # Identify priority
-                    priority = analytics.identify_priority(cleaned_data, provider_code)
-                    
-            finally:
-                # Restore original st functions
-                st.info = original_info
-                st.warning = original_warning
-                st.success = original_success
-                st.error = original_error
+                # Load data - either uploaded file or default
+                if uploaded_file is not None:
+                    # Process the uploaded file
+                    df = data_processor.load_excel_file(uploaded_file)
+                    data_source = "custom uploaded file"
+                else:
+                    # Load default data with provider-specific sheet selection
+                    df = data_processor.load_default_data(provider_code)
+                    data_source = "default 2024 TSM dataset"
+                
+                if df is None or df.empty:
+                    st.error(f"❌ Failed to load data from the {data_source}. Please check the file format.")
+                    return
+                
+                # Clean and validate data
+                cleaned_data = data_processor.clean_and_validate(df)
+                
+                if cleaned_data is None or cleaned_data.empty:
+                    st.error(f"❌ No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures.")
+                    return
+                
+                # Check if provider exists
+                if provider_code not in cleaned_data['provider_code'].values:
+                    st.error(f"❌ Provider code '{provider_code}' not found in the dataset. Please check the code and try again.")
+                    return
+            
+            # Generate analytics
+            with st.spinner("📈 Calculating performance metrics..."):
+                # Calculate rankings
+                rankings = analytics.calculate_rankings(cleaned_data, peer_group_filter)
+                
+                # Calculate momentum
+                momentum = analytics.calculate_momentum(cleaned_data, provider_code)
+                
+                # Identify priority
+                priority = analytics.identify_priority(cleaned_data, provider_code)
             
             # Display executive dashboard at the top
             dashboard.render_executive_summary(
@@ -268,22 +230,6 @@ def main():
             # Data quality metrics
             with st.expander("🔍 Data Quality Report", expanded=False):
                 dashboard.render_data_quality(cleaned_data, data_processor)
-            
-            # Processing details at the bottom - only show if advanced logging is enabled
-            if show_advanced_logging:
-                with st.expander("📋 Processing Details", expanded=False):
-                    if log_messages:
-                        for msg_type, msg in log_messages:
-                            if msg_type == 'info':
-                                original_info(msg)
-                            elif msg_type == 'warning':
-                                original_warning(msg)
-                            elif msg_type == 'success':
-                                original_success(msg)
-                            elif msg_type == 'error':
-                                original_error(msg)
-                    else:
-                        st.info("No processing logs to display")
                 
         except Exception as e:
             st.error(f"❌ Error processing data: {str(e)}")

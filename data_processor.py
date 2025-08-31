@@ -13,10 +13,30 @@ class TSMDataProcessor:
     Handles loading, cleaning, and validation of UK government TSM data
     """
     
-    def __init__(self):
+    def __init__(self, silent_mode=False):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]  # TP01 to TP12
         self.required_columns = ['provider_code', 'provider_name'] + self.tp_codes
         self.default_data_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
+        self.silent_mode = silent_mode
+        
+    def _log_info(self, msg):
+        """Log info message if not in silent mode"""
+        if not self.silent_mode:
+            st.info(msg)
+            
+    def _log_warning(self, msg):
+        """Log warning message if not in silent mode"""
+        if not self.silent_mode:
+            st.warning(msg)
+            
+    def _log_success(self, msg):
+        """Log success message if not in silent mode"""
+        if not self.silent_mode:
+            st.success(msg)
+            
+    def _log_error(self, msg):
+        """Always show errors regardless of silent mode"""
+        st.error(msg)
         
     def load_excel_file(self, uploaded_file) -> Optional[pd.DataFrame]:
         """
@@ -30,7 +50,7 @@ class TSMDataProcessor:
             xl_file = pd.ExcelFile(file_buffer)
             sheet_names = xl_file.sheet_names
             
-            st.info(f"📋 Found {len(sheet_names)} sheets: {', '.join(sheet_names[:5])}{'...' if len(sheet_names) > 5 else ''}")
+            self._log_info(f"📋 Found {len(sheet_names)} sheets: {', '.join(sheet_names[:5])}{'...' if len(sheet_names) > 5 else ''}")
             
             # Try to find the main data sheet
             main_df = None
@@ -44,10 +64,10 @@ class TSMDataProcessor:
                 if matching_sheets:
                     try:
                         main_df = pd.read_excel(file_buffer, sheet_name=matching_sheets[0])
-                        st.success(f"✅ Using sheet: '{matching_sheets[0]}'")
+                        self._log_success(f"✅ Using sheet: '{matching_sheets[0]}'")
                         break
                     except Exception as e:
-                        st.warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
+                        self._log_warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
                         continue
             
             # If no priority sheet worked, try the largest sheet
@@ -69,17 +89,17 @@ class TSMDataProcessor:
                         continue
                 
                 if main_df is not None:
-                    st.info(f"📊 Using largest sheet: '{largest_sheet}' ({max_rows} rows)")
+                    self._log_info(f"📊 Using largest sheet: '{largest_sheet}' ({max_rows} rows)")
             
             # Last resort: use first sheet
             if main_df is None:
                 main_df = pd.read_excel(file_buffer, sheet_name=sheet_names[0])
-                st.warning(f"⚠️ Using first sheet: '{sheet_names[0]}'")
+                self._log_warning(f"⚠️ Using first sheet: '{sheet_names[0]}'")
             
             return main_df
             
         except Exception as e:
-            st.error(f"❌ Error loading Excel file: {str(e)}")
+            self._log_error(f"❌ Error loading Excel file: {str(e)}")
             return None
     
     def clean_and_validate(self, df: pd.DataFrame) -> Optional[pd.DataFrame]:
@@ -90,34 +110,35 @@ class TSMDataProcessor:
             if df is None or df.empty:
                 return None
             
-            st.info(f"🔍 Processing dataset with {len(df)} rows and {len(df.columns)} columns")
+            self._log_info(f"🔍 Processing dataset with {len(df)} rows and {len(df.columns)} columns")
             
             # Display column names for debugging
-            with st.expander("📋 Available Columns", expanded=False):
-                st.write("Available columns:")
-                st.write(list(df.columns))
+            if not self.silent_mode:
+                with st.expander("📋 Available Columns", expanded=False):
+                    st.write("Available columns:")
+                    st.write(list(df.columns))
             
             # Try to identify provider code columns
             provider_col = self._identify_provider_column(df)
             if provider_col is None:
-                st.error("❌ Could not identify provider code column")
+                self._log_error("❌ Could not identify provider code column")
                 return None
             
-            st.info(f"📌 Found provider code column: '{provider_col}'")
+            self._log_info(f"📌 Found provider code column: '{provider_col}'")
             
             # Try to identify provider name column
             name_col = self._identify_name_column(df)
             if name_col:
-                st.info(f"📌 Found provider name column: '{name_col}'")
+                self._log_info(f"📌 Found provider name column: '{name_col}'")
             
             # Try to identify TP columns
             tp_columns = self._identify_tp_columns(df)
             
             if not tp_columns:
-                st.error("❌ Could not identify any TP01-TP12 satisfaction measure columns")
+                self._log_error("❌ Could not identify any TP01-TP12 satisfaction measure columns")
                 return None
             
-            st.success(f"✅ Found {len(tp_columns)} TP satisfaction measures")
+            self._log_success(f"✅ Found {len(tp_columns)} TP satisfaction measures")
             
             # Create cleaned dataset
             cleaned_df = df.copy()
@@ -132,24 +153,32 @@ class TSMDataProcessor:
                 column_mapping[original_col] = tp_code
             
             # Debug: Check for duplicate mappings
-            with st.expander("🔍 Debug: Column Mapping", expanded=False):
-                st.write("Column mapping:")
-                for old, new in list(column_mapping.items())[:15]:
-                    st.write(f"  '{old[:50]}...' -> '{new}'")
-                
-                # Check for duplicate target names
+            if not self.silent_mode:
+                with st.expander("🔍 Debug: Column Mapping", expanded=False):
+                    st.write("Column mapping:")
+                    for old, new in list(column_mapping.items())[:15]:
+                        st.write(f"  '{old[:50]}...' -> '{new}'")
+                    
+                    # Check for duplicate target names
+                    target_names = list(column_mapping.values())
+                    duplicates = [name for name in target_names if target_names.count(name) > 1]
+                    if duplicates:
+                        self._log_warning(f"Duplicate target column names found: {set(duplicates)}")
+            else:
+                # Still check for duplicates even in silent mode
                 target_names = list(column_mapping.values())
                 duplicates = [name for name in target_names if target_names.count(name) > 1]
                 if duplicates:
-                    st.warning(f"Duplicate target column names found: {set(duplicates)}")
+                    self._log_warning(f"Duplicate target column names found: {set(duplicates)}")
             
             cleaned_df = cleaned_df.rename(columns=column_mapping)
             
             # Check if rename created any issues
             if cleaned_df.columns.duplicated().any():
-                st.warning("⚠️ Duplicate column names detected after renaming!")
+                self._log_warning("⚠️ Duplicate column names detected after renaming!")
                 duplicated_cols = cleaned_df.columns[cleaned_df.columns.duplicated()].tolist()
-                st.write(f"Duplicated columns: {duplicated_cols}")
+                if not self.silent_mode:
+                    st.write(f"Duplicated columns: {duplicated_cols}")
             
             # Select only relevant columns
             relevant_cols = ['provider_code']
@@ -161,12 +190,18 @@ class TSMDataProcessor:
             relevant_cols.extend(unique_tp_codes)
             
             # Debug: Check what columns we're trying to select
-            with st.expander("🔍 Debug: Column Selection", expanded=False):
-                st.write(f"Trying to select columns: {relevant_cols}")
-                st.write(f"Available columns after rename: {list(cleaned_df.columns)[:20]}...")
+            if not self.silent_mode:
+                with st.expander("🔍 Debug: Column Selection", expanded=False):
+                    st.write(f"Trying to select columns: {relevant_cols}")
+                    st.write(f"Available columns after rename: {list(cleaned_df.columns)[:20]}...")
+                    missing_cols = [col for col in relevant_cols if col not in cleaned_df.columns]
+                    if missing_cols:
+                        self._log_warning(f"Missing columns: {missing_cols}")
+            else:
+                # Still check for missing columns in silent mode
                 missing_cols = [col for col in relevant_cols if col not in cleaned_df.columns]
                 if missing_cols:
-                    st.warning(f"Missing columns: {missing_cols}")
+                    self._log_warning(f"Missing columns: {missing_cols}")
             
             # Make sure all columns exist before selecting
             relevant_cols = [col for col in relevant_cols if col in cleaned_df.columns]
@@ -175,7 +210,7 @@ class TSMDataProcessor:
             if cleaned_df.columns.duplicated().any():
                 # Keep only first occurrence of duplicated columns
                 cleaned_df = cleaned_df.loc[:, ~cleaned_df.columns.duplicated()]
-                st.info("ℹ️ Removed duplicate columns after renaming")
+                self._log_info("ℹ️ Removed duplicate columns after renaming")
             
             # Now select the columns
             cleaned_df = cleaned_df[relevant_cols]
@@ -198,22 +233,22 @@ class TSMDataProcessor:
                         if isinstance(col_data, pd.Series):
                             cleaned_df[tp_code] = pd.to_numeric(col_data, errors='coerce')
                         else:
-                            st.warning(f"⚠️ Column {tp_code} is not a Series, it's a {type(col_data)}")
+                            self._log_warning(f"⚠️ Column {tp_code} is not a Series, it's a {type(col_data)}")
                     except Exception as e:
-                        st.warning(f"⚠️ Could not convert {tp_code} to numeric: {str(e)}")
+                        self._log_warning(f"⚠️ Could not convert {tp_code} to numeric: {str(e)}")
             
             # Remove rows with all missing TP values
             tp_cols_present = [col for col in unique_tp_codes if col in cleaned_df.columns]
             if tp_cols_present:
                 cleaned_df = cleaned_df.dropna(subset=tp_cols_present, how='all')
             
-            st.info(f"✅ Cleaned dataset: {len(cleaned_df)} providers with satisfaction data")
+            self._log_info(f"✅ Cleaned dataset: {len(cleaned_df)} providers with satisfaction data")
             
             return cleaned_df
             
         except Exception as e:
-            st.error(f"❌ Error cleaning data: {str(e)}")
-            st.error(f"Full traceback: {traceback.format_exc()}")
+            self._log_error(f"❌ Error cleaning data: {str(e)}")
+            self._log_error(f"Full traceback: {traceback.format_exc()}")
             return None
     
     def _identify_provider_column(self, df: pd.DataFrame) -> Optional[str]:
@@ -330,7 +365,7 @@ class TSMDataProcessor:
                             break
         
         # Log what we found
-        if tp_pattern_found:
+        if tp_pattern_found and not self.silent_mode:
             with st.expander("🔍 Debug: TP Column Detection", expanded=False):
                 st.write(f"Found {len(tp_columns)} TP columns:")
                 for pattern in tp_pattern_found[:12]:
@@ -394,12 +429,12 @@ class TSMDataProcessor:
             coverage_df = coverage_df.dropna(subset=['landlord_code'])
             coverage_df = coverage_df[coverage_df['landlord_code'] != '']
             
-            st.info(f"📋 Loaded Table Coverage data for {len(coverage_df)} providers")
+            self._log_info(f"📋 Loaded Table Coverage data for {len(coverage_df)} providers")
             
             return coverage_df
             
         except Exception as e:
-            st.warning(f"⚠️ Could not load Table Coverage sheet: {str(e)}")
+            self._log_warning(f"⚠️ Could not load Table Coverage sheet: {str(e)}")
             return None
 
     def get_provider_options(self) -> Optional[Dict[str, str]]:
@@ -424,7 +459,7 @@ class TSMDataProcessor:
             return provider_options
             
         except Exception as e:
-            st.warning(f"⚠️ Could not load provider options: {str(e)}")
+            self._log_warning(f"⚠️ Could not load provider options: {str(e)}")
             return None
 
     def get_provider_type_and_sheet(self, provider_code: str) -> Tuple[Optional[str], Optional[str]]:
@@ -440,7 +475,7 @@ class TSMDataProcessor:
         provider_row = coverage_df[coverage_df['landlord_code'] == provider_code]
         
         if provider_row.empty:
-            st.warning(f"⚠️ Provider code '{provider_code}' not found in Table Coverage")
+            self._log_warning(f"⚠️ Provider code '{provider_code}' not found in Table Coverage")
             return None, None
         
         provider_row = provider_row.iloc[0]
@@ -458,10 +493,10 @@ class TSMDataProcessor:
             sheet_type = 'LCHO'
         else:
             # Fallback - no perception data available
-            st.warning(f"⚠️ No perception data available for provider '{provider_code}' in any TSM24 sheet")
+            self._log_warning(f"⚠️ No perception data available for provider '{provider_code}' in any TSM24 sheet")
             return provider_type, None
         
-        st.success(f"✅ Provider '{provider_code}' found in {selected_sheet} (Type: {provider_type}, Data: {sheet_type})")
+        self._log_success(f"✅ Provider '{provider_code}' found in {selected_sheet} (Type: {provider_type}, Data: {sheet_type})")
         return provider_type, selected_sheet
 
     def load_default_data(self, provider_code: Optional[str] = None) -> Optional[pd.DataFrame]:
@@ -471,16 +506,16 @@ class TSMDataProcessor:
         """
         try:
             if not os.path.exists(self.default_data_path):
-                st.error(f"❌ Default data file not found: {self.default_data_path}")
+                self._log_error(f"❌ Default data file not found: {self.default_data_path}")
                 return None
             
-            st.info("📊 Loading default 2024 TSM data...")
+            self._log_info("📊 Loading default 2024 TSM data...")
             
             # Get all sheet names
             xl_file = pd.ExcelFile(self.default_data_path)
             sheet_names = xl_file.sheet_names
             
-            st.info(f"📋 Found {len(sheet_names)} sheets in default data")
+            self._log_info(f"📋 Found {len(sheet_names)} sheets in default data")
             
             # Try to find the main data sheet
             main_df = None
@@ -497,11 +532,11 @@ class TSMDataProcessor:
                         # Row 2: Headers (including TP measures)
                         # Row 3+: Data
                         if target_sheet.startswith('TSM24_'):
-                            st.info(f"📖 Reading TSM24 sheet with special structure: '{target_sheet}'")
+                            self._log_info(f"📖 Reading TSM24 sheet with special structure: '{target_sheet}'")
                             # Read with row 2 as header
                             main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet, header=2)
                             selected_sheet = target_sheet
-                            st.success(f"✅ Using provider-specific TSM24 sheet: '{target_sheet}' for provider '{provider_code}'")
+                            self._log_success(f"✅ Using provider-specific TSM24 sheet: '{target_sheet}' for provider '{provider_code}'")
                             
                             # Log column info for debugging
                             with st.expander("🔍 Debug: Column Analysis", expanded=False):
@@ -515,10 +550,10 @@ class TSMDataProcessor:
                         else:
                             main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet)
                             selected_sheet = target_sheet
-                            st.success(f"✅ Using provider-specific sheet: '{target_sheet}' for provider '{provider_code}'")
+                            self._log_success(f"✅ Using provider-specific sheet: '{target_sheet}' for provider '{provider_code}'")
                     except Exception as e:
-                        st.warning(f"⚠️ Could not read provider-specific sheet '{target_sheet}': {str(e)}")
-                        st.info("🔄 Falling back to general sheet selection...")
+                        self._log_warning(f"⚠️ Could not read provider-specific sheet '{target_sheet}': {str(e)}")
+                        self._log_info("🔄 Falling back to general sheet selection...")
             
             # If no provider-specific sheet was loaded, use general logic
             if main_df is None:
@@ -532,10 +567,10 @@ class TSMDataProcessor:
                         try:
                             main_df = pd.read_excel(self.default_data_path, sheet_name=matching_sheets[0])
                             selected_sheet = matching_sheets[0]
-                            st.success(f"✅ Using default data sheet: '{matching_sheets[0]}'")
+                            self._log_success(f"✅ Using default data sheet: '{matching_sheets[0]}'")
                             break
                         except Exception as e:
-                            st.warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
+                            self._log_warning(f"⚠️ Could not read sheet '{matching_sheets[0]}': {str(e)}")
                             continue
                 
                 # If no priority sheet worked, try the largest sheet
@@ -558,16 +593,16 @@ class TSMDataProcessor:
                     
                     if main_df is not None:
                         selected_sheet = largest_sheet
-                        st.info(f"📊 Using largest default data sheet: '{largest_sheet}' ({max_rows} rows)")
+                        self._log_info(f"📊 Using largest default data sheet: '{largest_sheet}' ({max_rows} rows)")
                 
                 # Last resort: use first sheet
                 if main_df is None:
                     main_df = pd.read_excel(self.default_data_path, sheet_name=sheet_names[0])
                     selected_sheet = sheet_names[0]
-                    st.warning(f"⚠️ Using first sheet from default data: '{sheet_names[0]}'")
+                    self._log_warning(f"⚠️ Using first sheet from default data: '{sheet_names[0]}'")
             
             return main_df
             
         except Exception as e:
-            st.error(f"❌ Error loading default data file: {str(e)}")
+            self._log_error(f"❌ Error loading default data file: {str(e)}")
             return None
