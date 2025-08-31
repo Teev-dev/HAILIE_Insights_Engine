@@ -539,14 +539,15 @@ class TSMDataProcessor:
                             self._log_success(f"✅ Using provider-specific TSM24 sheet: '{target_sheet}' for provider '{provider_code}'")
                             
                             # Log column info for debugging
-                            with st.expander("🔍 Debug: Column Analysis", expanded=False):
-                                st.write(f"Total columns loaded: {len(main_df.columns)}")
-                                tp_cols = [col for col in main_df.columns if 'TP' in str(col).upper()]
-                                st.write(f"Columns containing 'TP': {len(tp_cols)}")
-                                if tp_cols:
-                                    st.write("Sample TP columns found:")
-                                    for col in tp_cols[:5]:
-                                        st.write(f"  - {col[:80]}...")
+                            if not self.silent_mode:
+                                with st.expander("🔍 Debug: Column Analysis", expanded=False):
+                                    st.write(f"Total columns loaded: {len(main_df.columns)}")
+                                    tp_cols = [col for col in main_df.columns if 'TP' in str(col).upper()]
+                                    st.write(f"Columns containing 'TP': {len(tp_cols)}")
+                                    if tp_cols:
+                                        st.write("Sample TP columns found:")
+                                        for col in tp_cols[:5]:
+                                            st.write(f"  - {col[:80]}...")
                         else:
                             main_df = pd.read_excel(self.default_data_path, sheet_name=target_sheet)
                             selected_sheet = target_sheet
