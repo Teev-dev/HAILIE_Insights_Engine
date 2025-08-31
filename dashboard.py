@@ -63,20 +63,36 @@ class ExecutiveDashboard:
         
         # YOUR MOMENTUM
         with col2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <p class="metric-label">📈 YOUR MOMENTUM</p>
-                <p class="metric-value" style="color: {momentum['momentum_color']};">
-                    {momentum['momentum_icon']}
-                </p>
-                <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
-                    {momentum['momentum_text']}
-                </p>
-                <p style="font-size: 0.9rem; color: #64748B;">
-                    Relative to peer average: {momentum['relative_performance']:+.1f} points
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            if momentum.get('disabled', False):
+                st.markdown(f"""
+                <div class="metric-card">
+                    <p class="metric-label">📈 YOUR MOMENTUM</p>
+                    <p class="metric-value" style="color: {momentum['momentum_color']};">
+                        {momentum['momentum_icon']}
+                    </p>
+                    <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
+                        {momentum['momentum_text']}
+                    </p>
+                    <p style="font-size: 0.9rem; color: #64748B;">
+                        Requires multi-year TSM data for true momentum analysis
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <p class="metric-label">📈 YOUR MOMENTUM</p>
+                    <p class="metric-value" style="color: {momentum['momentum_color']};">
+                        {momentum['momentum_icon']}
+                    </p>
+                    <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
+                        {momentum['momentum_text']}
+                    </p>
+                    <p style="font-size: 0.9rem; color: #64748B;">
+                        Relative to peer average: {momentum['relative_performance']:+.1f} points
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
         
         # YOUR PRIORITY
         with col3:
@@ -433,7 +449,9 @@ class ExecutiveDashboard:
             insights.append("⚠️ **Performance attention needed** - You're in the bottom quartile.")
         
         # Momentum insights
-        if momentum['direction'] == 'up':
+        if momentum.get('disabled', False):
+            insights.append("⏳ **Momentum analysis** - Will be available in 2026 with multi-year TSM data.")
+        elif momentum['direction'] == 'up':
             insights.append(f"📈 **Positive momentum** - {momentum['momentum_text']} trajectory detected.")
         elif momentum['direction'] == 'down':
             insights.append(f"📉 **Declining trend** - {momentum['momentum_text']} requires immediate attention.")
@@ -457,9 +475,14 @@ class ExecutiveDashboard:
         
         recommendations = [
             f"1. **Focus on {priority['measure_name']}** - This has the highest improvement potential ({priority['improvement_potential']:.1f}%) with {impact_text}",
-            f"2. **Benchmark against top quartile** - Learn from providers scoring above {provider_ranking.get('top_quartile_threshold', 'N/A')}",
-            f"3. **Monitor momentum** - Track monthly progress to maintain {momentum['momentum_text'].lower()} trend"
+            f"2. **Benchmark against top quartile** - Learn from providers scoring above {provider_ranking.get('top_quartile_threshold', 'N/A')}"
         ]
+        
+        # Add momentum recommendation only if not disabled
+        if not momentum.get('disabled', False):
+            recommendations.append(f"3. **Monitor momentum** - Track monthly progress to maintain {momentum['momentum_text'].lower()} trend")
+        else:
+            recommendations.append("3. **Prepare for momentum tracking** - Set up data collection processes for 2025 TSM analysis")
         
         # Add top 3 priorities if available
         if 'top_3_priorities' in priority and len(priority['top_3_priorities']) > 1:
