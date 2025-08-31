@@ -241,6 +241,61 @@ def main():
                 
     else:
         # Welcome screen - no provider code entered yet
+        
+        # Quick Tutorial for First-Time Users
+        with st.expander("🎓 Quick Tutorial for First-Time Users", expanded=True):
+            st.markdown("""
+            **Welcome! This tutorial will get you started in just 2 minutes.**
+            
+            ### What is HAILIE Insights Engine?
+            This dashboard analyzes your social housing performance using UK government TSM data. You'll get three key insights:
+            - **Your Rank** among similar providers
+            - **Your Momentum** showing improvement trends  
+            - **Your Priority** area needing most attention
+            
+            ### How to Get Started (3 Easy Steps)
+            
+            **Step 1: Find Your Provider Code**
+            - Look in the sidebar on the left →
+            - Use the dropdown to search by your organization name
+            - OR enter your provider code directly (e.g., H1234, H0001)
+            - ✅ You'll see a green checkmark when selected
+            
+            **Step 2: Choose Your Settings (Optional)**
+            - **Peer Group Filter**: Compare with similar providers only
+            - **Confidence Intervals**: Shows statistical reliability
+            - Keep defaults if unsure - they work great!
+            
+            **Step 3: View Your Dashboard**
+            - Your results appear automatically once you enter a provider code
+            - See your executive summary with three key metrics
+            - Expand "Detailed Analysis" for deeper insights
+            
+            ### Understanding Your Results
+            
+            **🏆 Your Rank**: Shows your position among all providers
+            - **Green**: Top performers (1st quartile)
+            - **Yellow**: Above average (2nd quartile) 
+            - **Orange**: Below average (3rd quartile)
+            - **Red**: Needs improvement (4th quartile)
+            
+            **📈 Your Momentum**: 12-month trend direction
+            - **↗️ Improving**: Getting better over time
+            - **→ Stable**: Consistent performance
+            - **↘️ Declining**: May need attention
+            
+            **🎯 Your Priority**: Most important area to focus on
+            - Shows which satisfaction measure needs attention most
+            - Based on correlation with overall satisfaction
+            
+            ### Need Help?
+            - All data comes from official UK government TSM surveys
+            - Covers TP01-TP12 satisfaction measures
+            - Questions? Look for help icons (?) next to settings
+            
+            **Ready? Enter your provider code in the sidebar to start! →**
+            """)
+        
         st.markdown("""
         ### Welcome to HAILIE Insights Engine
         
