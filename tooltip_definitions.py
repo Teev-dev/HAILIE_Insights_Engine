@@ -243,7 +243,7 @@ class TooltipDefinitions:
         clean_content = tooltip_data['content'].replace('"', '&quot;').replace(
             '\n', '&#10;')
 
-        return f"""
+        html_template = f"""
         <span style="position: relative; display: inline-block; margin-left: 5px;">
             <span style="
                 display: inline-block;
@@ -261,6 +261,7 @@ class TooltipDefinitions:
             " title="{clean_content}">?</span>
         </span>
         """
+        return html_template
 
     @staticmethod
     def get_streamlit_help_text(tooltip_key: str,

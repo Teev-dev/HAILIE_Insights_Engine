@@ -198,6 +198,10 @@ class ExecutiveDashboard:
         """
         Render detailed analysis section with correlation insights
         """
+        # Get tooltip definitions
+        tooltips = TooltipDefinitions()
+        technical_tooltips = tooltips.get_technical_tooltips()
+        
         st.markdown("### 🔍 Detailed Performance Analysis")
         
         # Get detailed analysis and priority data
