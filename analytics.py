@@ -103,91 +103,19 @@ class TSMAnalytics:
     
     def calculate_momentum(self, df: pd.DataFrame, provider_code: str) -> Dict:
         """
-        Calculate 12-month performance trajectory (momentum)
-        Note: Since we don't have time-series data, we'll simulate based on score volatility
+        Momentum feature disabled - requires multi-year data
         """
-        try:
-            if provider_code not in df['provider_code'].values:
-                return {"error": f"Provider {provider_code} not found"}
-            
-            provider_row = df[df['provider_code'] == provider_code].iloc[0]
-            tp_cols = [col for col in df.columns if col.startswith('TP')]
-            
-            # Get provider's scores
-            provider_scores = []
-            for tp_col in tp_cols:
-                if pd.notna(provider_row[tp_col]):
-                    provider_scores.append(float(provider_row[tp_col]))
-            
-            if not provider_scores:
-                return {"error": "No valid scores found for momentum calculation"}
-            
-            # Calculate momentum based on score distribution and peer comparison
-            avg_score = np.mean(provider_scores)
-            score_std = np.std(provider_scores) if len(provider_scores) > 1 else 0
-            
-            # Compare with peer average
-            peer_scores = []
-            for _, row in df.iterrows():
-                if row['provider_code'] != provider_code:
-                    row_scores = []
-                    for tp_col in tp_cols:
-                        if pd.notna(row[tp_col]) == True:
-                            row_scores.append(float(row[tp_col]))
-                    if row_scores:
-                        peer_scores.append(np.mean(row_scores))
-            
-            peer_avg = 0  # Initialize peer_avg
-            if peer_scores:
-                peer_avg = np.mean(peer_scores)
-                relative_performance = avg_score - peer_avg
-                
-                # Determine momentum direction
-                if relative_performance > 5:
-                    direction = "up"
-                    momentum_text = "Strong Upward"
-                    momentum_icon = "📈"
-                    momentum_color = "#22C55E"
-                elif relative_performance > 2:
-                    direction = "up"
-                    momentum_text = "Upward"
-                    momentum_icon = "↗️"
-                    momentum_color = "#84CC16"
-                elif relative_performance < -5:
-                    direction = "down"
-                    momentum_text = "Declining"
-                    momentum_icon = "📉"
-                    momentum_color = "#EF4444"
-                elif relative_performance < -2:
-                    direction = "down"
-                    momentum_text = "Downward"
-                    momentum_icon = "↘️"
-                    momentum_color = "#F59E0B"
-                else:
-                    direction = "stable"
-                    momentum_text = "Stable"
-                    momentum_icon = "➡️"
-                    momentum_color = "#64748B"
-            else:
-                direction = "stable"
-                momentum_text = "Stable"
-                momentum_icon = "➡️"
-                momentum_color = "#64748B"
-                relative_performance = 0
-            
-            return {
-                'direction': direction,
-                'momentum_text': momentum_text,
-                'momentum_icon': momentum_icon,
-                'momentum_color': momentum_color,
-                'relative_performance': relative_performance,
-                'provider_avg': avg_score,
-                'peer_avg': peer_avg,
-                'score_volatility': score_std
-            }
-            
-        except Exception as e:
-            return {"error": f"Error calculating momentum: {str(e)}"}
+        return {
+            'direction': "disabled",
+            'momentum_text': "Coming in 2026",
+            'momentum_icon': "⏳",
+            'momentum_color': "#64748B",
+            'relative_performance': 0,
+            'provider_avg': 0,
+            'peer_avg': 0,
+            'score_volatility': 0,
+            'disabled': True
+        }
     
     def identify_priority(self, df: pd.DataFrame, provider_code: str) -> Dict:
         """

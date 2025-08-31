@@ -215,18 +215,26 @@ class TSMDataProcessor:
             # Now select the columns
             cleaned_df = cleaned_df[relevant_cols]
             
-            # Clean provider codes
-            cleaned_df['provider_code'] = cleaned_df['provider_code'].astype(str).str.strip()
+            # Clean provider codes - ensure we have a DataFrame
+            if isinstance(cleaned_df, pd.DataFrame):
+                cleaned_df['provider_code'] = cleaned_df['provider_code'].astype(str).str.strip()
+            else:
+                self._log_error("❌ Data structure error: expected DataFrame but got array")
+                return None
             
             # Remove rows with missing provider codes
-            cleaned_df = cleaned_df.dropna(subset=['provider_code'])
+            if isinstance(cleaned_df, pd.DataFrame):
+                cleaned_df = cleaned_df.dropna(subset=['provider_code'])
+            else:
+                self._log_error("❌ Data structure error: cannot process non-DataFrame data")
+                return None
             cleaned_df = cleaned_df[cleaned_df['provider_code'] != '']
             cleaned_df = cleaned_df[cleaned_df['provider_code'] != 'nan']
             
             # Convert TP columns to numeric - use unique codes only
             unique_tp_codes = list(set(tp_columns.values()))
             for tp_code in unique_tp_codes:
-                if tp_code in cleaned_df.columns:
+                if isinstance(cleaned_df, pd.DataFrame) and tp_code in cleaned_df.columns:
                     # Make sure we're working with a Series and it's not a duplicate
                     try:
                         col_data = cleaned_df[tp_code]
@@ -238,13 +246,19 @@ class TSMDataProcessor:
                         self._log_warning(f"⚠️ Could not convert {tp_code} to numeric: {str(e)}")
             
             # Remove rows with all missing TP values
-            tp_cols_present = [col for col in unique_tp_codes if col in cleaned_df.columns]
-            if tp_cols_present:
-                cleaned_df = cleaned_df.dropna(subset=tp_cols_present, how='all')
+            if isinstance(cleaned_df, pd.DataFrame):
+                tp_cols_present = [col for col in unique_tp_codes if col in cleaned_df.columns]
+                if tp_cols_present:
+                    cleaned_df = cleaned_df.dropna(subset=tp_cols_present, how='all')
             
             self._log_info(f"✅ Cleaned dataset: {len(cleaned_df)} providers with satisfaction data")
             
-            return cleaned_df
+            # Ensure we return a DataFrame or None
+            if isinstance(cleaned_df, pd.DataFrame):
+                return cleaned_df
+            else:
+                self._log_error("❌ Final validation failed: result is not a DataFrame")
+                return None
             
         except Exception as e:
             self._log_error(f"❌ Error cleaning data: {str(e)}")
@@ -431,7 +445,12 @@ class TSMDataProcessor:
             
             self._log_info(f"📋 Loaded Table Coverage data for {len(coverage_df)} providers")
             
-            return coverage_df
+            # Ensure we return a DataFrame or None
+            if isinstance(coverage_df, pd.DataFrame):
+                return coverage_df
+            else:
+                self._log_error("❌ Table Coverage data is not a DataFrame")
+                return None
             
         except Exception as e:
             self._log_warning(f"⚠️ Could not load Table Coverage sheet: {str(e)}")
