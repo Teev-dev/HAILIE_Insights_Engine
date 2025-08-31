@@ -8,12 +8,10 @@ import traceback
 from contextlib import contextmanager
 
 # Page configuration
-st.set_page_config(
-    page_title="HAILIE Insights Engine",
-    page_icon="🏠",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="HAILIE TSM Insights Engine",
+                   page_icon="🏠",
+                   layout="wide",
+                   initial_sidebar_state="expanded")
 
 # Custom CSS for executive styling
 st.markdown("""
@@ -87,95 +85,106 @@ st.markdown("""
         margin-bottom: 2rem;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+            unsafe_allow_html=True)
+
 
 def main():
     # Title and description
-    st.markdown('<h1 class="main-title">🏠 HAILIE Insights Engine</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">Executive Dashboard for Social Housing Performance Analysis</p>', unsafe_allow_html=True)
-    
+    st.markdown('<h1 class="main-title">🏠 HAILIE TSM Insights Engine</h1>',
+                unsafe_allow_html=True)
+    st.markdown(
+        '<p class="subtitle">Executive Dashboard for Social Housing Performance Analysis</p>',
+        unsafe_allow_html=True)
+
     # Initialize variables
     show_advanced_logging = False
-    
+
     # Sidebar for settings and optional file upload
     with st.sidebar:
         st.header("🏢 Provider Settings")
-        
+
         # Initialize data processor to get provider options (always show for provider selection)
         data_processor_for_options = TSMDataProcessor(silent_mode=True)
         provider_options = data_processor_for_options.get_provider_options()
-        
+
         provider_code = None
-        
+
         if provider_options:
             # Provider search dropdown with autocomplete
             st.subheader("🔍 Search by Provider Name")
             selected_provider = st.selectbox(
                 "Select your provider",
-                options=["Select a provider..."] + list(provider_options.keys()),
+                options=["Select a provider..."] +
+                list(provider_options.keys()),
                 index=0,
                 help="Search and select your housing provider from the dropdown"
             )
-            
+
             if selected_provider != "Select a provider...":
                 provider_code = provider_options[selected_provider]
                 st.success(f"✅ Selected: {provider_code}")
-            
+
             st.markdown("**OR**")
-        
+
         # Fallback text input for provider code
         text_provider_code = st.text_input(
-            "Enter Provider Code Directly", 
+            "Enter Provider Code Directly",
             placeholder="e.g., H1234",
-            help="Enter your housing provider's unique identifier if not found above"
+            help=
+            "Enter your housing provider's unique identifier if not found above"
         )
-        
+
         # Use text input if provided, otherwise use dropdown selection
         if text_provider_code:
             provider_code = text_provider_code
             if provider_options:
                 st.info("💡 Using manually entered provider code")
-        
+
         # Analysis options
         st.header("⚙️ Analysis Options")
-        include_confidence = st.checkbox("Include confidence intervals", value=True)
+        include_confidence = st.checkbox("Include confidence intervals",
+                                         value=True)
         peer_group_filter = st.selectbox(
             "Peer Group Filter",
             ["All Providers", "Similar Size", "Same Region", "Same Type"],
-            help="Filter comparison providers for more relevant benchmarking"
-        )
-        
+            help="Filter comparison providers for more relevant benchmarking")
+
         # Advanced options
         st.markdown("---")
         show_advanced_logging = st.checkbox(
-            "Show advanced logging view", 
+            "Show advanced logging view",
             value=False,
-            help="Display detailed processing logs and debugging information"
-        )
-        
+            help="Display detailed processing logs and debugging information")
+
         st.markdown("---")
-        
+
         # Optional custom data upload
         st.header("📊 Custom Data (Optional)")
-        st.info("💡 Using default 2024 TSM data. Upload your own file only if you have custom data.")
-        uploaded_file = st.file_uploader(
-            "Upload Custom TSM Data", 
-            type=['xlsx', 'xls'],
-            help="Optional: Upload your own TSM data file to override the default 2024 dataset"
+        st.info(
+            "💡 Using default 2024 TSM data. Upload your own file only if you have custom data."
         )
-        
+        uploaded_file = st.file_uploader(
+            "Upload Custom TSM Data",
+            type=['xlsx', 'xls'],
+            help=
+            "Optional: Upload your own TSM data file to override the default 2024 dataset"
+        )
+
         if uploaded_file is not None:
-            st.success("✅ Custom file uploaded - using your data instead of default")
-    
+            st.success(
+                "✅ Custom file uploaded - using your data instead of default")
+
     # Main content area
     if provider_code:
         try:
             # Initialize processors with silent mode based on checkbox
             with st.spinner("🔄 Processing TSM data..."):
-                data_processor = TSMDataProcessor(silent_mode=not show_advanced_logging)
+                data_processor = TSMDataProcessor(
+                    silent_mode=not show_advanced_logging)
                 analytics = TSMAnalytics()
                 dashboard = ExecutiveDashboard()
-                
+
                 # Load data - either uploaded file or default
                 if uploaded_file is not None:
                     # Process the uploaded file
@@ -185,69 +194,76 @@ def main():
                     # Load default data with provider-specific sheet selection
                     df = data_processor.load_default_data(provider_code)
                     data_source = "default 2024 TSM dataset"
-                
+
                 if df is None or df.empty:
-                    st.error(f"❌ Failed to load data from the {data_source}. Please check the file format.")
+                    st.error(
+                        f"❌ Failed to load data from the {data_source}. Please check the file format."
+                    )
                     return
-                
+
                 # Clean and validate data
                 cleaned_data = data_processor.clean_and_validate(df)
-                
+
                 if cleaned_data is None or cleaned_data.empty:
-                    st.error(f"❌ No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures.")
+                    st.error(
+                        f"❌ No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures."
+                    )
                     return
-                
+
                 # Check if provider exists
                 if provider_code not in cleaned_data['provider_code'].values:
-                    st.error(f"❌ Provider code '{provider_code}' not found in the dataset. Please check the code and try again.")
+                    st.error(
+                        f"❌ Provider code '{provider_code}' not found in the dataset. Please check the code and try again."
+                    )
                     return
-            
+
             # Generate analytics
             with st.spinner("📈 Calculating performance metrics..."):
                 # Calculate rankings
-                rankings = analytics.calculate_rankings(cleaned_data, peer_group_filter)
-                
+                rankings = analytics.calculate_rankings(
+                    cleaned_data, peer_group_filter)
+
                 # Calculate momentum
-                momentum = analytics.calculate_momentum(cleaned_data, provider_code)
-                
+                momentum = analytics.calculate_momentum(
+                    cleaned_data, provider_code)
+
                 # Identify priority
-                priority = analytics.identify_priority(cleaned_data, provider_code)
-            
+                priority = analytics.identify_priority(cleaned_data,
+                                                       provider_code)
+
             # Display executive dashboard at the top
-            dashboard.render_executive_summary(
-                provider_code, 
-                rankings, 
-                momentum, 
-                priority,
-                include_confidence
-            )
-            
+            dashboard.render_executive_summary(provider_code, rankings,
+                                               momentum, priority,
+                                               include_confidence)
+
             # Additional insights section
             st.markdown("---")
             with st.expander("📋 Detailed Analysis", expanded=False):
-                dashboard.render_detailed_analysis(cleaned_data, provider_code, analytics)
-            
+                dashboard.render_detailed_analysis(cleaned_data, provider_code,
+                                                   analytics)
+
             # Data quality metrics
             with st.expander("🔍 Data Quality Report", expanded=False):
                 dashboard.render_data_quality(cleaned_data, data_processor)
-                
+
         except Exception as e:
             st.error(f"❌ Error processing data: {str(e)}")
-            
+
             # Show detailed error for debugging only if advanced logging is enabled
             if show_advanced_logging:
                 with st.expander("🔧 Technical Details", expanded=False):
                     st.code(traceback.format_exc())
-                
+
     else:
         # Welcome screen - no provider code entered yet
-        
+
         # Quick Tutorial for First-Time Users
-        with st.expander("🎓 Quick Tutorial for First-Time Users", expanded=True):
+        with st.expander("🎓 Quick Tutorial for First-Time Users",
+                         expanded=True):
             st.markdown("""
             **Welcome! This tutorial will get you started in just 2 minutes.**
             
-            ### What is HAILIE Insights Engine?
+            ### What is HAILIE TSM Insights Engine?
             This dashboard analyzes your social housing performance using UK government TSM data. You'll get three key insights:
             - **Your Rank** among similar providers
             - **Your Momentum** showing improvement trends  
@@ -264,7 +280,7 @@ def main():
             **Step 2: Choose Your Settings (Optional)**
             - **Peer Group Filter**: Compare with similar providers only
             - **Confidence Intervals**: Shows statistical reliability
-            - Keep defaults if unsure - they work great!
+            - Keep defaults if unsure - they simply work!
             
             **Step 3: View Your Dashboard**
             - Your results appear automatically once you enter a provider code
@@ -295,9 +311,9 @@ def main():
             
             **Ready? Enter your provider code in the sidebar to start! →**
             """)
-        
+
         st.markdown("""
-        ### Welcome to HAILIE Insights Engine
+        ### Welcome to HAILIE TSM Insights Engine
         
         This executive dashboard provides key insights from UK government TSM (Tenant Satisfaction Measures) data:
         
@@ -323,6 +339,7 @@ def main():
         
         👆 **Simply enter your provider code in the sidebar to begin!**
         """)
+
 
 if __name__ == "__main__":
     main()
