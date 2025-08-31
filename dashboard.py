@@ -108,6 +108,9 @@ class ExecutiveDashboard:
                 <p class="metric-value" style="font-size: 1.8rem; color: {priority['priority_color']};">
                     {priority['priority_level']}
                 </p>
+                <p style="font-size: 1.3rem; font-weight: 700; margin: 0.3rem 0; color: #2E5BBA;">
+                    {priority['measure']}
+                </p>
                 <p style="font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; color: #1E293B;">
                     {priority['measure_name']}
                 </p>
