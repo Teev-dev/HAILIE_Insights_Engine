@@ -2,18 +2,21 @@
 Tooltip definitions for complex data metrics in the HAILIE TSM Dashboard
 """
 
+
 class TooltipDefinitions:
     """
     Centralized tooltip definitions for all complex metrics and technical terms
     """
-    
+
     @staticmethod
     def get_metric_tooltips():
         """Get tooltips for main dashboard metrics"""
         return {
             'ranking': {
-                'title': 'Your Rank Explained',
-                'content': """
+                'title':
+                'Your Rank Explained',
+                'content':
+                """
                 **How ranking works:**
                 • Based on your average score across all TSM satisfaction measures (TP01-TP12)
                 • Compares you against all other housing providers in the dataset
@@ -29,8 +32,10 @@ class TooltipDefinitions:
                 """
             },
             'momentum': {
-                'title': 'Your Momentum Explained', 
-                'content': """
+                'title':
+                'Your Momentum Explained',
+                'content':
+                """
                 **What momentum shows:**
                 • Tracks your performance trajectory over the past 12 months
                 • Compares your trend against peer averages
@@ -45,8 +50,10 @@ class TooltipDefinitions:
                 """
             },
             'priority': {
-                'title': 'Your Priority Explained',
-                'content': """
+                'title':
+                'Your Priority Explained',
+                'content':
+                """
                 **How priority is calculated:**
                 • Combines improvement potential with correlation to overall satisfaction (TP01)
                 • Higher potential + stronger correlation = higher priority
@@ -63,14 +70,16 @@ class TooltipDefinitions:
                 """
             }
         }
-    
+
     @staticmethod
     def get_technical_tooltips():
         """Get tooltips for technical terms"""
         return {
             'percentile': {
-                'title': 'Percentile Ranking',
-                'content': """
+                'title':
+                'Percentile Ranking',
+                'content':
+                """
                 **What percentile means:**
                 • Shows what percentage of providers you perform better than
                 • 75th percentile = you perform better than 75% of providers
@@ -80,8 +89,10 @@ class TooltipDefinitions:
                 """
             },
             'correlation': {
-                'title': 'Correlation with Overall Satisfaction',
-                'content': """
+                'title':
+                'Correlation with Overall Satisfaction',
+                'content':
+                """
                 **What correlation shows:**
                 • Measures how strongly each satisfaction area relates to overall satisfaction (TP01)
                 • Ranges from -1 to +1 (stronger correlations closer to +1 or -1)
@@ -96,8 +107,10 @@ class TooltipDefinitions:
                 """
             },
             'improvement_potential': {
-                'title': 'Improvement Potential',
-                'content': """
+                'title':
+                'Improvement Potential',
+                'content':
+                """
                 **How improvement potential is calculated:**
                 • Based on the gap between your performance and top-performing providers
                 • Higher percentages = more room for improvement
@@ -109,8 +122,10 @@ class TooltipDefinitions:
                 """
             },
             'weighted_priority': {
-                'title': 'Weighted Priority Score',
-                'content': """
+                'title':
+                'Weighted Priority Score',
+                'content':
+                """
                 **How weighted priority works:**
                 • Combines improvement potential × correlation strength with overall satisfaction
                 • Identifies areas where improvement will have maximum impact
@@ -122,8 +137,10 @@ class TooltipDefinitions:
                 """
             },
             'quartile': {
-                'title': 'Quartile Performance Bands',
-                'content': """
+                'title':
+                'Quartile Performance Bands',
+                'content':
+                """
                 **Quartile system:**
                 • Divides all providers into 4 equal groups based on performance
                 • Each quartile represents 25% of providers
@@ -138,8 +155,10 @@ class TooltipDefinitions:
                 """
             },
             'tp_measures': {
-                'title': 'TSM Satisfaction Measures (TP01-TP12)',
-                'content': """
+                'title':
+                'TSM Satisfaction Measures (TP01-TP12)',
+                'content':
+                """
                 **What TSM measures are:**
                 • Official UK government Tenant Satisfaction Measures
                 • 12 key areas of housing provider performance
@@ -161,8 +180,10 @@ class TooltipDefinitions:
                 """
             },
             'peer_comparison': {
-                'title': 'Peer Comparison',
-                'content': """
+                'title':
+                'Peer Comparison',
+                'content':
+                """
                 **How peer comparison works:**
                 • Compares your performance against similar housing providers
                 • Can be filtered by provider size, region, or type
@@ -177,18 +198,20 @@ class TooltipDefinitions:
                 """
             }
         }
-    
+
     @staticmethod
     def get_chart_tooltips():
         """Get enhanced tooltip templates for charts"""
         return {
-            'performance_comparison': """
+            'performance_comparison':
+            """
             <b>%{fullData.name}</b><br>
             <b>%{x}</b><br>
             Score: %{y:.1f}<br>
             <extra></extra>
             """,
-            'correlation_chart': """
+            'correlation_chart':
+            """
             <b>%{y}</b><br>
             Correlation: %{x:.3f}<br>
             Strength: %{customdata[0]}<br>
@@ -196,7 +219,8 @@ class TooltipDefinitions:
             P-Value: %{customdata[2]:.4f}<br>
             <extra></extra>
             """,
-            'priority_matrix': """
+            'priority_matrix':
+            """
             <b>%{text}</b><br>
             <b>%{customdata[0]}</b><br>
             Improvement Potential: %{x:.1f}%<br>
@@ -206,18 +230,19 @@ class TooltipDefinitions:
             <extra></extra>
             """
         }
-    
+
     @staticmethod
     def get_help_icon_html(tooltip_key: str, definitions_dict: dict) -> str:
         """Generate HTML for help icon with tooltip"""
         if tooltip_key not in definitions_dict:
             return ""
-        
+
         tooltip_data = definitions_dict[tooltip_key]
-        
+
         # Clean up the tooltip content for HTML
-        clean_content = tooltip_data['content'].replace('"', '&quot;').replace('\n', '&#10;')
-        
+        clean_content = tooltip_data['content'].replace('"', '&quot;').replace(
+            '\n', '&#10;')
+
         return f"""
         <span style="position: relative; display: inline-block; margin-left: 5px;">
             <span style="
@@ -236,12 +261,13 @@ class TooltipDefinitions:
             " title="{clean_content}">?</span>
         </span>
         """
-    
-    @staticmethod 
-    def get_streamlit_help_text(tooltip_key: str, definitions_dict: dict) -> str:
+
+    @staticmethod
+    def get_streamlit_help_text(tooltip_key: str,
+                                definitions_dict: dict) -> str:
         """Get formatted help text for Streamlit help parameter"""
         if tooltip_key not in definitions_dict:
             return ""
-        
+
         tooltip_data = definitions_dict[tooltip_key]
         return tooltip_data['content'].strip()
