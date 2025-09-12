@@ -282,38 +282,46 @@ def main():
                          expanded=True):
             
             # Workflow steps
+            st.markdown("""<div class="workflow-container">""", unsafe_allow_html=True)
+            st.markdown("""<div class="workflow-steps">""", unsafe_allow_html=True)
+            
+            # Step 1
             st.markdown("""
-            <div class="workflow-container">
-                <div class="workflow-steps">
-                    <div class="workflow-step" data-step="1">
-                        <span class="workflow-step-icon">🏢</span>
-                        <h4 class="workflow-step-title">Select Your Provider</h4>
-                        <p class="workflow-step-description">
-                            Choose your housing provider from the dropdown or enter your provider code directly. 
-                            Our system recognizes all UK housing providers.
-                        </p>
-                    </div>
-                    
-                    <div class="workflow-step" data-step="2">
-                        <span class="workflow-step-icon">⚡</span>
-                        <h4 class="workflow-step-title">Instant Analysis</h4>
-                        <p class="workflow-step-description">
-                            Our AI engine processes your TSM data in seconds, calculating rankings, 
-                            momentum trends, and priority insights automatically.
-                        </p>
-                    </div>
-                    
-                    <div class="workflow-step" data-step="3">
-                        <span class="workflow-step-icon">📊</span>
-                        <h4 class="workflow-step-title">Executive Dashboard</h4>
-                        <p class="workflow-step-description">
-                            Get clear, actionable insights with visual indicators showing your 
-                            performance position and improvement opportunities.
-                        </p>
-                    </div>
+                <div class="workflow-step" data-step="1">
+                    <span class="workflow-step-icon">🏢</span>
+                    <h4 class="workflow-step-title">Select Your Provider</h4>
+                    <p class="workflow-step-description">
+                        Choose your housing provider from the dropdown or enter your provider code directly. 
+                        Our system recognizes all UK housing providers.
+                    </p>
                 </div>
-            </div>
             """, unsafe_allow_html=True)
+            
+            # Step 2
+            st.markdown("""
+                <div class="workflow-step" data-step="2">
+                    <span class="workflow-step-icon">⚡</span>
+                    <h4 class="workflow-step-title">Instant Analysis</h4>
+                    <p class="workflow-step-description">
+                        Our AI engine processes your TSM data in seconds, calculating rankings, 
+                        momentum trends, and priority insights automatically.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Step 3
+            st.markdown("""
+                <div class="workflow-step" data-step="3">
+                    <span class="workflow-step-icon">📊</span>
+                    <h4 class="workflow-step-title">Executive Dashboard</h4>
+                    <p class="workflow-step-description">
+                        Get clear, actionable insights with visual indicators showing your 
+                        performance position and improvement opportunities.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""</div></div>""", unsafe_allow_html=True)
             
             # Results preview section
             st.markdown("""
