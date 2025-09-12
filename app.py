@@ -280,6 +280,8 @@ def main():
         # Professional How It Works Section
         with st.expander("📋 How It Works - Get Insights in 3 Simple Steps",
                          expanded=True):
+            
+            # Workflow steps
             st.markdown("""
             <div class="workflow-container">
                 <div class="workflow-steps">
@@ -310,30 +312,32 @@ def main():
                         </p>
                     </div>
                 </div>
-                
-                <div class="results-preview">
-                    <h4 style="text-align: center; margin-bottom: 1rem; color: #1E293B;">What You'll Get</h4>
-                    <div class="results-grid">
-                        <div class="result-item">
-                            <div class="result-icon">🏆</div>
-                            <div class="result-label">Your Rank</div>
-                            <div class="result-description">Quartile position vs peers</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-icon">📈</div>
-                            <div class="result-label">Your Momentum</div>
-                            <div class="result-description">12-month trend direction</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-icon">🎯</div>
-                            <div class="result-label">Your Priority</div>
-                            <div class="result-description">Top improvement area</div>
-                        </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Results preview section
+            st.markdown("""
+            <div class="results-preview">
+                <h4 style="text-align: center; margin-bottom: 1rem; color: #1E293B;">What You'll Get</h4>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <div class="result-icon">🏆</div>
+                        <div class="result-label">Your Rank</div>
+                        <div class="result-description">Quartile position vs peers</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-icon">📈</div>
+                        <div class="result-label">Your Momentum</div>
+                        <div class="result-description">12-month trend direction</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-icon">🎯</div>
+                        <div class="result-label">Your Priority</div>
+                        <div class="result-description">Top improvement area</div>
                     </div>
                 </div>
             </div>
-            """,
-                        unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
             st.markdown("""
             **💡 Understanding Your Dashboard:**
