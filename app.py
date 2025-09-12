@@ -38,7 +38,7 @@ def render_features_overview():
     """Render the key features overview section"""
     st.markdown("""
     <div class="features-grid">
-        <div class="feature-card style="background-color: #ffffff;">
+        <div class="feature-card" style="background-color: #ffffff;">
             <div style="display: flex; justify-content: space-between; color: #333333;">
                 <div style="flex: 1; text-align: center;">
                     <span class="feature-icon">🏆</span>
