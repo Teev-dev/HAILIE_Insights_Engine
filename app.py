@@ -368,38 +368,44 @@ def main():
             """)
 
         # Additional Information Section
+        st.markdown("""<div class="workflow-container">""", unsafe_allow_html=True)
+        st.markdown("""<h3 style="color: #1E293B; margin-bottom: 1rem;">📊 About Your Data</h3>""", unsafe_allow_html=True)
+        st.markdown("""<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">""", unsafe_allow_html=True)
+        
+        # Card 1: Official Government Data
         st.markdown("""
-        <div class="workflow-container">
-            <h3 style="color: #1E293B; margin-bottom: 1rem;">📊 About Your Data</h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
-                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #2E5BBA;">
-                    <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🏛️ Official Government Data</h4>
-                    <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
-                        All analysis based on official UK government TSM (Tenant Satisfaction Measures) 
-                        surveys covering TP01-TP12 satisfaction measures.
-                    </p>
-                </div>
-                
-                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #22C55E;">
-                    <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🔒 Secure & Compliant</h4>
-                    <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
-                        Your data is processed securely with UK data protection compliance. 
-                        No sensitive information is stored or shared.
-                    </p>
-                </div>
-                
-                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                    <h4 style="color: #1E293B; margin-bottom: 0.5rem;">📈 Real-Time Analysis</h4>
-                    <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
-                        Get instant insights from the latest 2024 dataset covering all 
-                        registered housing providers across England.
-                    </p>
-                </div>
+            <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #2E5BBA;">
+                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🏛️ Official Government Data</h4>
+                <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+                    All analysis based on official UK government TSM (Tenant Satisfaction Measures) 
+                    surveys covering TP01-TP12 satisfaction measures.
+                </p>
             </div>
-        </div>
-        """,
-                    unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+        
+        # Card 2: Secure & Compliant
+        st.markdown("""
+            <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #22C55E;">
+                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🔒 Secure & Compliant</h4>
+                <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+                    Your data is processed securely with UK data protection compliance. 
+                    No sensitive information is stored or shared.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Card 3: Real-Time Analysis
+        st.markdown("""
+            <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
+                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">📈 Real-Time Analysis</h4>
+                <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+                    Get instant insights from the latest 2024 dataset covering all 
+                    registered housing providers across England.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""</div></div>""", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
