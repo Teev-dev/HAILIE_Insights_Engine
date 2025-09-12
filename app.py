@@ -13,9 +13,221 @@ st.set_page_config(page_title="HAILIE TSM Insights Engine",
                    layout="wide",
                    initial_sidebar_state="expanded")
 
-# Custom CSS for executive styling
+# Custom CSS for executive styling and landing page
 st.markdown("""
 <style>
+    /* Landing Page Styles */
+    .hero-section {
+        background: linear-gradient(135deg, #2E5BBA 0%, #1E40AF 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hero-tagline {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.95;
+        font-weight: 400;
+    }
+    
+    .hero-description {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+        opacity: 0.9;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .feature-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #2E5BBA;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.75rem;
+    }
+    
+    .feature-description {
+        color: #64748B;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    .cta-section {
+        background: #F8FAFC;
+        padding: 2rem;
+        border-radius: 12px;
+        border: 2px solid #E2E8F0;
+        margin: 2rem 0;
+        text-align: center;
+    }
+    
+    .cta-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 1rem;
+    }
+    
+    .trust-indicators {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
+        margin: 1rem 0;
+    }
+    
+    .trust-badge {
+        display: inline-block;
+        background: #EEF2FF;
+        color: #2E5BBA;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin: 0.25rem;
+    }
+    
+    /* How It Works Section */
+    .workflow-container {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 2rem 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .workflow-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .workflow-step {
+        text-align: center;
+        padding: 1.5rem;
+        background: #F8FAFC;
+        border-radius: 8px;
+        border: 2px solid #E2E8F0;
+        position: relative;
+    }
+    
+    .workflow-step::before {
+        content: attr(data-step);
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2E5BBA;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    
+    .workflow-step-icon {
+        font-size: 2.5rem;
+        margin: 1rem 0 0.75rem 0;
+        display: block;
+    }
+    
+    .workflow-step-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.5rem;
+    }
+    
+    .workflow-step-description {
+        color: #64748B;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .results-preview {
+        background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%);
+        border: 2px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .result-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 3px solid #2E5BBA;
+        text-align: center;
+    }
+    
+    .result-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .result-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1E293B;
+        margin-bottom: 0.25rem;
+    }
+    
+    .result-description {
+        font-size: 0.8rem;
+        color: #64748B;
+    }
+    
+    /* Enhanced existing styles */
     .metric-card {
         background: white;
         padding: 2rem;
@@ -89,13 +301,75 @@ st.markdown("""
             unsafe_allow_html=True)
 
 
+def render_landing_hero():
+    """Render the professional hero section"""
+    st.markdown("""
+    <div class="hero-section">
+        <h1 class="hero-title">🏠 HAILIE TSM Insights Engine</h1>
+        <p class="hero-tagline">Transform Your Housing Performance Data Into Executive Intelligence</p>
+        <p class="hero-description">
+            Turn complex UK government TSM data into clear, actionable insights. 
+            Get your performance ranking, track momentum, and identify priority improvement areas 
+            with executive-level clarity.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_features_overview():
+    """Render the key features overview section"""
+    st.markdown("""
+    <div class="features-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🏆</span>
+            <h3 class="feature-title">Your Rank</h3>
+            <p class="feature-description">
+                See exactly how your housing provider compares to peers with quartile-based scoring. 
+                Get clear visual indicators showing your competitive position.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">📈</span>
+            <h3 class="feature-title">Your Momentum</h3>
+            <p class="feature-description">
+                Track your 12-month performance trajectory. Understand if you're improving, 
+                stable, or declining across key satisfaction measures.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">🎯</span>
+            <h3 class="feature-title">Your Priority</h3>
+            <p class="feature-description">
+                Identify the single most critical area for improvement based on data-driven 
+                correlation analysis with overall tenant satisfaction.
+            </p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_trust_indicators():
+    """Render trust and credibility indicators"""
+    st.markdown("""
+    <div class="trust-indicators">
+        <span class="trust-badge">✅ UK Government TSM Data</span>
+        <span class="trust-badge">🔒 Secure & Compliant</span>
+        <span class="trust-badge">📊 TP01-TP12 Measures</span>
+        <span class="trust-badge">🏛️ All England Providers</span>
+        <span class="trust-badge">⚡ Instant Analysis</span>
+        <span class="trust-badge">📈 Real-Time Insights</span>
+    </div>
+    """, unsafe_allow_html=True)
+
 def main():
-    # Title and description
-    st.markdown('<h1 class="main-title">🏠 HAILIE TSM Insights Engine</h1>',
-                unsafe_allow_html=True)
-    st.markdown(
-        '<p class="subtitle">Executive Dashboard for Social Housing Performance Analysis</p>',
-        unsafe_allow_html=True)
+    # Landing page hero section
+    render_landing_hero()
+    
+    # Key features overview
+    render_features_overview()
+    
+    # Trust indicators
+    render_trust_indicators()
 
     # Initialize variables
     show_advanced_logging = False
@@ -143,9 +417,15 @@ def main():
             st.success(
                 "✅ Custom file uploaded - using your data instead of default")
 
-    # Main provider selection section
+    # Call-to-action section for provider selection
+    st.markdown("""
+    <div class="cta-section">
+        <h2 class="cta-title">🚀 Get Your Performance Insights Now</h2>
+        <p>Choose your housing provider below to view your executive dashboard with key performance insights.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.markdown("## 🏢 Select Your Provider")
-    st.markdown("Choose your housing provider to view your performance dashboard:")
     
     col1, col2 = st.columns([2, 1])
     
@@ -276,88 +556,115 @@ def main():
     else:
         # Welcome screen - no provider code entered yet
 
-        # Quick Tutorial for First-Time Users
-        with st.expander("🎓 Quick Tutorial for First-Time Users",
+        # Professional How It Works Section
+        with st.expander("📋 How It Works - Get Insights in 3 Simple Steps",
                          expanded=True):
             st.markdown("""
-            **Welcome! This tutorial will get you started in just 2 minutes.**
+            <div class="workflow-container">
+                <div class="workflow-steps">
+                    <div class="workflow-step" data-step="1">
+                        <span class="workflow-step-icon">🏢</span>
+                        <h4 class="workflow-step-title">Select Your Provider</h4>
+                        <p class="workflow-step-description">
+                            Choose your housing provider from the dropdown or enter your provider code directly. 
+                            Our system recognizes all UK housing providers.
+                        </p>
+                    </div>
+                    
+                    <div class="workflow-step" data-step="2">
+                        <span class="workflow-step-icon">⚡</span>
+                        <h4 class="workflow-step-title">Instant Analysis</h4>
+                        <p class="workflow-step-description">
+                            Our AI engine processes your TSM data in seconds, calculating rankings, 
+                            momentum trends, and priority insights automatically.
+                        </p>
+                    </div>
+                    
+                    <div class="workflow-step" data-step="3">
+                        <span class="workflow-step-icon">📊</span>
+                        <h4 class="workflow-step-title">Executive Dashboard</h4>
+                        <p class="workflow-step-description">
+                            Get clear, actionable insights with visual indicators showing your 
+                            performance position and improvement opportunities.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="results-preview">
+                    <h4 style="text-align: center; margin-bottom: 1rem; color: #1E293B;">What You'll Get</h4>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <div class="result-icon">🏆</div>
+                            <div class="result-label">Your Rank</div>
+                            <div class="result-description">Quartile position vs peers</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-icon">📈</div>
+                            <div class="result-label">Your Momentum</div>
+                            <div class="result-description">12-month trend direction</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-icon">🎯</div>
+                            <div class="result-label">Your Priority</div>
+                            <div class="result-description">Top improvement area</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            ### What is HAILIE TSM Insights Engine?
-            This dashboard analyzes your social housing performance using UK government TSM data. You'll get three key insights:
-            - **Your Rank** among similar providers
-            - **Your Momentum** showing improvement trends  
-            - **Your Priority** area needing most attention
+            st.markdown("""
+            **💡 Understanding Your Dashboard:**
             
-            ### How to Get Started (3 Easy Steps)
+            **🏆 Performance Ranking** - Color-coded quartile system:
+            - **🟢 Green**: Top performers (1st quartile) - Leading the sector
+            - **🟡 Yellow**: Above average (2nd quartile) - Strong performance  
+            - **🟠 Orange**: Below average (3rd quartile) - Room for improvement
+            - **🔴 Red**: Needs attention (4th quartile) - Priority focus area
             
-            **Step 1: Find Your Provider Code**
-            - Use the dropdown above to search by your organization name
-            - OR enter your provider code directly (e.g., H1234, H0001)
-            - ✅ You'll see a green checkmark when selected
+            **📈 Momentum Tracking** - 12-month performance trajectory:
+            - **↗️ Improving**: Positive trend - keep up the good work
+            - **→ Stable**: Consistent performance - maintain standards
+            - **↘️ Declining**: Negative trend - requires attention
             
-            **Step 2: Choose Your Settings (Optional)**
-            - Use the sidebar on the left for optional settings
-            - **Peer Group Filter**: Compare with similar providers only
-            - **Confidence Intervals**: Shows statistical reliability
-            - Keep defaults if unsure - they work great!
-            
-            **Step 3: View Your Dashboard**
-            - Your results appear automatically once you enter a provider code
-            - See your executive summary with three key metrics
-            - Expand "Detailed Analysis" for deeper insights
-            
-            ### Understanding Your Results
-            
-            **🏆 Your Rank**: Shows your position among all providers
-            - **Green**: Top performers (1st quartile)
-            - **Yellow**: Above average (2nd quartile) 
-            - **Orange**: Below average (3rd quartile)
-            - **Red**: Needs improvement (4th quartile)
-            
-            **📈 Your Momentum**: 12-month trend direction
-            - **↗️ Improving**: Getting better over time
-            - **→ Stable**: Consistent performance
-            - **↘️ Declining**: May need attention
-            
-            **🎯 Your Priority**: Most important area to focus on
-            - Shows which satisfaction measure needs attention most
-            - Based on correlation with overall satisfaction
-            
-            ### Need Help?
-            - All data comes from official UK government TSM surveys
-            - Covers TP01-TP12 satisfaction measures
-            - Questions? Look for help icons (?) next to settings
-            
-            **Ready? Enter your provider code above to start! ↑**
+            **🎯 Priority Focus** - Data-driven improvement recommendations:
+            - Identifies which satisfaction measure has the strongest correlation with overall performance
+            - Focuses your improvement efforts where they'll have maximum impact
+            - Based on statistical analysis of TP01-TP12 measures
             """)
 
+        # Additional Information Section
         st.markdown("""
-        ### Welcome to HAILIE TSM Insights Engine
-        
-        This executive dashboard provides key insights from UK government TSM (Tenant Satisfaction Measures) data:
-        
-        **📊 Your Rank** - See how you compare to similar housing providers with quartile-based scoring
-        
-        **📈 Your Momentum** - Track your 12-month performance trajectory 
-        
-        **🎯 Your Priority** - Identify the single most critical area for improvement
-        
-        ---
-        
-        **To get started:**
-        1. Enter your provider code above (e.g., H1234)
-        2. View your executive dashboard with key performance insights
-        3. Optionally upload custom TSM data if needed (see sidebar)
-        
-        ---
-        
-        **📊 Data Ready to Use:**
-        - Default 2024 TSM dataset already loaded
-        - UK government TSM datasets with TP01-TP12 satisfaction measures
-        - All housing providers across England included
-        
-        👆 **Simply enter your provider code above to begin!**
-        """)
+        <div class="workflow-container">
+            <h3 style="color: #1E293B; margin-bottom: 1rem;">📊 About Your Data</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #2E5BBA;">
+                    <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🏛️ Official Government Data</h4>
+                    <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+                        All analysis based on official UK government TSM (Tenant Satisfaction Measures) 
+                        surveys covering TP01-TP12 satisfaction measures.
+                    </p>
+                </div>
+                
+                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #22C55E;">
+                    <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🔒 Secure & Compliant</h4>
+                    <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+                        Your data is processed securely with UK data protection compliance. 
+                        No sensitive information is stored or shared.
+                    </p>
+                </div>
+                
+                <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
+                    <h4 style="color: #1E293B; margin-bottom: 0.5rem;">📈 Real-Time Analysis</h4>
+                    <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+                        Get instant insights from the latest 2024 dataset covering all 
+                        registered housing providers across England.
+                    </p>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
