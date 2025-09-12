@@ -30,42 +30,45 @@ def render_landing_hero():
             with executive-level clarity.
         </p>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+                unsafe_allow_html=True)
 
-def render_features_overview():
-    """Render the key features overview section"""
-    st.markdown("""
-    <div class="features-grid">
-        <div class="feature-card">
-            <div style="display: flex; justify-content: space-between;">
-                <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon">🏆</span>
-                    <h3 class="feature-title">Your Rank</h3>
-                    <p class="feature-description">
-                        See exactly how your housing provider compares to peers with quartile-based scoring. 
-                        Get clear visual indicators showing your competitive position.
-                    </p>
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon">📈</span>
-                    <h3 class="feature-title">Your Momentum</h3>
-                    <p class="feature-description">
-                        Track your 12-month performance trajectory. Understand if you're improving, 
-                        stable, or declining across key satisfaction measures.
-                    </p>
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon">🎯</span>
-                    <h3 class="feature-title">Your Priority</h3>
-                    <p class="feature-description">
-                        Identify the single most critical area for improvement based on data-driven 
-                        correlation analysis with overall tenant satisfaction.
-                    </p>
+    def render_features_overview():
+        """Render the key features overview section"""
+        st.markdown("""
+        <div class="features-grid">
+            <div class="feature-card">
+                <div style="display: flex; justify-content: space-between;">
+                    <div style="flex: 1; text-align: center;">
+                        <span class="feature-icon">🏆</span>
+                        <h3 class="feature-title">Your Rank</h3>
+                        <p class="feature-description">
+                            See exactly how your housing provider compares to peers with quartile-based scoring. 
+                            Get clear visual indicators showing your competitive position.
+                        </p>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <span class="feature-icon">📈</span>
+                        <h3 class="feature-title">Your Momentum</h3>
+                        <p class="feature-description">
+                            Track your 12-month performance trajectory. Understand if you're improving, 
+                            stable, or declining across key satisfaction measures.
+                        </p>
+                    </div>
+                    <div style="flex: 1; text-align: center;">
+                        <span class="feature-icon">🎯</span>
+                        <h3 class="feature-title">Your Priority</h3>
+                        <p class="feature-description">
+                            Identify the single most critical area for improvement based on data-driven 
+                            correlation analysis with overall tenant satisfaction.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
+
 
 def render_trust_indicators():
     """Render trust and credibility indicators"""
@@ -75,18 +78,18 @@ def render_trust_indicators():
         <span class="trust-badge">🔒 Secure & Compliant</span>
         <span class="trust-badge">📊 TP01-TP12 Measures</span>
         <span class="trust-badge">🏛️ All England Providers</span>
-        <span class="trust-badge">⚡ Instant Analysis</span>
-        <span class="trust-badge">📈 Real-Time Insights</span>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+                unsafe_allow_html=True)
+
 
 def main():
     # Landing page hero section
     render_landing_hero()
-    
+
     # Key features overview
     render_features_overview()
-    
+
     # Trust indicators
     render_trust_indicators()
 
@@ -96,7 +99,7 @@ def main():
     # Initialize data processor to get provider options
     data_processor_for_options = TSMDataProcessor(silent_mode=True)
     provider_options = data_processor_for_options.get_provider_options()
-    
+
     provider_code = None
 
     # Sidebar for analysis options and optional file upload
@@ -142,42 +145,45 @@ def main():
         <h2 class="cta-title">🚀 Get Your Performance Insights Now</h2>
         <p>Choose your housing provider below to view your executive dashboard with key performance insights.</p>
     </div>
-    """, unsafe_allow_html=True)
-    
+    """,
+                unsafe_allow_html=True)
+
     st.markdown("## 🏢 Select Your Provider")
-    
+
     col1, col2 = st.columns([2, 1])
-    
+
     with col1:
         if provider_options:
             # Provider search dropdown with autocomplete
             st.subheader("🔍 Search by Provider Name")
             selected_provider = st.selectbox(
                 "Select your provider",
-                options=["Select a provider..."] + list(provider_options.keys()),
+                options=["Select a provider..."] +
+                list(provider_options.keys()),
                 index=0,
                 help="Search and select your housing provider from the dropdown"
             )
-            
+
             if selected_provider != "Select a provider...":
                 provider_code = provider_options[selected_provider]
                 st.success(f"✅ Selected: {provider_code}")
-            
+
             st.markdown("**OR**")
-        
+
         # Fallback text input for provider code
         text_provider_code = st.text_input(
             "Enter Provider Code Directly",
             placeholder="e.g., H1234",
-            help="Enter your housing provider's unique identifier if not found above"
+            help=
+            "Enter your housing provider's unique identifier if not found above"
         )
-        
+
         # Use text input if provided, otherwise use dropdown selection
         if text_provider_code:
             provider_code = text_provider_code
             if provider_options:
                 st.info("💡 Using manually entered provider code")
-    
+
     with col2:
         st.markdown("### Quick Help")
         st.markdown("""
@@ -330,8 +336,9 @@ def main():
                     </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
-            
+            """,
+                        unsafe_allow_html=True)
+
             st.markdown("""
             **💡 Understanding Your Dashboard:**
             
@@ -383,7 +390,8 @@ def main():
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
