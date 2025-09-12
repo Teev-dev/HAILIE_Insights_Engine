@@ -33,41 +33,42 @@ def render_landing_hero():
     """,
                 unsafe_allow_html=True)
 
-    def render_features_overview():
-        """Render the key features overview section"""
-        st.markdown("""
-        <div class="features-grid">
-            <div class="feature-card">
-                <div style="display: flex; justify-content: space-between;">
-                    <div style="flex: 1; text-align: center;">
-                        <span class="feature-icon">🏆</span>
-                        <h3 class="feature-title">Your Rank</h3>
-                        <p class="feature-description">
-                            See exactly how your housing provider compares to peers with quartile-based scoring. 
-                            Get clear visual indicators showing your competitive position.
-                        </p>
-                    </div>
-                    <div style="flex: 1; text-align: center;">
-                        <span class="feature-icon">📈</span>
-                        <h3 class="feature-title">Your Momentum</h3>
-                        <p class="feature-description">
-                            Track your 12-month performance trajectory. Understand if you're improving, 
-                            stable, or declining across key satisfaction measures.
-                        </p>
-                    </div>
-                    <div style="flex: 1; text-align: center;">
-                        <span class="feature-icon">🎯</span>
-                        <h3 class="feature-title">Your Priority</h3>
-                        <p class="feature-description">
-                            Identify the single most critical area for improvement based on data-driven 
-                            correlation analysis with overall tenant satisfaction.
-                        </p>
-                    </div>
+
+def render_features_overview():
+    """Render the key features overview section"""
+    st.markdown("""
+    <div class="features-grid">
+        <div class="feature-card">
+            <div style="display: flex; justify-content: space-between;">
+                <div style="flex: 1; text-align: center;">
+                    <span class="feature-icon">🏆</span>
+                    <h3 class="feature-title">Your Rank</h3>
+                    <p class="feature-description">
+                        See exactly how your housing provider compares to peers with quartile-based scoring. 
+                        Get clear visual indicators showing your competitive position.
+                    </p>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <span class="feature-icon">📈</span>
+                    <h3 class="feature-title">Your Momentum</h3>
+                    <p class="feature-description">
+                        Track your 12-month performance trajectory. Understand if you're improving, 
+                        stable, or declining across key satisfaction measures.
+                    </p>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <span class="feature-icon">🎯</span>
+                    <h3 class="feature-title">Your Priority</h3>
+                    <p class="feature-description">
+                        Identify the single most critical area for improvement based on data-driven 
+                        correlation analysis with overall tenant satisfaction.
+                    </p>
                 </div>
             </div>
         </div>
-        """,
-                    unsafe_allow_html=True)
+    </div>
+    """,
+                unsafe_allow_html=True)
 
 
 def render_trust_indicators():
