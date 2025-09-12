@@ -39,20 +39,18 @@ def get_main_css():
         --spacing-2xl: 3rem;
     }
 
-    /* Base responsive font sizing */
+    /* Base font sizing - keep consistent baseline */
     html {
         font-size: 16px;
     }
     
-    @media (max-width: 768px) {
-        html {
-            font-size: 14px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        html {
-            font-size: 13px;
+    /* Accessibility: Respect user motion preferences */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
         }
     }
 
