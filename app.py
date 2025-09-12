@@ -38,8 +38,8 @@ def render_features_overview():
     """Render the key features overview section"""
     st.markdown("""
     <div class="features-grid">
-        <div class="feature-card">
-            <div style="display: flex; justify-content: space-between;">
+        <div class="feature-card style="background-color: #ffffff;">
+            <div style="display: flex; justify-content: space-between; color: #333333;">
                 <div style="flex: 1; text-align: center;">
                     <span class="feature-icon">🏆</span>
                     <h3 class="feature-title">Your Rank</h3>
@@ -74,11 +74,14 @@ def render_features_overview():
 def render_trust_indicators():
     """Render trust and credibility indicators"""
     st.markdown("""
-    <div class="trust-indicators">
-        <span class="trust-badge">✅ UK Government TSM Data</span>
-        <span class="trust-badge">🔒 Secure & Compliant</span>
-        <span class="trust-badge">📊 TP01-TP12 Measures</span>
-        <span class="trust-badge">🏛️ All England Providers</span>
+    <div class="trust-indicators" style="background-color: #ffffff; color: #000000;">
+        <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start;">
+            <h3 class="feature-title" style="margin-bottom: 16px;">Why trust the HAILIE Insights Engine?</h3>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">✅ UK Government TSM Data</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">🔒 Secure & Compliant</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">📊 TP01-TP12 Measures</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">🏛️ All England Providers</span>
+        </div>
     </div>
     """,
                 unsafe_allow_html=True)
@@ -140,14 +143,6 @@ def main():
             st.success(
                 "✅ Custom file uploaded - using your data instead of default")
 
-    # Call-to-action section for provider selection
-    st.markdown("""
-    <div class="cta-section">
-        <h2 class="cta-title">🚀 Get Your Performance Insights Now</h2>
-        <p>Choose your housing provider below to view your executive dashboard with key performance insights.</p>
-    </div>
-    """,
-                unsafe_allow_html=True)
 
     st.markdown("## 🏢 Select Your Provider")
 
