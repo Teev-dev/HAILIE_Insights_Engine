@@ -38,33 +38,29 @@ def render_features_overview():
     """Render the key features overview section"""
     st.markdown("""
     <div class="features-grid">
-        <div class="feature-card style="background-color: #ffffff;">
-            <div style="display: flex; justify-content: space-between; color: #333333;">
-                <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon"></span>
-                    <h3 class="feature-title">Your Rank</h3>
-                    <p class="feature-description">
-                        See exactly how your housing provider compares to peers with quartile-based scoring. 
-                        Get clear visual indicators showing your competitive position.
-                    </p>
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon"></span>
-                    <h3 class="feature-title">Your Momentum</h3>
-                    <p class="feature-description">
-                        Track your 12-month performance trajectory. Understand if you're improving, 
-                        stable, or declining across key satisfaction measures.
-                    </p>
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon"></span>
-                    <h3 class="feature-title">Your Priority</h3>
-                    <p class="feature-description">
-                        Identify the single most critical area for improvement based on data-driven 
-                        correlation analysis with overall tenant satisfaction.
-                    </p>
-                </div>
-            </div>
+        <div class="feature-card">
+            <span class="feature-icon">🏆</span>
+            <h3 class="feature-title">Your Rank</h3>
+            <p class="feature-description">
+                See exactly how your housing provider compares to peers with quartile-based scoring. 
+                Get clear visual indicators showing your competitive position.
+            </p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">📈</span>
+            <h3 class="feature-title">Your Momentum</h3>
+            <p class="feature-description">
+                Track your 12-month performance trajectory. Understand if you're improving, 
+                stable, or declining across key satisfaction measures.
+            </p>
+        </div>
+        <div class="feature-card">
+            <span class="feature-icon">🎯</span>
+            <h3 class="feature-title">Your Priority</h3>
+            <p class="feature-description">
+                Identify the single most critical area for improvement based on data-driven 
+                correlation analysis with overall tenant satisfaction.
+            </p>
         </div>
     </div>
     """,
@@ -74,13 +70,13 @@ def render_features_overview():
 def render_trust_indicators():
     """Render trust and credibility indicators"""
     st.markdown("""
-    <div class="trust-indicators" style="background-color: #ffffff; color: #000000;">
-        <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start;">
-            <h3 class="feature-title" style="margin-bottom: 16px;">Why trust the HAILIE Insights Engine?</h3>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">UK Government TSM Data</span>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">Secure & Compliant</span>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">TP01-TP12 Measures</span>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">All England Providers</span>
+    <div class="trust-indicators">
+        <h3 class="feature-title">Why trust the HAILIE Insights Engine?</h3>
+        <div class="mobile-stack">
+            <span class="trust-badge">UK Government TSM Data</span>
+            <span class="trust-badge">Secure & Compliant</span>
+            <span class="trust-badge">TP01-TP12 Measures</span>
+            <span class="trust-badge">All England Providers</span>
         </div>
     </div>
     """,
@@ -145,7 +141,7 @@ def main():
 
     st.markdown("##Select Your Provider")
 
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([3, 1], gap="large")
 
     with col1:
         if provider_options:
@@ -330,7 +326,7 @@ def main():
             # Results preview section
             st.markdown("""
             <div class="results-preview">
-                <h4 style="text-align: center; margin-bottom: 1rem; color: #1E293B;">What You'll Get</h4>
+                <h4 class="mobile-center" style="margin-bottom: 1rem; color: #1E293B;">What You'll Get</h4>
                 <div class="results-grid">
                     <div class="result-item">
                         <div class="result-icon">🏆</div>
@@ -378,45 +374,40 @@ def main():
         st.markdown(
             """<h3 style="color: #1E293B; margin-bottom: 1rem;">About Your Data</h3>""",
             unsafe_allow_html=True)
-        st.markdown(
-            """<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">""",
-            unsafe_allow_html=True)
+        st.markdown('<div class="data-grid">', unsafe_allow_html=True)
 
         # Card 1: Official Government Data
         st.markdown("""
-            <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #2E5BBA;">
-                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">Official Government Data</h4>
-                <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+            <div class="data-card">
+                <h4 class="data-card-title">Official Government Data</h4>
+                <p class="data-card-text">
                     All analysis based on official UK government TSM (Tenant Satisfaction Measures) 
                     surveys covering TP01-TP12 satisfaction measures.
                 </p>
             </div>
-        """,
-                    unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
         # Card 2: Secure & Compliant
         st.markdown("""
-            <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #22C55E;">
-                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🔒 Secure & Compliant</h4>
-                <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+            <div class="data-card secure">
+                <h4 class="data-card-title">🔒 Secure & Compliant</h4>
+                <p class="data-card-text">
                     Your data is processed securely with UK data protection compliance. 
                     No sensitive information is stored or shared.
                 </p>
             </div>
-        """,
-                    unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
         # Card 3: Real-Time Analysis
         st.markdown("""
-            <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">Real-Time Analysis</h4>
-                <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
+            <div class="data-card realtime">
+                <h4 class="data-card-title">Real-Time Analysis</h4>
+                <p class="data-card-text">
                     Get instant insights from the latest 2024 dataset covering all 
                     registered housing providers across England.
                 </p>
             </div>
-        """,
-                    unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
         st.markdown("""</div></div>""", unsafe_allow_html=True)
 

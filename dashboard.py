@@ -20,7 +20,7 @@ class ExecutiveDashboard:
         metric_tooltips = tooltips.get_metric_tooltips()
         technical_tooltips = tooltips.get_technical_tooltips()
         
-        col_header1, col_header2 = st.columns([3, 1])
+        col_header1, col_header2 = st.columns([4, 1], gap="medium")
         with col_header1:
             st.markdown("## 📊 Executive Summary")
             st.markdown(f"**Provider:** {provider_code}")
@@ -59,8 +59,8 @@ class ExecutiveDashboard:
         
         provider_ranking = rankings[provider_code]
         
-        # Create three columns for the key metrics
-        col1, col2, col3 = st.columns(3)
+        # Create responsive columns for the key metrics - mobile-friendly
+        col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
         
         # YOUR RANK
         with col1:
