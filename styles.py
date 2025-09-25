@@ -328,15 +328,49 @@ def get_main_css():
         }
     }
     
-    .feature-icon {
+    .feature-icon,
+    .feature-icon-professional {
         font-size: clamp(2.5rem, 5vw, 3.5rem);
         margin-bottom: var(--spacing-md);
         display: block;
         transition: transform 0.3s ease;
+        width: 3.5rem;
+        height: 3.5rem;
+        margin: 0 auto var(--spacing-md) auto;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 1.5rem;
     }
     
-    .feature-card:hover .feature-icon {
+    .feature-card:hover .feature-icon,
+    .feature-card:hover .feature-icon-professional {
         transform: scale(1.1);
+    }
+    
+    /* Professional icon styles for features */
+    .rank-icon {
+        background: linear-gradient(135deg, #22C55E, #16A34A);
+    }
+    .rank-icon::before {
+        content: "R";
+    }
+    
+    .momentum-icon {
+        background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    }
+    .momentum-icon::before {
+        content: "M";
+    }
+    
+    .priority-icon {
+        background: linear-gradient(135deg, #EF4444, #DC2626);
+    }
+    .priority-icon::before {
+        content: "P";
     }
     
     .feature-title {
@@ -468,15 +502,49 @@ def get_main_css():
         box-shadow: var(--shadow-lg);
     }
     
-    .workflow-step-icon {
+    .workflow-step-icon,
+    .workflow-step-icon-professional {
         font-size: clamp(2rem, 4vw, 2.5rem);
         margin: var(--spacing-md) 0 var(--spacing-sm) 0;
         display: block;
         transition: transform 0.3s ease;
+        width: 2.5rem;
+        height: 2.5rem;
+        margin: var(--spacing-md) auto var(--spacing-sm) auto;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 1.2rem;
     }
     
-    .workflow-step:hover .workflow-step-icon {
+    .workflow-step:hover .workflow-step-icon,
+    .workflow-step:hover .workflow-step-icon-professional {
         transform: scale(1.1);
+    }
+    
+    /* Professional workflow step icons */
+    .building-icon {
+        background: linear-gradient(135deg, #64748B, #475569);
+    }
+    .building-icon::before {
+        content: "1";
+    }
+    
+    .analytics-icon {
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+    }
+    .analytics-icon::before {
+        content: "2";
+    }
+    
+    .dashboard-icon {
+        background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+    }
+    .dashboard-icon::before {
+        content: "3";
     }
     
     .workflow-step-title {
@@ -548,9 +616,42 @@ def get_main_css():
         box-shadow: var(--shadow-md);
     }
     
-    .result-icon {
+    .result-icon,
+    .result-icon-professional {
         font-size: clamp(1.25rem, 3vw, 1.5rem);
         margin-bottom: var(--spacing-xs);
+        width: 1.5rem;
+        height: 1.5rem;
+        margin: 0 auto var(--spacing-xs) auto;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        font-size: 0.8rem;
+    }
+    
+    /* Professional result icons */
+    .rank-result {
+        background: linear-gradient(135deg, #22C55E, #16A34A);
+    }
+    .rank-result::before {
+        content: "R";
+    }
+    
+    .momentum-result {
+        background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    }
+    .momentum-result::before {
+        content: "↗";
+    }
+    
+    .priority-result {
+        background: linear-gradient(135deg, #EF4444, #DC2626);
+    }
+    .priority-result::before {
+        content: "!";
     }
     
     .result-label {
