@@ -22,17 +22,17 @@ class ExecutiveDashboard:
         
         col_header1, col_header2 = st.columns([4, 1], gap="medium")
         with col_header1:
-            st.markdown("## 📊 Executive Summary")
+            st.markdown("## Executive Summary")
             st.markdown(f"**Provider:** {provider_code}")
         with col_header2:
             # Add overall help for the executive summary
-            with st.expander("ℹ️ Understanding Your Dashboard", expanded=False):
+            with st.expander("Understanding Your Dashboard", expanded=False):
                 st.markdown("""
                 **Your dashboard shows three key insights:**
                 
-                🏆 **Your Rank**: How you compare to other housing providers
-                📈 **Your Momentum**: Your performance trend over time  
-                🎯 **Your Priority**: Most important area to focus on
+                **Your Rank**: How you compare to other housing providers
+                **Your Momentum**: Your performance trend over time  
+                **Your Priority**: Most important area to focus on
                 
                 Click the help icons (?) next to each metric for detailed explanations.
                 """)
@@ -69,7 +69,7 @@ class ExecutiveDashboard:
             # Add help expandable section for ranking
             st.markdown(f"""
             <div class="metric-card {quartile_class}">
-                <p class="metric-label">🏆 YOUR RANK</p>
+                <p class="metric-label">YOUR RANK</p>
                 <p class="metric-value">#{provider_ranking['rank']}</p>
                 <p style="font-size: 1.1rem; margin: 0.5rem 0; color: #64748B;">
                     of {provider_ranking['total_providers']} providers
@@ -84,7 +84,7 @@ class ExecutiveDashboard:
             """, unsafe_allow_html=True)
             
             # Add expandable help section
-            with st.expander("📖 How Your Rank Works", expanded=False):
+            with st.expander("How Your Rank Works", expanded=False):
                 st.markdown(metric_tooltips['ranking']['content'])
                 st.markdown(f"""
                 **Your specific ranking details:**
@@ -99,7 +99,7 @@ class ExecutiveDashboard:
             if momentum.get('disabled', False):
                 st.markdown(f"""
                 <div class="metric-card">
-                    <p class="metric-label">📈 YOUR MOMENTUM</p>
+                    <p class="metric-label">YOUR MOMENTUM</p>
                     <p class="metric-value" style="color: {momentum['momentum_color']};">
                         {momentum['momentum_icon']}
                     </p>
@@ -114,7 +114,7 @@ class ExecutiveDashboard:
             else:
                 st.markdown(f"""
                 <div class="metric-card">
-                    <p class="metric-label">📈 YOUR MOMENTUM</p>
+                    <p class="metric-label">YOUR MOMENTUM</p>
                     <p class="metric-value" style="color: {momentum['momentum_color']};">
                         {momentum['momentum_icon']}
                     </p>
@@ -128,7 +128,7 @@ class ExecutiveDashboard:
                 """, unsafe_allow_html=True)
             
             # Add expandable help section for momentum
-            with st.expander("📖 How Momentum Works", expanded=False):
+            with st.expander("How Momentum Works", expanded=False):
                 st.markdown(metric_tooltips['momentum']['content'])
                 if momentum.get('disabled', False):
                     st.markdown("""
@@ -157,7 +157,7 @@ class ExecutiveDashboard:
             
             st.markdown(f"""
             <div class="metric-card {priority_class}">
-                <p class="metric-label">🎯 YOUR PRIORITY</p>
+                <p class="metric-label">YOUR PRIORITY</p>
                 <p class="metric-value" style="font-size: 1.8rem; color: {priority['priority_color']};">
                     {priority['priority_level']}
                 </p>
@@ -180,7 +180,7 @@ class ExecutiveDashboard:
             """, unsafe_allow_html=True)
             
             # Add expandable help section for priority
-            with st.expander("📖 How Priority Works", expanded=False):
+            with st.expander("How Priority Works", expanded=False):
                 st.markdown(metric_tooltips['priority']['content'])
                 st.markdown(f"""
                 **Your priority details:**
@@ -202,7 +202,7 @@ class ExecutiveDashboard:
         tooltips = TooltipDefinitions()
         technical_tooltips = tooltips.get_technical_tooltips()
         
-        st.markdown("### 🔍 Detailed Performance Analysis")
+        st.markdown("### Detailed Performance Analysis")
         
         # Get detailed analysis and priority data
         detailed_analysis = analytics.get_detailed_performance_analysis(df, provider_code)
@@ -213,20 +213,20 @@ class ExecutiveDashboard:
             return
         
         # Create tabs for different views with help tooltips
-        tab1, tab2, tab3 = st.tabs(["📊 Performance Comparison", "🔗 Correlation Analysis", "🎯 Priority Matrix"])
+        tab1, tab2, tab3 = st.tabs(["Performance Comparison", "Correlation Analysis", "Priority Matrix"])
         
         # Add help information for the detailed analysis section
-        with st.expander("ℹ️ Understanding Detailed Analysis", expanded=False):
+        with st.expander("Understanding Detailed Analysis", expanded=False):
             st.markdown("""
             **This section provides three detailed views:**
             
-            📊 **Performance Comparison**: See how you score on each satisfaction measure compared to peer averages
+            **Performance Comparison**: See how you score on each satisfaction measure compared to peer averages
             
-            🔗 **Correlation Analysis**: Understand which measures have the strongest relationship with overall satisfaction
+            **Correlation Analysis**: Understand which measures have the strongest relationship with overall satisfaction
             
-            🎯 **Priority Matrix**: Visual guide to help prioritize which areas to focus on for maximum impact
+            **Priority Matrix**: Visual guide to help prioritize which areas to focus on for maximum impact
             
-            💡 **Tip**: Hover over charts for detailed information about each data point.
+            **Tip**: Hover over charts for detailed information about each data point.
             """)
         
         with tab1:
@@ -287,19 +287,19 @@ class ExecutiveDashboard:
                 # Performance table with help
                 col_table1, col_table2 = st.columns([4, 1])
                 with col_table1:
-                    st.markdown("#### 📋 Detailed Breakdown")
+                    st.markdown("#### Detailed Breakdown")
                 with col_table2:
-                    with st.expander("❓ Table Help", expanded=False):
+                    with st.expander("Table Help", expanded=False):
                         st.markdown("""
                         **Understanding the table:**
                         
-                        📊 **Your Score**: Your actual satisfaction score for this measure
+                        **Your Score**: Your actual satisfaction score for this measure
                         
-                        📈 **Percentile**: What % of providers you perform better than
+                        **Percentile**: What % of providers you perform better than
                         
-                        👥 **Peer Average**: Average score of all providers for this measure
+                        **Peer Average**: Average score of all providers for this measure
                         
-                        📊 **Gap**: Difference between your score and peer average
+                        **Gap**: Difference between your score and peer average
                         - Positive (+) = Above average
                         - Negative (-) = Below average
                         """)
@@ -322,10 +322,10 @@ class ExecutiveDashboard:
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
-                st.markdown("#### 🔗 Correlation with Overall Satisfaction (TP01)")
+                st.markdown("#### Correlation with Overall Satisfaction (TP01)")
             with col_header2:
                 # Help tooltip for correlation
-                with st.expander("❓ What is Correlation?", expanded=False):
+                with st.expander("What is Correlation?", expanded=False):
                     st.markdown(tooltips.get_streamlit_help_text('correlation', technical_tooltips))
             
             if not "error" in priority_data and 'all_correlations' in priority_data:
@@ -390,19 +390,19 @@ class ExecutiveDashboard:
                     # Correlation insights with help
                     col_insights1, col_insights2 = st.columns([4, 1])
                     with col_insights1:
-                        st.markdown("##### 📈 Key Correlation Insights")
+                        st.markdown("##### Key Correlation Insights")
                     with col_insights2:
-                        with st.expander("❓ Insights Help", expanded=False):
+                        with st.expander("Insights Help", expanded=False):
                             st.markdown("""
                             **Understanding correlations:**
                             
-                            🟢 **Strong correlations (>0.7)**: These measures have major impact on overall satisfaction. Focus here for maximum effect.
+                            **Strong correlations (>0.7)**: These measures have major impact on overall satisfaction. Focus here for maximum effect.
                             
-                            🟡 **Moderate correlations (0.4-0.7)**: Important but secondary impact areas.
+                            **Moderate correlations (0.4-0.7)**: Important but secondary impact areas.
                             
-                            🔵 **Weak correlations (<0.4)**: These may be important for other reasons but have limited impact on overall satisfaction.
+                            **Weak correlations (<0.4)**: These may be important for other reasons but have limited impact on overall satisfaction.
                             
-                            💡 **Strategy**: Prioritize strong correlation areas when resources are limited.
+                            **Strategy**: Prioritize strong correlation areas when resources are limited.
                             """)
                     
                     strong_correlations = corr_df[corr_df['Strength'] > 0.7]
@@ -416,21 +416,21 @@ class ExecutiveDashboard:
                     # Detailed correlation table with help
                     col_stats1, col_stats2 = st.columns([4, 1])
                     with col_stats1:
-                        st.markdown("##### 📊 Correlation Statistics")
+                        st.markdown("##### Correlation Statistics")
                     with col_stats2:
-                        with st.expander("❓ Statistics Help", expanded=False):
+                        with st.expander("Statistics Help", expanded=False):
                             st.markdown("""
                             **Statistical terms explained:**
                             
-                            📊 **Correlation**: Strength of relationship (-1 to +1)
+                            **Correlation**: Strength of relationship (-1 to +1)
                             - Closer to +1 = stronger positive relationship
                             - Closer to 0 = weaker relationship
                             
-                            🔬 **P-Value**: Statistical significance
+                            **P-Value**: Statistical significance
                             - <0.05 = statistically significant result
                             - >0.05 = result could be due to chance
                             
-                            👥 **Sample Size**: Number of providers with data for this measure
+                            **Sample Size**: Number of providers with data for this measure
                             - Larger samples = more reliable results
                             """)
                     
@@ -456,25 +456,25 @@ class ExecutiveDashboard:
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
-                st.markdown("#### 🎯 Priority Matrix")
+                st.markdown("#### Priority Matrix")
             with col_header2:
                 # Help tooltip for priority matrix
-                with st.expander("❓ Priority Matrix Guide", expanded=False):
+                with st.expander("Priority Matrix Guide", expanded=False):
                     st.markdown("""
                     **How to read the Priority Matrix:**
                     
-                    📍 **Position on chart**:
+                    **Position on chart**:
                     - **X-axis**: Improvement potential (how much you can improve)
                     - **Y-axis**: Correlation with overall satisfaction (impact)
                     - **Bubble size**: Combined priority score
                     
-                    🎯 **Quadrants**:
+                    **Quadrants**:
                     - **Top-Right (High Priority)**: High impact + High potential 
                     - **Top-Left (Quick Wins)**: High impact + Lower potential
                     - **Bottom-Right (Monitor)**: Lower impact + High potential
                     - **Bottom-Left (Low Priority)**: Lower impact + Lower potential
                     
-                    💡 **Focus on measures in the top-right quadrant for maximum impact.**
+                    **Focus on measures in the top-right quadrant for maximum impact.**
                     """)
             
             if not "error" in priority_data and 'all_weighted_priorities' in priority_data:
@@ -574,19 +574,19 @@ class ExecutiveDashboard:
                     if 'top_3_priorities' in priority_data:
                         col_top3_1, col_top3_2 = st.columns([4, 1])
                         with col_top3_1:
-                            st.markdown("##### 🏆 Top 3 Priority Areas")
+                            st.markdown("##### Top 3 Priority Areas")
                         with col_top3_2:
-                            with st.expander("❓ Priority Help", expanded=False):
+                            with st.expander("Priority Help", expanded=False):
                                 st.markdown("""
                                 **Your top 3 priorities are ranked by:**
                                 
-                                🎯 **Weighted priority score**: Combines improvement potential with correlation strength
+                                **Weighted priority score**: Combines improvement potential with correlation strength
                                 
-                                📈 **Improvement potential**: How much you could realistically improve
+                                **Improvement potential**: How much you could realistically improve
                                 
-                                🔗 **TP01 correlation**: How much impact improvement would have on overall satisfaction
+                                **TP01 correlation**: How much impact improvement would have on overall satisfaction
                                 
-                                💡 **Action**: Start with #1 priority for maximum impact, then work down the list.
+                                **Action**: Start with #1 priority for maximum impact, then work down the list.
                                 """)
                         
                         for i, priority in enumerate(priority_data['top_3_priorities'], 1):
@@ -611,21 +611,21 @@ class ExecutiveDashboard:
         # Add header with help
         col_header1, col_header2 = st.columns([4, 1])
         with col_header1:
-            st.markdown("### 📊 Data Quality Report")
+            st.markdown("### Data Quality Report")
         with col_header2:
-            with st.expander("ℹ️ About Data Quality", expanded=False):
+            with st.expander("About Data Quality", expanded=False):
                 st.markdown("""
                 **Data Quality Metrics Explained:**
                 
-                📈 **Total Providers**: Number of housing providers in the dataset
+                **Total Providers**: Number of housing providers in the dataset
                 
-                ✅ **Providers with Data**: How many providers have valid TSM data
+                **Providers with Data**: How many providers have valid TSM data
                 
-                📋 **TP Measures Found**: Which of the 12 official measures (TP01-TP12) are available
+                **TP Measures Found**: Which of the 12 official measures (TP01-TP12) are available
                 
-                🎯 **Completeness**: Percentage of providers with data for each measure
+                **Completeness**: Percentage of providers with data for each measure
                 
-                💡 **Why this matters**: Higher completeness means more reliable peer comparisons and benchmarking.
+                **Why this matters**: Higher completeness means more reliable peer comparisons and benchmarking.
                 """)
         
         quality_report = data_processor.get_data_quality_report(df)
@@ -691,7 +691,7 @@ class ExecutiveDashboard:
         """
         Render actionable insights summary
         """
-        st.markdown("### 💡 Key Insights & Recommendations")
+        st.markdown("### Key Insights & Recommendations")
         
         if provider_code not in rankings:
             st.warning("No ranking data available for insights")
@@ -703,30 +703,30 @@ class ExecutiveDashboard:
         
         # Ranking insights
         if provider_ranking['quartile'] == 'Top':
-            insights.append("🎉 **Excellent performance** - You're in the top quartile of providers!")
+            insights.append("**Excellent performance** - You're in the top quartile of providers!")
         elif provider_ranking['quartile'] == 'Low':
-            insights.append("⚠️ **Performance attention needed** - You're in the bottom quartile.")
+            insights.append("**Performance attention needed** - You're in the bottom quartile.")
         
         # Momentum insights
         if momentum.get('disabled', False):
-            insights.append("⏳ **Momentum analysis** - Will be available in 2026 with multi-year TSM data.")
+            insights.append("**Momentum analysis** - Will be available in 2026 with multi-year TSM data.")
         elif momentum['direction'] == 'up':
-            insights.append(f"📈 **Positive momentum** - {momentum['momentum_text']} trajectory detected.")
+            insights.append(f"**Positive momentum** - {momentum['momentum_text']} trajectory detected.")
         elif momentum['direction'] == 'down':
-            insights.append(f"📉 **Declining trend** - {momentum['momentum_text']} requires immediate attention.")
+            insights.append(f"**Declining trend** - {momentum['momentum_text']} requires immediate attention.")
         
         # Priority insights with correlation context
         if priority['priority_level'] in ['Critical', 'High']:
             corr_strength = priority.get('correlation_strength', 0)
             corr_text = "strong" if corr_strength > 70 else "moderate" if corr_strength > 40 else "weak"
-            insights.append(f"🚨 **Priority action required** - Focus on {priority['measure_name']} for maximum impact (has {corr_text} correlation with overall satisfaction).")
+            insights.append(f"**Priority action required** - Focus on {priority['measure_name']} for maximum impact (has {corr_text} correlation with overall satisfaction).")
         
         # Display insights
         for insight in insights:
             st.markdown(insight)
         
         # Recommendations
-        st.markdown("#### 🎯 Recommended Actions")
+        st.markdown("#### Recommended Actions")
         
         # Enhanced recommendations with correlation insights
         corr_strength = priority.get('correlation_strength', 0)

@@ -10,7 +10,7 @@ from contextlib import contextmanager
 
 # Page configuration
 st.set_page_config(page_title="HAILIE TSM Insights Engine",
-                   page_icon="🏠",
+                   page_icon="✓",
                    layout="wide",
                    initial_sidebar_state="expanded")
 
@@ -34,7 +34,7 @@ def render_features_overview():
     st.markdown("""
     <div class="features-grid">
         <div class="feature-card">
-            <span class="feature-icon">🏆</span>
+            <div class="feature-icon-professional rank-icon"></div>
             <h3 class="feature-title">Your Rank</h3>
             <p class="feature-description">
                 See exactly how your housing provider compares to peers with quartile-based scoring. 
@@ -42,7 +42,7 @@ def render_features_overview():
             </p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">📈</span>
+            <div class="feature-icon-professional momentum-icon"></div>
             <h3 class="feature-title">Your Momentum</h3>
             <p class="feature-description">
                 Track your 12-month performance trajectory. Understand if you're improving, 
@@ -50,7 +50,7 @@ def render_features_overview():
             </p>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🎯</span>
+            <div class="feature-icon-professional priority-icon"></div>
             <h3 class="feature-title">Your Priority</h3>
             <p class="feature-description">
                 Identify the single most critical area for improvement based on data-driven 
@@ -82,7 +82,7 @@ def main():
     with st.sidebar:
 
         # Analysis options
-        st.header("⚙️ Analysis Options")
+        st.header("Analysis Options")
         include_confidence = st.checkbox("Include confidence intervals",
                                          value=True)
         peer_group_filter = st.selectbox(
@@ -115,14 +115,14 @@ def main():
             st.success(
                 "Custom file uploaded - using your data instead of default")
 
-    st.markdown("##Select Your Provider")
+    st.markdown("## Select Your Provider")
 
     col1, col2 = st.columns([3, 1], gap="large")
 
     with col1:
         if provider_options:
             # Provider search dropdown with autocomplete
-            st.subheader("🔍 Search by Provider Name")
+            st.subheader("Search by Provider Name")
             selected_provider = st.selectbox(
                 "Select your provider",
                 options=["Select a provider..."] +
@@ -133,7 +133,7 @@ def main():
 
             if selected_provider != "Select a provider...":
                 provider_code = provider_options[selected_provider]
-                st.success(f"✅ Selected: {provider_code}")
+                st.success(f"Selected: {provider_code}")
 
             st.markdown("**OR**")
 
@@ -149,7 +149,7 @@ def main():
         if text_provider_code:
             provider_code = text_provider_code
             if provider_options:
-                st.info("💡 Using manually entered provider code")
+                st.info("Using manually entered provider code")
 
     with col2:
         st.markdown("### Quick Help")
@@ -170,7 +170,7 @@ def main():
     if provider_code:
         try:
             # Initialize processors with silent mode based on checkbox
-            with st.spinner("🔄 Processing TSM data..."):
+            with st.spinner("Processing TSM data..."):
                 data_processor = TSMDataProcessor(
                     silent_mode=not show_advanced_logging)
                 analytics = TSMAnalytics()
@@ -188,7 +188,7 @@ def main():
 
                 if df is None or df.empty:
                     st.error(
-                        f"❌ Failed to load data from the {data_source}. Please check the file format."
+                        f"Failed to load data from the {data_source}. Please check the file format."
                     )
                     return
 
@@ -197,19 +197,19 @@ def main():
 
                 if cleaned_data is None or cleaned_data.empty:
                     st.error(
-                        f"❌ No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures."
+                        f"No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures."
                     )
                     return
 
                 # Check if provider exists
                 if provider_code not in cleaned_data['provider_code'].values:
                     st.error(
-                        f"❌ Provider code '{provider_code}' not found in the dataset. Please check the code and try again."
+                        f"Provider code '{provider_code}' not found in the dataset. Please check the code and try again."
                     )
                     return
 
             # Generate analytics
-            with st.spinner("📈 Calculating performance metrics..."):
+            with st.spinner("Calculating performance metrics..."):
                 # Calculate rankings
                 rankings = analytics.calculate_rankings(
                     cleaned_data, peer_group_filter)
@@ -229,27 +229,27 @@ def main():
 
             # Additional insights section
             st.markdown("---")
-            with st.expander("📋 Detailed Analysis", expanded=False):
+            with st.expander("Detailed Analysis", expanded=False):
                 dashboard.render_detailed_analysis(cleaned_data, provider_code,
                                                    analytics)
 
             # Data quality metrics
-            with st.expander("🔍 Data Quality Report", expanded=False):
+            with st.expander("Data Quality Report", expanded=False):
                 dashboard.render_data_quality(cleaned_data, data_processor)
 
         except Exception as e:
-            st.error(f"❌ Error processing data: {str(e)}")
+            st.error(f"Error processing data: {str(e)}")
 
             # Show detailed error for debugging only if advanced logging is enabled
             if show_advanced_logging:
-                with st.expander("🔧 Technical Details", expanded=False):
+                with st.expander("Technical Details", expanded=False):
                     st.code(traceback.format_exc())
 
     else:
         # Welcome screen - no provider code entered yet
 
         # Professional How It Works Section
-        with st.expander("📋 How It Works - Get Insights in 3 Simple Steps",
+        with st.expander("How It Works - Get Insights in 3 Simple Steps",
                          expanded=True):
 
             # Workflow steps
@@ -261,7 +261,7 @@ def main():
             # Step 1
             st.markdown("""
                 <div class="workflow-step" data-step="1">
-                    <span class="workflow-step-icon">🏢</span>
+                    <div class="workflow-step-icon-professional building-icon"></div>
                     <h4 class="workflow-step-title">Select Your Provider</h4>
                     <p class="workflow-step-description">
                         Choose your housing provider from the dropdown or enter your provider code directly. 
@@ -274,7 +274,7 @@ def main():
             # Step 2
             st.markdown("""
                 <div class="workflow-step" data-step="2">
-                    <span class="workflow-step-icon">⚡</span>
+                    <div class="workflow-step-icon-professional analytics-icon"></div>
                     <h4 class="workflow-step-title">Instant Analysis</h4>
                     <p class="workflow-step-description">
                         Our AI engine processes your TSM data in seconds, calculating rankings, 
@@ -287,7 +287,7 @@ def main():
             # Step 3
             st.markdown("""
                 <div class="workflow-step" data-step="3">
-                    <span class="workflow-step-icon">📊</span>
+                    <div class="workflow-step-icon-professional dashboard-icon"></div>
                     <h4 class="workflow-step-title">Executive Dashboard</h4>
                     <p class="workflow-step-description">
                         Get clear, actionable insights with visual indicators showing your 
@@ -305,17 +305,17 @@ def main():
                 <h4 class="mobile-center" style="margin-bottom: 1rem; color: #1E293B;">What You'll Get</h4>
                 <div class="results-grid">
                     <div class="result-item">
-                        <div class="result-icon">🏆</div>
+                        <div class="result-icon-professional rank-result"></div>
                         <div class="result-label">Your Rank</div>
                         <div class="result-description">Quartile position vs peers</div>
                     </div>
                     <div class="result-item">
-                        <div class="result-icon">📈</div>
+                        <div class="result-icon-professional momentum-result"></div>
                         <div class="result-label">Your Momentum</div>
                         <div class="result-description">12-month trend direction</div>
                     </div>
                     <div class="result-item">
-                        <div class="result-icon">🎯</div>
+                        <div class="result-icon-professional priority-result"></div>
                         <div class="result-label">Your Priority</div>
                         <div class="result-description">Top improvement area</div>
                     </div>
@@ -328,17 +328,17 @@ def main():
             **Understanding Your Dashboard:**
             
             **Performance Ranking** - Color-coded quartile system:
-            - **🟢 Green**: Top performers (1st quartile) - Leading the sector
-            - **🟡 Yellow**: Above average (2nd quartile) - Strong performance  
-            - **🟠 Orange**: Below average (3rd quartile) - Room for improvement
-            - **🔴 Red**: Needs attention (4th quartile) - Priority focus area
+            - **Green**: Top performers (1st quartile) - Leading the sector
+            - **Yellow**: Above average (2nd quartile) - Strong performance  
+            - **Orange**: Below average (3rd quartile) - Room for improvement
+            - **Red**: Needs attention (4th quartile) - Priority focus area
             
-            **📈 Momentum Tracking** - 12-month performance trajectory:
-            - **↗️ Improving**: Positive trend - keep up the good work
-            - **→ Stable**: Consistent performance - maintain standards
-            - **↘️ Declining**: Negative trend - requires attention
+            **Momentum Tracking** - 12-month performance trajectory:
+            - **Improving**: Positive trend - keep up the good work
+            - **Stable**: Consistent performance - maintain standards
+            - **Declining**: Negative trend - requires attention
             
-            **🎯 Priority Focus** - Data-driven improvement recommendations:
+            **Priority Focus** - Data-driven improvement recommendations:
             - Identifies which satisfaction measure has the strongest correlation with overall performance
             - Focuses your improvement efforts where they'll have maximum impact
             - Based on statistical analysis of TP01-TP12 measures
@@ -367,7 +367,7 @@ def main():
         # Card 2: Secure & Compliant
         st.markdown("""
             <div class="data-card secure">
-                <h4 class="data-card-title">🔒 Secure & Compliant</h4>
+                <h4 class="data-card-title">Secure & Compliant</h4>
                 <p class="data-card-text">
                     Your data is processed securely with UK data protection compliance. 
                     No sensitive information is stored or shared.
