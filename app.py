@@ -67,20 +67,6 @@ def render_features_overview():
                 unsafe_allow_html=True)
 
 
-def render_trust_indicators():
-    """Render trust and credibility indicators"""
-    st.markdown("""
-    <div class="trust-indicators">
-        <h3 class="feature-title">Why trust the HAILIE Insights Engine?</h3>
-        <div class="mobile-stack">
-            <span class="trust-badge">UK Government TSM Data</span>
-            <span class="trust-badge">Secure & Compliant</span>
-            <span class="trust-badge">TP01-TP12 Measures</span>
-            <span class="trust-badge">All England Providers</span>
-        </div>
-    </div>
-    """,
-                unsafe_allow_html=True)
 
 
 def main():
@@ -90,8 +76,6 @@ def main():
     # Key features overview
     render_features_overview()
 
-    # Trust indicators
-    render_trust_indicators()
 
     # Initialize variables
     show_advanced_logging = False

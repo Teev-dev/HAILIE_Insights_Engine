@@ -388,52 +388,6 @@ def get_main_css():
         line-height: 1.3;
     }
     
-    .trust-indicators {
-        background: var(--bg-primary);
-        padding: var(--spacing-lg);
-        border-radius: var(--border-radius-md);
-        border: 1px solid var(--border-color);
-        margin: var(--spacing-md) 0;
-        box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
-    }
-    
-    .trust-indicators:hover {
-        box-shadow: var(--shadow-md);
-    }
-    
-    @media (max-width: 768px) {
-        .trust-indicators {
-            padding: var(--spacing-md);
-        }
-    }
-    
-    .trust-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #EEF2FF, #F0F7FF);
-        color: var(--primary-color);
-        padding: var(--spacing-xs) var(--spacing-md);
-        border-radius: 20px;
-        font-size: clamp(0.8rem, 2vw, 0.9rem);
-        font-weight: 600;
-        margin: calc(var(--spacing-xs) / 2);
-        border: 1px solid rgba(46, 91, 186, 0.2);
-        transition: all 0.2s ease;
-    }
-    
-    .trust-badge:hover {
-        background: linear-gradient(135deg, #E0E7FF, #EEF2FF);
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    @media (max-width: 768px) {
-        .trust-badge {
-            display: block;
-            margin: var(--spacing-xs) 0;
-            text-align: center;
-        }
-    }
     
     /* How It Works Section */
     .workflow-container {
