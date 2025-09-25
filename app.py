@@ -22,13 +22,8 @@ def render_landing_hero():
     """Render the professional hero section"""
     st.markdown("""
     <div class="hero-section">
-        <h1 class="hero-title">HAILIE TSM Insights Engine</h1>
-        <p class="hero-tagline">Transform Your Housing Performance Data Into Executive Intelligence</p>
-        <p class="hero-description">
-            Turn complex UK government TSM data into clear, actionable insights. 
-            Get your performance ranking, track momentum, and identify priority improvement areas 
-            with executive-level clarity.
-        </p>
+        <h1 class="hero-title">HAILIE Insights</h1>
+        <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
     </div>
     """,
                 unsafe_allow_html=True)
@@ -67,15 +62,12 @@ def render_features_overview():
                 unsafe_allow_html=True)
 
 
-
-
 def main():
     # Landing page hero section
     render_landing_hero()
 
     # Key features overview
     render_features_overview()
-
 
     # Initialize variables
     show_advanced_logging = False
@@ -369,7 +361,8 @@ def main():
                     surveys covering TP01-TP12 satisfaction measures.
                 </p>
             </div>
-        """, unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
         # Card 2: Secure & Compliant
         st.markdown("""
@@ -380,7 +373,8 @@ def main():
                     No sensitive information is stored or shared.
                 </p>
             </div>
-        """, unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
         # Card 3: Real-Time Analysis
         st.markdown("""
@@ -391,7 +385,8 @@ def main():
                     registered housing providers across England.
                 </p>
             </div>
-        """, unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
         st.markdown("""</div></div>""", unsafe_allow_html=True)
 
