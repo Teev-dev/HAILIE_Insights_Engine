@@ -116,6 +116,7 @@ def get_main_css():
         margin-left: auto;
         margin-right: auto;
         line-height: 1.6;
+        text-align: center;
     }
     
     .features-grid {

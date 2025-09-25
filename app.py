@@ -22,7 +22,7 @@ def render_landing_hero():
     """Render the professional hero section"""
     st.markdown("""
     <div class="hero-section">
-        <h1 class="hero-title">🏠 HAILIE TSM Insights Engine</h1>
+        <h1 class="hero-title">HAILIE TSM Insights Engine</h1>
         <p class="hero-tagline">Transform Your Housing Performance Data Into Executive Intelligence</p>
         <p class="hero-description">
             Turn complex UK government TSM data into clear, actionable insights. 
@@ -41,7 +41,7 @@ def render_features_overview():
         <div class="feature-card style="background-color: #ffffff;">
             <div style="display: flex; justify-content: space-between; color: #333333;">
                 <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon">🏆</span>
+                    <span class="feature-icon"></span>
                     <h3 class="feature-title">Your Rank</h3>
                     <p class="feature-description">
                         See exactly how your housing provider compares to peers with quartile-based scoring. 
@@ -49,7 +49,7 @@ def render_features_overview():
                     </p>
                 </div>
                 <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon">📈</span>
+                    <span class="feature-icon"></span>
                     <h3 class="feature-title">Your Momentum</h3>
                     <p class="feature-description">
                         Track your 12-month performance trajectory. Understand if you're improving, 
@@ -57,7 +57,7 @@ def render_features_overview():
                     </p>
                 </div>
                 <div style="flex: 1; text-align: center;">
-                    <span class="feature-icon">🎯</span>
+                    <span class="feature-icon"></span>
                     <h3 class="feature-title">Your Priority</h3>
                     <p class="feature-description">
                         Identify the single most critical area for improvement based on data-driven 
@@ -77,10 +77,10 @@ def render_trust_indicators():
     <div class="trust-indicators" style="background-color: #ffffff; color: #000000;">
         <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start;">
             <h3 class="feature-title" style="margin-bottom: 16px;">Why trust the HAILIE Insights Engine?</h3>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">✅ UK Government TSM Data</span>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">🔒 Secure & Compliant</span>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">📊 TP01-TP12 Measures</span>
-            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">🏛️ All England Providers</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">UK Government TSM Data</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">Secure & Compliant</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">TP01-TP12 Measures</span>
+            <span class="trust-badge" style="background-color: #f8f9fa; color: #0d6efd;">All England Providers</span>
         </div>
     </div>
     """,
@@ -128,9 +128,9 @@ def main():
         st.markdown("---")
 
         # Optional custom data upload
-        st.header("📊 Custom Data (Optional)")
+        st.header("Custom Data (Optional)")
         st.info(
-            "💡 Using default 2024 TSM data. Upload your own file only if you have custom data."
+            "Using default 2024 TSM data. Upload your own file only if you have custom data."
         )
         uploaded_file = st.file_uploader(
             "Upload Custom TSM Data",
@@ -141,10 +141,9 @@ def main():
 
         if uploaded_file is not None:
             st.success(
-                "✅ Custom file uploaded - using your data instead of default")
+                "Custom file uploaded - using your data instead of default")
 
-
-    st.markdown("## 🏢 Select Your Provider")
+    st.markdown("##Select Your Provider")
 
     col1, col2 = st.columns([2, 1])
 
@@ -280,11 +279,13 @@ def main():
         # Professional How It Works Section
         with st.expander("📋 How It Works - Get Insights in 3 Simple Steps",
                          expanded=True):
-            
+
             # Workflow steps
-            st.markdown("""<div class="workflow-container">""", unsafe_allow_html=True)
-            st.markdown("""<div class="workflow-steps">""", unsafe_allow_html=True)
-            
+            st.markdown("""<div class="workflow-container">""",
+                        unsafe_allow_html=True)
+            st.markdown("""<div class="workflow-steps">""",
+                        unsafe_allow_html=True)
+
             # Step 1
             st.markdown("""
                 <div class="workflow-step" data-step="1">
@@ -295,8 +296,9 @@ def main():
                         Our system recognizes all UK housing providers.
                     </p>
                 </div>
-            """, unsafe_allow_html=True)
-            
+            """,
+                        unsafe_allow_html=True)
+
             # Step 2
             st.markdown("""
                 <div class="workflow-step" data-step="2">
@@ -307,8 +309,9 @@ def main():
                         momentum trends, and priority insights automatically.
                     </p>
                 </div>
-            """, unsafe_allow_html=True)
-            
+            """,
+                        unsafe_allow_html=True)
+
             # Step 3
             st.markdown("""
                 <div class="workflow-step" data-step="3">
@@ -319,10 +322,11 @@ def main():
                         performance position and improvement opportunities.
                     </p>
                 </div>
-            """, unsafe_allow_html=True)
-            
+            """,
+                        unsafe_allow_html=True)
+
             st.markdown("""</div></div>""", unsafe_allow_html=True)
-            
+
             # Results preview section
             st.markdown("""
             <div class="results-preview">
@@ -345,12 +349,13 @@ def main():
                     </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            """,
+                        unsafe_allow_html=True)
 
             st.markdown("""
-            **💡 Understanding Your Dashboard:**
+            **Understanding Your Dashboard:**
             
-            **🏆 Performance Ranking** - Color-coded quartile system:
+            **Performance Ranking** - Color-coded quartile system:
             - **🟢 Green**: Top performers (1st quartile) - Leading the sector
             - **🟡 Yellow**: Above average (2nd quartile) - Strong performance  
             - **🟠 Orange**: Below average (3rd quartile) - Room for improvement
@@ -368,21 +373,27 @@ def main():
             """)
 
         # Additional Information Section
-        st.markdown("""<div class="workflow-container">""", unsafe_allow_html=True)
-        st.markdown("""<h3 style="color: #1E293B; margin-bottom: 1rem;">📊 About Your Data</h3>""", unsafe_allow_html=True)
-        st.markdown("""<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">""", unsafe_allow_html=True)
-        
+        st.markdown("""<div class="workflow-container">""",
+                    unsafe_allow_html=True)
+        st.markdown(
+            """<h3 style="color: #1E293B; margin-bottom: 1rem;">About Your Data</h3>""",
+            unsafe_allow_html=True)
+        st.markdown(
+            """<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">""",
+            unsafe_allow_html=True)
+
         # Card 1: Official Government Data
         st.markdown("""
             <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #2E5BBA;">
-                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">🏛️ Official Government Data</h4>
+                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">Official Government Data</h4>
                 <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
                     All analysis based on official UK government TSM (Tenant Satisfaction Measures) 
                     surveys covering TP01-TP12 satisfaction measures.
                 </p>
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+                    unsafe_allow_html=True)
+
         # Card 2: Secure & Compliant
         st.markdown("""
             <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #22C55E;">
@@ -392,19 +403,21 @@ def main():
                     No sensitive information is stored or shared.
                 </p>
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+                    unsafe_allow_html=True)
+
         # Card 3: Real-Time Analysis
         st.markdown("""
             <div style="background: #F8FAFC; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #F59E0B;">
-                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">📈 Real-Time Analysis</h4>
+                <h4 style="color: #1E293B; margin-bottom: 0.5rem;">Real-Time Analysis</h4>
                 <p style="color: #64748B; margin: 0; font-size: 0.95rem;">
                     Get instant insights from the latest 2024 dataset covering all 
                     registered housing providers across England.
                 </p>
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+                    unsafe_allow_html=True)
+
         st.markdown("""</div></div>""", unsafe_allow_html=True)
 
 
