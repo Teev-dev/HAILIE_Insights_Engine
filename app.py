@@ -72,10 +72,9 @@ def main():
     # Initialize variables
     show_advanced_logging = False
 
-    # Initialize data processor to get provider options with progress indicator
-    with st.spinner("🏠 Loading provider options..."):
-        data_processor_for_options = TSMDataProcessor(silent_mode=True)
-        provider_options = data_processor_for_options.get_provider_options()
+    # Initialize data processor to get provider options
+    data_processor_for_options = TSMDataProcessor(silent_mode=True)
+    provider_options = data_processor_for_options.get_provider_options()
 
     provider_code = None
 
@@ -170,24 +169,20 @@ def main():
     # Main content area
     if provider_code:
         try:
-            # Initialize processors with enhanced progress tracking
-            progress_placeholder = st.empty()
-            
-            with progress_placeholder.container():
-                st.info("🔄 Initializing analysis engine...")
-            
-            data_processor = TSMDataProcessor(silent_mode=not show_advanced_logging)
-            analytics = TSMAnalytics()
-            dashboard = ExecutiveDashboard()
+            # Initialize processors with silent mode based on checkbox
+            with st.spinner("Processing TSM data..."):
+                data_processor = TSMDataProcessor(
+                    silent_mode=not show_advanced_logging)
+                analytics = TSMAnalytics()
+                dashboard = ExecutiveDashboard()
 
-            # Load data with detailed progress indicators
-            with progress_placeholder.container():
+                # Load data - either uploaded file or default
                 if uploaded_file is not None:
-                    st.info("📄 Processing your custom TSM data file...")
+                    # Process the uploaded file
                     df = data_processor.load_excel_file(uploaded_file)
                     data_source = "custom uploaded file"
                 else:
-                    st.info(f"📊 Loading TSM data for provider {provider_code}...")
+                    # Load default data with provider-specific sheet selection
                     df = data_processor.load_default_data(provider_code)
                     data_source = "default 2024 TSM dataset"
 
@@ -213,24 +208,19 @@ def main():
                     )
                     return
 
-            # Generate analytics with detailed progress
-            with progress_placeholder.container():
-                st.info("🧮 Calculating performance rankings...")
+            # Generate analytics
+            with st.spinner("Calculating performance metrics..."):
+                # Calculate rankings
                 rankings = analytics.calculate_rankings(
                     cleaned_data, peer_group_filter)
 
-            with progress_placeholder.container():
-                st.info("📈 Analyzing 12-month momentum trends...")
+                # Calculate momentum
                 momentum = analytics.calculate_momentum(
                     cleaned_data, provider_code)
 
-            with progress_placeholder.container():
-                st.info("🎯 Identifying priority improvement areas...")
+                # Identify priority
                 priority = analytics.identify_priority(cleaned_data,
                                                        provider_code)
-            
-            # Clear progress indicator
-            progress_placeholder.empty()
 
             # Display executive dashboard at the top
             dashboard.render_executive_summary(provider_code, rankings,
