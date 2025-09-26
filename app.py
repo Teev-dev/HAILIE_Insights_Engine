@@ -22,7 +22,7 @@ def render_landing_hero():
     """Render the professional hero section"""
     st.markdown("""
     <div class="hero-section">
-        <h1 class="hero-title">HAILIE Insights</h1>
+        <h1 class="hero-title">TSM Insights by HAILIE</h1>
         <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
     </div>
     """,
@@ -281,16 +281,15 @@ def main():
             """,
                         unsafe_allow_html=True)
 
-
             st.markdown("#### What You'll Get")
-            
+
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.markdown("**Your Rank**")  
+                st.markdown("**Your Rank**")
                 st.markdown("Quartile position vs peers")
             with col2:
                 st.markdown("**Your Momentum**")
-                st.markdown("12-month trend direction") 
+                st.markdown("12-month trend direction")
             with col3:
                 st.markdown("**Your Priority**")
                 st.markdown("Top improvement area")
@@ -315,22 +314,28 @@ def main():
             - Based on statistical analysis of TP01-TP12 measures
             """)
 
-        # Additional Information Section  
+        # Additional Information Section
         st.markdown("### About the Data")
 
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             st.markdown("**Official Government Data**")
-            st.markdown("All analysis based on official UK government TSM (Tenant Satisfaction Measures) surveys covering TP01-TP12 satisfaction measures.")
-            
+            st.markdown(
+                "All analysis based on official UK government TSM (Tenant Satisfaction Measures) surveys covering TP01-TP12 satisfaction measures."
+            )
+
         with col2:
-            st.markdown("**Secure & Compliant**") 
-            st.markdown("Your data is processed securely with UK data protection compliance. No sensitive information is stored or shared.")
-            
+            st.markdown("**Secure & Compliant**")
+            st.markdown(
+                "Your data is processed securely with UK data protection compliance. No sensitive information is stored or shared."
+            )
+
         with col3:
             st.markdown("**Built-In Analysis**")
-            st.markdown("Get instant insights from the latest 2024 dataset covering all registered housing providers across England.")
+            st.markdown(
+                "Get instant insights from the latest 2024 dataset covering all registered housing providers across England."
+            )
 
 
 if __name__ == "__main__":
