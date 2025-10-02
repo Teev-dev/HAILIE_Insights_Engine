@@ -96,24 +96,24 @@ def main():
             "Show advanced logging view",
             value=False,
             help="Display detailed processing logs and debugging information")
+        # Remove customer upload function
+        # st.markdown("---")
 
-        st.markdown("---")
+        # # Optional custom data upload
+        # st.header("Custom Data (Optional)")
+        # st.info(
+        #     "Using default 2024 TSM data. Upload your own file only if you have custom data."
+        # )
+        # uploaded_file = st.file_uploader(
+        #     "Upload Custom TSM Data",
+        #     type=['xlsx', 'xls'],
+        #     help=
+        #     "Optional: Upload your own TSM data file to override the default 2024 dataset"
+        # )
 
-        # Optional custom data upload
-        st.header("Custom Data (Optional)")
-        st.info(
-            "Using default 2024 TSM data. Upload your own file only if you have custom data."
-        )
-        uploaded_file = st.file_uploader(
-            "Upload Custom TSM Data",
-            type=['xlsx', 'xls'],
-            help=
-            "Optional: Upload your own TSM data file to override the default 2024 dataset"
-        )
-
-        if uploaded_file is not None:
-            st.success(
-                "Custom file uploaded - using your data instead of default")
+        # if uploaded_file is not None:
+        #     st.success(
+        #         "Custom file uploaded - using your data instead of default")
 
     st.markdown("## Select Your Provider")
 
@@ -176,15 +176,18 @@ def main():
                 analytics = TSMAnalytics()
                 dashboard = ExecutiveDashboard()
 
-                # Load data - either uploaded file or default
-                if uploaded_file is not None:
-                    # Process the uploaded file
-                    df = data_processor.load_excel_file(uploaded_file)
-                    data_source = "custom uploaded file"
-                else:
-                    # Load default data with provider-specific sheet selection
-                    df = data_processor.load_default_data(provider_code)
-                    data_source = "default 2024 TSM dataset"
+                # # Load data - either uploaded file or default
+                # if uploaded_file is not None:
+                #     # Process the uploaded file
+                #     df = data_processor.load_excel_file(uploaded_file)
+                #     data_source = "custom uploaded file"
+                # else:
+                #     # Load default data with provider-specific sheet selection
+                #     df = data_processor.load_default_data(provider_code)
+                #     data_source = "default 2024 TSM dataset"
+                # Load default data with provider-specific sheet selection only (file upload function is removed)
+                df = data_processor.load_default_data(provider_code)
+                data_source = "default 2024 TSM dataset"
 
                 if df is None or df.empty:
                     st.error(
