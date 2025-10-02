@@ -134,22 +134,22 @@ def main():
             if selected_provider != "Select a provider...":
                 provider_code = provider_options[selected_provider]
                 st.success(f"Selected: {provider_code}")
+        # Removing provider code entry
+        #     st.markdown("**OR**")
 
-            st.markdown("**OR**")
+        # # Fallback text input for provider code
+        # text_provider_code = st.text_input(
+        #     "Enter Provider Code Directly",
+        #     placeholder="e.g., H1234",
+        #     help=
+        #     "Enter your housing provider's unique identifier if not found above"
+        # )
 
-        # Fallback text input for provider code
-        text_provider_code = st.text_input(
-            "Enter Provider Code Directly",
-            placeholder="e.g., H1234",
-            help=
-            "Enter your housing provider's unique identifier if not found above"
-        )
-
-        # Use text input if provided, otherwise use dropdown selection
-        if text_provider_code:
-            provider_code = text_provider_code
-            if provider_options:
-                st.info("Using manually entered provider code")
+        # # Use text input if provided, otherwise use dropdown selection
+        # if text_provider_code:
+        #     provider_code = text_provider_code
+        #     if provider_options:
+        #         st.info("Using manually entered provider code")
 
     with col2:
         st.markdown("### Quick Help")
