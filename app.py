@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from data_processor import TSMDataProcessor
-from analytics import TSMAnalytics
+from data_processor_refactored import TSMDataProcessor
+from analytics_refactored import TSMAnalytics
 from dashboard import ExecutiveDashboard
 from styles import apply_css
 import traceback
 from contextlib import contextmanager
+import os
 
 # Page configuration
 st.set_page_config(page_title="HAILIE TSM Insights Engine",
@@ -62,12 +63,34 @@ def render_features_overview():
                 unsafe_allow_html=True)
 
 
+def check_database_exists():
+    """Check if the analytics database exists"""
+    db_path = "attached_assets/hailie_analytics.duckdb"
+    return os.path.exists(db_path)
+
+
 def main():
     # Landing page hero section
     render_landing_hero()
 
     # Key features overview
     render_features_overview()
+
+    # Check if database exists
+    if not check_database_exists():
+        st.error("""
+        ❌ **Analytics Database Not Found**
+        
+        The pre-calculated analytics database has not been generated yet.
+        Please run the ETL pipeline first:
+        
+        ```bash
+        python build_analytics_db.py
+        ```
+        
+        This will process the TSM data and create the analytics database required for the application.
+        """)
+        return
 
     # Initialize variables
     show_advanced_logging = False
@@ -78,9 +101,8 @@ def main():
 
     provider_code = None
 
-    # Sidebar for analysis options and optional file upload
+    # Sidebar for analysis options
     with st.sidebar:
-
         # Analysis options
         st.header("Analysis Options")
         include_confidence = st.checkbox("Include confidence intervals",
@@ -96,24 +118,18 @@ def main():
             "Show advanced logging view",
             value=False,
             help="Display detailed processing logs and debugging information")
-        # Remove customer upload function
-        # st.markdown("---")
-
-        # # Optional custom data upload
-        # st.header("Custom Data (Optional)")
-        # st.info(
-        #     "Using default 2024 TSM data. Upload your own file only if you have custom data."
-        # )
-        # uploaded_file = st.file_uploader(
-        #     "Upload Custom TSM Data",
-        #     type=['xlsx', 'xls'],
-        #     help=
-        #     "Optional: Upload your own TSM data file to override the default 2024 dataset"
-        # )
-
-        # if uploaded_file is not None:
-        #     st.success(
-        #         "Custom file uploaded - using your data instead of default")
+        
+        # Note about the new architecture
+        st.markdown("---")
+        st.info("""
+        📊 **Pre-Calculated Analytics**
+        
+        This application now uses a pre-calculated analytics database for 
+        instant performance. All percentiles and correlations are pre-computed 
+        for optimal speed.
+        
+        Data source: 2024 TSM Dataset
+        """)
 
     st.markdown("## Select Your Provider")
 
@@ -124,221 +140,115 @@ def main():
             # Provider search dropdown with autocomplete
             st.subheader("Search by Provider Name")
             selected_provider = st.selectbox(
-                "Select your provider",
-                options=["Select a provider..."] +
-                list(provider_options.keys()),
-                index=0,
-                help="Search and select your housing provider from the dropdown"
-            )
+                "Type or select your provider:",
+                options=[""] + provider_options,
+                help="Start typing to search for your provider",
+                format_func=lambda x: "Select a provider..." if x == "" else x)
 
-            if selected_provider != "Select a provider...":
-                provider_code = provider_options[selected_provider]
-                st.success(f"Selected: {provider_code}")
-        # Removing provider code entry
-        #     st.markdown("**OR**")
-
-        # # Fallback text input for provider code
-        # text_provider_code = st.text_input(
-        #     "Enter Provider Code Directly",
-        #     placeholder="e.g., H1234",
-        #     help=
-        #     "Enter your housing provider's unique identifier if not found above"
-        # )
-
-        # # Use text input if provided, otherwise use dropdown selection
-        # if text_provider_code:
-        #     provider_code = text_provider_code
-        #     if provider_options:
-        #         st.info("Using manually entered provider code")
+            # Extract provider code from selection
+            if selected_provider and selected_provider != "":
+                # Format is "Provider Name (CODE)"
+                if "(" in selected_provider and ")" in selected_provider:
+                    provider_code = selected_provider.split("(")[-1].replace(")", "")
+                else:
+                    provider_code = None
+        else:
+            st.error("No providers found in the database")
+            provider_code = None
 
     with col2:
-        st.markdown("### Quick Help")
-        st.markdown("""
-        **Need your provider code?**
-        - Check with your housing team
-        - Look for codes like H1234, H0001
-        - Use the search dropdown if unsure
-        
-        **Can't find your provider?**
-        - Try entering the code directly
-        - Check if it's in the dropdown list
-        """)
+        st.subheader("Or Enter Provider Code")
+        direct_code = st.text_input("Enter your 4-character code:",
+                                    max_chars=4,
+                                    placeholder="e.g., L001",
+                                    help="Enter your provider code directly")
 
-    st.markdown("---")
+        if direct_code:
+            provider_code = direct_code.upper()
 
-    # Main content area
+    # Process the selected provider
     if provider_code:
-        try:
-            # Initialize processors with silent mode based on checkbox
-            with st.spinner("Processing TSM data..."):
-                data_processor = TSMDataProcessor(
-                    silent_mode=not show_advanced_logging)
-                analytics = TSMAnalytics()
-                dashboard = ExecutiveDashboard()
+        st.markdown("---")
 
-                # # Load data - either uploaded file or default
-                # if uploaded_file is not None:
-                #     # Process the uploaded file
-                #     df = data_processor.load_excel_file(uploaded_file)
-                #     data_source = "custom uploaded file"
-                # else:
-                #     # Load default data with provider-specific sheet selection
-                #     df = data_processor.load_default_data(provider_code)
-                #     data_source = "default 2024 TSM dataset"
-                # Load default data with provider-specific sheet selection only (file upload function is removed)
-                df = data_processor.load_default_data(provider_code)
-                data_source = "default 2024 TSM dataset"
+        # Initialize data processor and analytics with database connection
+        data_processor = TSMDataProcessor(silent_mode=not show_advanced_logging)
+        analytics = TSMAnalytics(data_processor)
 
-                if df is None or df.empty:
-                    st.error(
-                        f"Failed to load data from the {data_source}. Please check the file format."
-                    )
-                    return
+        # Check if provider exists in database
+        if not data_processor.get_provider_exists(provider_code):
+            st.error(f"❌ Provider '{provider_code}' not found in the database")
+            return
 
-                # Clean and validate data
-                cleaned_data = data_processor.clean_and_validate(df)
+        # Load data (for backward compatibility with dashboard)
+        df = data_processor.load_default_data()
+        
+        if df is None or df.empty:
+            st.error("❌ Failed to load provider data from analytics database")
+            return
 
-                if cleaned_data is None or cleaned_data.empty:
-                    st.error(
-                        f"No valid TSM data found in the {data_source}. Please ensure the data contains TP01-TP12 measures."
-                    )
-                    return
+        st.success(f"✅ Loaded pre-calculated analytics for provider: {provider_code}")
 
-                # Check if provider exists
-                if provider_code not in cleaned_data['provider_code'].values:
-                    st.error(
-                        f"Provider code '{provider_code}' not found in the dataset. Please check the code and try again."
-                    )
-                    return
+        # Calculate key metrics using pre-calculated data
+        rankings = analytics.calculate_rankings(df, peer_group_filter)
+        momentum = analytics.calculate_momentum(df, provider_code)
+        priority = analytics.identify_priority(df, provider_code)
 
-            # Generate analytics
-            with st.spinner("Calculating performance metrics..."):
-                # Calculate rankings
-                rankings = analytics.calculate_rankings(
-                    cleaned_data, peer_group_filter)
+        # Initialize and render dashboard
+        dashboard = ExecutiveDashboard()
 
-                # Calculate momentum
-                momentum = analytics.calculate_momentum(
-                    cleaned_data, provider_code)
+        # Executive Summary
+        dashboard.render_executive_summary(provider_code, rankings, momentum,
+                                          priority)
 
-                # Identify priority
-                priority = analytics.identify_priority(cleaned_data,
-                                                       provider_code)
+        # Detailed Analysis Tabs
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📊 Performance Analysis",
+            "📈 Measure Correlations",
+            "🎯 Priority Matrix",
+            "📋 Raw Data"
+        ])
 
-            # Display executive dashboard at the top
-            dashboard.render_executive_summary(provider_code, rankings,
-                                               momentum, priority,
-                                               include_confidence)
+        with tab1:
+            detailed_analysis = analytics.get_detailed_performance_analysis(
+                df, provider_code)
+            dashboard.render_performance_analysis(detailed_analysis)
 
-            # Additional insights section
-            st.markdown("---")
-            with st.expander("Detailed Analysis", expanded=False):
-                dashboard.render_detailed_analysis(cleaned_data, provider_code,
-                                                   analytics)
+        with tab2:
+            # Get pre-calculated correlations
+            correlations = data_processor.get_all_correlations()
+            dashboard.render_correlation_analysis(correlations, priority)
 
-            # Data quality metrics
-            with st.expander("Data Quality Report", expanded=False):
-                dashboard.render_data_quality(cleaned_data, data_processor)
+        with tab3:
+            dashboard.render_priority_matrix(priority, detailed_analysis)
 
-        except Exception as e:
-            st.error(f"Error processing data: {str(e)}")
+        with tab4:
+            # Show provider's raw scores
+            provider_scores = data_processor.get_provider_scores(provider_code)
+            if provider_scores:
+                scores_df = pd.DataFrame([provider_scores])
+                st.dataframe(scores_df, use_container_width=True)
+            else:
+                st.info("No raw data available for this provider")
 
-            # Show detailed error for debugging only if advanced logging is enabled
-            if show_advanced_logging:
-                with st.expander("Technical Details", expanded=False):
-                    st.code(traceback.format_exc())
+        # Footer
+        st.markdown("---")
+        st.caption(
+            "HAILIE TSM Insights Engine v2.0 | Using Pre-Calculated Analytics Database | Data: 2024 TSM Dataset"
+        )
+        
+        # Close database connection when done
+        data_processor.close()
 
     else:
-        # Welcome screen - no provider code entered yet
-
-        # Professional How It Works Section
-        with st.expander("How It Works - Get Insights in 3 Simple Steps",
-                         expanded=True):
-
-            # Workflow steps
-
-            # Step 1
-            st.markdown("""
-            **1. Select Your Provider**
-            
-            Choose your housing provider from the dropdown or enter your provider code directly. 
-            Our system recognizes all UK housing providers.
-            """,
-                        unsafe_allow_html=True)
-
-            # Step 2
-            st.markdown("""
-            **2. Instant Analysis**
-            
-            Our AI engine processes your TSM data in seconds, calculating rankings, 
-            momentum trends, and priority insights automatically.
-            """,
-                        unsafe_allow_html=True)
-
-            # Step 3
-            st.markdown("""
-            **3. Executive Dashboard**
-            
-            Get clear, actionable insights with visual indicators showing your 
-            performance position and improvement opportunities.
-            """,
-                        unsafe_allow_html=True)
-
-            st.markdown("#### What You'll Get")
-
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown("**Your Rank**")
-                st.markdown("Quartile position vs peers")
-            with col2:
-                st.markdown("**Your Momentum**")
-                st.markdown("12-month trend direction")
-            with col3:
-                st.markdown("**Your Priority**")
-                st.markdown("Top improvement area")
-
-            st.markdown("""
-            **Understanding Your Dashboard:**
-            
-            **Performance Ranking** - Color-coded quartile system:
-            - **Green**: Top performers (1st quartile) - Leading the sector
-            - **Yellow**: Above average (2nd quartile) - Strong performance  
-            - **Orange**: Below average (3rd quartile) - Room for improvement
-            - **Red**: Needs attention (4th quartile) - Priority focus area
-            
-            **Momentum Tracking** - 12-month performance trajectory:
-            - **Improving**: Positive trend - keep up the good work
-            - **Stable**: Consistent performance - maintain standards
-            - **Declining**: Negative trend - requires attention
-            
-            **Priority Focus** - Data-driven improvement recommendations:
-            - Identifies which satisfaction measure has the strongest correlation with overall performance
-            - Focuses your improvement efforts where they'll have maximum impact
-            - Based on statistical analysis of TP01-TP12 measures
-            """)
-
-        # Additional Information Section
-        st.markdown("### About the Data")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.markdown("**Official Government Data**")
-            st.markdown(
-                "All analysis based on official UK government TSM (Tenant Satisfaction Measures) surveys covering TP01-TP12 satisfaction measures."
-            )
-
-        with col2:
-            st.markdown("**Secure & Compliant**")
-            st.markdown(
-                "Your data is processed securely with UK data protection compliance. No sensitive information is stored or shared."
-            )
-
-        with col3:
-            st.markdown("**Built-In Analysis**")
-            st.markdown(
-                "Get instant insights from the latest 2024 dataset covering all registered housing providers across England."
-            )
+        # Instructions when no provider is selected
+        st.markdown("---")
+        st.info("""
+        👆 **Getting Started:**
+        1. Search for your provider name in the dropdown above, or
+        2. Enter your 4-character provider code directly
+        
+        The system will instantly retrieve your pre-calculated analytics.
+        """)
 
 
 if __name__ == "__main__":

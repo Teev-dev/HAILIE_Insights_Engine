@@ -1,16 +1,21 @@
+"""
+Refactored Analytics Module for Pre-calculated DuckDB Data
+Uses pre-calculated analytics from DuckDB instead of on-the-fly calculations
+"""
+
 import pandas as pd
 import numpy as np
 import streamlit as st
-from typing import Dict, List, Optional, Tuple
-from scipy import stats
-from scipy.stats import pearsonr
+from typing import Dict, List, Optional
+
 
 class TSMAnalytics:
     """
-    Handles analytics calculations for TSM data including rankings, momentum, and priorities
+    Handles analytics retrieval from pre-calculated DuckDB analytics
     """
     
-    def __init__(self):
+    def __init__(self, data_processor):
+        self.data_processor = data_processor  # Instance of refactored TSMDataProcessor
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
         self.tp_descriptions = {
             'TP01': 'Overall satisfaction',
@@ -29,40 +34,45 @@ class TSMAnalytics:
     
     def calculate_rankings(self, df: pd.DataFrame, peer_group_filter: str = "All Providers") -> Dict:
         """
-        Calculate provider rankings with quartile-based scoring
+        Calculate provider rankings using pre-calculated percentiles
+        Note: df parameter maintained for backward compatibility but not used
         """
         try:
-            tp_cols = [col for col in df.columns if col.startswith('TP')]
+            # Get all providers with their scores
+            all_providers_df = self.data_processor.get_all_providers_with_scores()
             
-            if not tp_cols:
-                return {"error": "No TP measures found for ranking calculation"}
+            if all_providers_df.empty:
+                return {"error": "No provider data available"}
             
-            # Apply peer group filtering
-            filtered_df = self._apply_peer_group_filter(df, peer_group_filter)
+            # Apply peer group filtering (simplified for MVP)
+            filtered_df = self._apply_peer_group_filter(all_providers_df, peer_group_filter)
             
-            # Calculate composite score for each provider
+            # Calculate composite scores from the pre-calculated data
             provider_scores = {}
             
             for _, row in filtered_df.iterrows():
                 provider_code = row['provider_code']
                 tp_values = []
                 
-                for tp_col in tp_cols:
-                    if pd.notna(row[tp_col]) == True:
-                        tp_values.append(float(row[tp_col]))
+                for tp_col in self.tp_codes:
+                    if tp_col in row:
+                        value = row[tp_col]
+                        if pd.notna(value):
+                            tp_values.append(float(value))
                 
                 if tp_values:
-                    # Calculate weighted average (equal weights for now)
                     composite_score = np.mean(tp_values)
                     provider_scores[provider_code] = {
                         'score': composite_score,
                         'measures_count': len(tp_values),
-                        'individual_scores': {tp_cols[i]: tp_values[i] for i in range(len(tp_values)) if i < len(tp_cols)}
+                        'individual_scores': {self.tp_codes[i]: tp_values[i] 
+                                            for i in range(len(tp_values)) 
+                                            if i < len(self.tp_codes) and i < len(tp_values)}
                     }
             
-            # Calculate rankings and quartiles
+            # Sort and rank providers
             scores_list = [(provider, data['score']) for provider, data in provider_scores.items()]
-            scores_list.sort(key=lambda x: x[1], reverse=True)  # Higher scores = better ranking
+            scores_list.sort(key=lambda x: x[1], reverse=True)
             
             total_providers = len(scores_list)
             
@@ -87,13 +97,12 @@ class TSMAnalytics:
                 
                 rankings[provider] = {
                     'rank': rank,
-                    'total_providers': total_providers,
                     'score': score,
                     'percentile': percentile,
                     'quartile': quartile,
                     'quartile_color': quartile_color,
-                    'measures_count': provider_scores[provider]['measures_count'],
-                    'individual_scores': provider_scores[provider]['individual_scores']
+                    'total_providers': total_providers,
+                    'measures_count': provider_scores[provider]['measures_count']
                 }
             
             return rankings
@@ -119,191 +128,156 @@ class TSMAnalytics:
     
     def identify_priority(self, df: pd.DataFrame, provider_code: str) -> Dict:
         """
-        Identify highest-priority improvement area through comprehensive correlation analysis with TP01
+        Identify highest-priority improvement area using pre-calculated correlations and percentiles
         """
         try:
-            if provider_code not in df['provider_code'].values:
+            # Check if provider exists
+            if not self.data_processor.get_provider_exists(provider_code):
                 return {"error": f"Provider {provider_code} not found"}
             
-            provider_row = df[df['provider_code'] == provider_code].iloc[0]
-            tp_cols = [col for col in df.columns if col.startswith('TP')]
-            
-            # Calculate correlations between all measures and TP01 across all providers
-            correlations_with_tp01 = {}
-            provider_scores = {}
-            
-            # Get provider's scores
-            for tp_col in tp_cols:
-                if pd.notna(provider_row[tp_col]):
-                    provider_scores[tp_col] = float(provider_row[tp_col])
+            # Get provider's scores and percentiles
+            provider_scores = self.data_processor.get_provider_scores(provider_code)
+            provider_percentiles = self.data_processor.get_provider_percentiles(provider_code)
             
             if not provider_scores:
-                return {"error": "No valid scores found for priority analysis"}
+                return {"error": "No scores found for priority analysis"}
             
-            # Calculate correlations of each measure with TP01 (overall satisfaction)
-            if 'TP01' in df.columns:
-                tp01_scores = df['TP01'].dropna()
-                
-                for tp_col in tp_cols:
-                    if tp_col != 'TP01' and tp_col in df.columns:
-                        measure_scores = df[tp_col].dropna()
-                        
-                        # Get common indices for correlation
-                        common_indices = tp01_scores.index.intersection(measure_scores.index)
-                        
-                        if len(common_indices) > 5:  # Need sufficient data for correlation
-                            try:
-                                corr_coef, p_value = pearsonr(
-                                    tp01_scores.loc[common_indices],
-                                    measure_scores.loc[common_indices]
-                                )
-                                correlations_with_tp01[tp_col] = {
-                                    'correlation': corr_coef,
-                                    'p_value': p_value,
-                                    'strength': abs(corr_coef),
-                                    'sample_size': len(common_indices)
-                                }
-                            except:
-                                correlations_with_tp01[tp_col] = {
-                                    'correlation': 0,
-                                    'p_value': 1,
-                                    'strength': 0,
-                                    'sample_size': len(common_indices)
-                                }
+            # Convert percentiles DataFrame to dict for easier access
+            percentile_dict = {}
+            if not provider_percentiles.empty:
+                percentile_dict = dict(zip(provider_percentiles['tp_measure'], 
+                                          provider_percentiles['percentile_rank']))
             
-            # Calculate peer percentiles and improvement potential for each measure
-            peer_percentiles = {}
-            improvement_potential = {}
-            weighted_priorities = {}  # Combined score of improvement potential * correlation strength
+            # Get pre-calculated correlations with TP01
+            correlations_df = self.data_processor.get_all_correlations()
+            correlation_dict = {}
+            if not correlations_df.empty:
+                correlation_dict = dict(zip(correlations_df['tp_measure'], 
+                                           correlations_df['correlation_with_tp01']))
             
-            for tp_col in tp_cols:
-                if tp_col == 'TP01': 
-                    continue  # skip TP01 (overall satisfaction) to avoid self-correlation
-                if tp_col in provider_scores:
-                    # Get all valid scores for this measure
-                    all_scores = df[tp_col].dropna()
+            # Calculate priority for each measure
+            priority_scores = {}
+            
+            for tp_measure in self.tp_codes[1:]:  # Skip TP01
+                if tp_measure not in provider_scores:
+                    continue
                     
-                    if len(all_scores) > 1:
-                        provider_score = provider_scores[tp_col]
-                        
-                        # Calculate percentile
-                        percentile = stats.percentileofscore(all_scores, provider_score)
-                        peer_percentiles[tp_col] = percentile
-                        
-                        # Calculate improvement potential (inverse of percentile)
-                        improvement_potential[tp_col] = 100 - percentile
-                        
-                        # Calculate weighted priority (improvement potential * correlation with TP01)
-                        if tp_col in correlations_with_tp01:
-                            correlation_weight = correlations_with_tp01[tp_col]['strength']
-                        else:
-                            correlation_weight = 0.5  # Default moderate correlation if not available
-                        
-                        # Weighted priority considers both improvement potential and correlation with overall satisfaction
-                        weighted_priorities[tp_col] = improvement_potential[tp_col] * (0.5 + 0.5 * correlation_weight)
-            
-            # Find the measure with highest weighted priority
-            if weighted_priorities:
-                # Sort measures by weighted priority
-                sorted_priorities = sorted(weighted_priorities.items(), key=lambda x: x[1], reverse=True)
-                priority_measure = sorted_priorities[0][0]
-                priority_potential = improvement_potential[priority_measure]
-                
-                # Get correlation info for the priority measure
-                correlation_info = correlations_with_tp01.get(priority_measure, {
-                    'correlation': 0,
-                    'strength': 0,
-                    'p_value': 1
-                })
-                
-                # Determine priority level based on weighted priority score
-                weighted_score = weighted_priorities[priority_measure]
-                if weighted_score > 60:
-                    priority_level = "Critical"
-                    priority_color = "#EF4444"
-                elif weighted_score > 40:
-                    priority_level = "High"
-                    priority_color = "#F59E0B"
-                elif weighted_score > 20:
-                    priority_level = "Medium"
-                    priority_color = "#84CC16"
+                # Get percentile (or calculate if not available)
+                if tp_measure in percentile_dict:
+                    percentile = percentile_dict[tp_measure]
                 else:
-                    priority_level = "Low"
-                    priority_color = "#22C55E"
+                    # Fallback: calculate percentile on the fly
+                    score = provider_scores[tp_measure]
+                    percentile = self.data_processor.get_percentile_for_score(tp_measure, score)
                 
-                # Build comprehensive priority analysis
-                return {
-                    'measure': priority_measure,
-                    'measure_name': self.tp_descriptions.get(priority_measure, priority_measure),
-                    'improvement_potential': priority_potential,
-                    'current_percentile': peer_percentiles.get(priority_measure, 50),
-                    'current_score': provider_scores[priority_measure],
-                    'priority_level': priority_level,
-                    'priority_color': priority_color,
-                    'correlation_with_tp01': correlation_info.get('correlation', 0),
-                    'correlation_strength': correlation_info.get('strength', 0) * 100,
-                    'correlation_p_value': correlation_info.get('p_value', 1),
-                    'weighted_priority_score': weighted_score,
-                    'all_potentials': improvement_potential,
-                    'all_correlations': correlations_with_tp01,
-                    'all_weighted_priorities': weighted_priorities,
-                    'top_3_priorities': [
-                        {
-                            'measure': m,
-                            'name': self.tp_descriptions.get(m, m),
-                            'weighted_score': s,
-                            'improvement_potential': improvement_potential.get(m, 0),
-                            'correlation': correlations_with_tp01.get(m, {}).get('correlation', 0)
-                        }
-                        for m, s in sorted_priorities[:3]
-                    ]
+                # Improvement potential (lower percentile = more room for improvement)
+                improvement_potential = 100 - percentile
+                
+                # Get correlation strength
+                correlation = correlation_dict.get(tp_measure, 0)
+                correlation_strength = abs(correlation)
+                
+                # Calculate weighted priority score
+                # Higher priority = high improvement potential + high correlation with TP01
+                priority_score = (improvement_potential * 0.6) + (correlation_strength * 100 * 0.4)
+                
+                priority_scores[tp_measure] = {
+                    'measure': tp_measure,
+                    'description': self.tp_descriptions.get(tp_measure, tp_measure),
+                    'current_score': provider_scores[tp_measure],
+                    'percentile': percentile,
+                    'improvement_potential': improvement_potential,
+                    'correlation': correlation,
+                    'correlation_strength': correlation_strength,
+                    'priority_score': priority_score
                 }
+            
+            if not priority_scores:
+                return {"error": "No measures available for priority analysis"}
+            
+            # Find highest priority measure
+            highest_priority = max(priority_scores.values(), key=lambda x: x['priority_score'])
+            
+            # Determine priority level
+            if highest_priority['priority_score'] > 70:
+                priority_level = "Critical"
+                priority_color = "#EF4444"
+            elif highest_priority['priority_score'] > 50:
+                priority_level = "High"
+                priority_color = "#F59E0B"
+            elif highest_priority['priority_score'] > 30:
+                priority_level = "Medium"
+                priority_color = "#EAB308"
             else:
-                return {"error": "Could not calculate improvement priorities"}
-                
+                priority_level = "Low"
+                priority_color = "#22C55E"
+            
+            return {
+                'priority_measure': highest_priority['measure'],
+                'priority_description': highest_priority['description'],
+                'priority_level': priority_level,
+                'priority_color': priority_color,
+                'current_score': highest_priority['current_score'],
+                'percentile': highest_priority['percentile'],
+                'improvement_potential': highest_priority['improvement_potential'],
+                'correlation_with_tp01': highest_priority['correlation'],
+                'priority_score': highest_priority['priority_score'],
+                'all_priorities': priority_scores
+            }
+            
         except Exception as e:
-            return {"error": f"Error identifying priority: {str(e)}"}
+            return {"error": f"Error in priority identification: {str(e)}"}
     
-    def _apply_peer_group_filter(self, df: pd.DataFrame, filter_type: str) -> pd.DataFrame:
+    def _apply_peer_group_filter(self, df: pd.DataFrame, peer_group_filter: str) -> pd.DataFrame:
         """
-        Apply peer group filtering (placeholder implementation)
+        Apply peer group filtering (simplified for MVP)
         """
-        # For now, return all providers
-        # In a real implementation, this would filter by size, region, type, etc.
+        # For MVP, we're not implementing complex peer group filtering
+        # This would require additional metadata about providers
         return df
     
     def get_detailed_performance_analysis(self, df: pd.DataFrame, provider_code: str) -> Dict:
         """
-        Get detailed performance analysis for all measures
+        Get detailed performance analysis using pre-calculated percentiles
         """
         try:
-            if provider_code not in df['provider_code'].values:
+            # Check if provider exists
+            if not self.data_processor.get_provider_exists(provider_code):
                 return {"error": f"Provider {provider_code} not found"}
             
-            provider_row = df[df['provider_code'] == provider_code].iloc[0]
-            tp_cols = [col for col in df.columns if col.startswith('TP')]
+            # Get provider's scores and percentiles
+            provider_scores = self.data_processor.get_provider_scores(provider_code)
+            provider_percentiles = self.data_processor.get_provider_percentiles(provider_code)
+            
+            # Convert percentiles DataFrame to dict
+            percentile_dict = {}
+            if not provider_percentiles.empty:
+                percentile_dict = dict(zip(provider_percentiles['tp_measure'], 
+                                          provider_percentiles['percentile_rank']))
             
             detailed_analysis = {}
             
-            for tp_col in tp_cols:
-                if pd.notna(provider_row[tp_col]):
-                    provider_score = float(provider_row[tp_col])
+            for tp_measure in self.tp_codes:
+                if tp_measure not in provider_scores:
+                    continue
                     
-                    # Get all valid scores for this measure
-                    all_scores = df[tp_col].dropna()
-                    
-                    if len(all_scores) > 1:
-                        percentile = stats.percentileofscore(all_scores, provider_score)
-                        
-                        detailed_analysis[tp_col] = {
-                            'score': provider_score,
-                            'percentile': percentile,
-                            'description': self.tp_descriptions.get(tp_col, tp_col),
-                            'peer_avg': all_scores.mean(),
-                            'peer_median': all_scores.median(),
-                            'top_quartile_threshold': all_scores.quantile(0.75),
-                            'bottom_quartile_threshold': all_scores.quantile(0.25)
-                        }
+                score = provider_scores[tp_measure]
+                
+                # Get percentile from pre-calculated data
+                percentile = percentile_dict.get(tp_measure, 0)
+                
+                # Get measure statistics
+                stats = self.data_processor.get_measure_statistics(tp_measure)
+                
+                detailed_analysis[tp_measure] = {
+                    'score': score,
+                    'percentile': percentile,
+                    'description': self.tp_descriptions.get(tp_measure, tp_measure),
+                    'peer_avg': stats.get('mean_score', 0),
+                    'peer_median': stats.get('median_score', 0),
+                    'top_quartile_threshold': stats.get('mean_score', 0) + stats.get('std_dev', 0),
+                    'bottom_quartile_threshold': stats.get('mean_score', 0) - stats.get('std_dev', 0)
+                }
             
             return detailed_analysis
             
