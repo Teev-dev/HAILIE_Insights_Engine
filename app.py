@@ -133,38 +133,26 @@ def main():
 
     st.markdown("## Select Your Provider")
 
-    col1, col2 = st.columns([3, 1], gap="large")
+    # Single column layout for provider selection
+    if provider_options:
+        # Provider search dropdown with autocomplete
+        st.subheader("Search by Provider Name")
+        selected_provider = st.selectbox(
+            "Type or select your provider:",
+            options=[""] + provider_options,
+            help="Start typing to search for your provider",
+            format_func=lambda x: "Select a provider..." if x == "" else x)
 
-    with col1:
-        if provider_options:
-            # Provider search dropdown with autocomplete
-            st.subheader("Search by Provider Name")
-            selected_provider = st.selectbox(
-                "Type or select your provider:",
-                options=[""] + provider_options,
-                help="Start typing to search for your provider",
-                format_func=lambda x: "Select a provider..." if x == "" else x)
-
-            # Extract provider code from selection
-            if selected_provider and selected_provider != "":
-                # Format is "Provider Name (CODE)"
-                if "(" in selected_provider and ")" in selected_provider:
-                    provider_code = selected_provider.split("(")[-1].replace(")", "")
-                else:
-                    provider_code = None
-        else:
-            st.error("No providers found in the database")
-            provider_code = None
-
-    with col2:
-        st.subheader("Or Enter Provider Code")
-        direct_code = st.text_input("Enter your 4-character code:",
-                                    max_chars=4,
-                                    placeholder="e.g., L001",
-                                    help="Enter your provider code directly")
-
-        if direct_code:
-            provider_code = direct_code.upper()
+        # Extract provider code from selection
+        if selected_provider and selected_provider != "":
+            # Format is "Provider Name (CODE)"
+            if "(" in selected_provider and ")" in selected_provider:
+                provider_code = selected_provider.split("(")[-1].replace(")", "")
+            else:
+                provider_code = None
+    else:
+        st.error("No providers found in the database")
+        provider_code = None
 
     # Process the selected provider
     if provider_code:
@@ -244,8 +232,9 @@ def main():
         st.markdown("---")
         st.info("""
         👆 **Getting Started:**
-        1. Search for your provider name in the dropdown above, or
-        2. Enter your 4-character provider code directly
+        
+        Search for your provider name in the dropdown above.
+        Start typing to filter the list and find your provider quickly.
         
         The system will instantly retrieve your pre-calculated analytics.
         """)
