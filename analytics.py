@@ -177,6 +177,8 @@ class TSMAnalytics:
             weighted_priorities = {}  # Combined score of improvement potential * correlation strength
             
             for tp_col in tp_cols:
+                if tp_col == 'TP01': 
+                    continue  # skip TP01 (overall satisfaction) to avoid self-correlation
                 if tp_col in provider_scores:
                     # Get all valid scores for this measure
                     all_scores = df[tp_col].dropna()
