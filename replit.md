@@ -4,6 +4,8 @@
 
 HAILIE Insights Engine is a Streamlit web application designed to process UK government TSM (Tenant Satisfaction Measures) data and generate executive dashboards for social housing providers. The application provides three key insights: provider rankings against peers, performance momentum over time, and priority areas for improvement. It focuses on delivering actionable intelligence through an executive-friendly interface that transforms complex TSM datasets (TP01-TP12 satisfaction measures) into clear, visual insights for non-technical stakeholders in the social housing sector.
 
+**Version 2.0 Update (October 2025)**: Successfully refactored from on-the-fly Excel processing to a pre-calculated analytics database architecture using DuckDB, delivering instant analytics retrieval and significantly improved performance.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -16,17 +18,23 @@ Preferred communication style: Simple, everyday language.
 - Three-column layout showcasing key metrics: Your Rank, Your Momentum, Your Priority
 - Custom CSS styling for metric cards with visual hierarchy and accessibility
 
+**Database Layer (New in v2.0)**
+- DuckDB analytics database storing pre-calculated metrics for instant retrieval
+- ETL pipeline (build_analytics_db.py) processes Excel data into optimized database format
+- Three core tables: raw_scores, calculated_percentiles, calculated_correlations
+- Successfully processed 355 providers with 4,260 score records
+
 **Data Processing Layer**
-- Multi-sheet Excel file parser with intelligent sheet detection using priority keywords
-- TP-code validation system for UK government TSM datasets (TP01-TP12)
-- Flexible column mapping to handle various government dataset formats
-- Error handling and data quality validation with user feedback
+- DuckDB query client for high-performance data retrieval
+- Cached provider lists and metadata for instant dropdown population
+- Pre-calculated percentiles for all TP measures across all providers
+- Pre-computed Spearman correlations between measures and TP01 (overall satisfaction)
 
 **Analytics Engine**
-- Statistical ranking system with quartile-based peer comparisons
-- Trend analysis for 12-month performance momentum using directional indicators
-- Correlation-based priority identification to surface critical improvement areas
-- Support for peer group filtering and segmentation
+- Statistical ranking using pre-calculated percentiles from database
+- Momentum analysis ready for multi-year data (available 2026+)
+- Priority identification using pre-computed correlations and percentiles
+- Support for peer group filtering (future enhancement)
 
 **Dashboard Components**
 - Executive summary with three key performance indicators

@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["glibcLocales", "libxcrypt", "pkg-config", "xsimd"]
+packages = ["glibcLocales", "libxcrypt", "openssl", "pkg-config", "xsimd"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -39,3 +39,11 @@ externalPort = 80
 [[ports]]
 localPort = 34189
 externalPort = 3001
+
+[[ports]]
+localPort = 39469
+externalPort = 3002
+
+[[ports]]
+localPort = 42511
+externalPort = 3000
