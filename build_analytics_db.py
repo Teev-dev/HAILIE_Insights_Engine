@@ -10,7 +10,6 @@ import duckdb
 import numpy as np
 from scipy import stats
 from scipy.stats import spearmanr, percentileofscore
-from data_processor import TSMDataProcessor
 import os
 import sys
 from datetime import datetime
@@ -20,7 +19,6 @@ class AnalyticsETL:
     """ETL pipeline for pre-calculating TSM analytics"""
     
     def __init__(self):
-        self.data_processor = TSMDataProcessor(silent_mode=True)
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
         self.db_path = "attached_assets/hailie_analytics.duckdb"
         self.year = 2024  # Default year for the dataset
@@ -34,14 +32,67 @@ class AnalyticsETL:
         """Extract data from the default Excel file"""
         self.log("📂 Loading raw TSM data from Excel...")
         
-        # Load the default dataset
-        df = self.data_processor.load_default_data()
+        # Load Excel file directly
+        excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
         
-        if df is None or df.empty:
-            raise ValueError("Failed to load TSM data from Excel file")
-        
-        self.log(f"✅ Loaded {len(df)} providers with {len(df.columns)} columns")
-        return df
+        try:
+            # Load the specific sheet with TSM data
+            # TSM24_LCRA_Perception contains the main provider data
+            # Read without headers first to get the actual structure
+            df = pd.read_excel(excel_path, sheet_name='TSM24_LCRA_Perception', header=None)
+            
+            self.log(f"  Loaded sheet TSM24_LCRA_Perception with {len(df)} rows")
+            
+            # The actual headers are in row 2 (0-indexed)
+            headers = df.iloc[2].values
+            # Data starts from row 3
+            df = df.iloc[3:].reset_index(drop=True)
+            
+            # Map specific columns by their position
+            # Based on analysis, the TP measures are at columns 22-33
+            column_mapping = {
+                0: 'provider_name',  # Landlord name
+                1: 'provider_code',  # Landlord code
+                22: 'TP01',  # Overall satisfaction
+                23: 'TP02',  # Satisfaction with repairs
+                24: 'TP03',  # Time taken to complete repair
+                25: 'TP04',  # Satisfaction with time taken
+                26: 'TP05',  # Home well-maintained
+                27: 'TP06',  # Home is safe
+                28: 'TP07',  # Listens to views
+                29: 'TP08',  # Keeps informed
+                30: 'TP09',  # Treats fairly
+                31: 'TP10',  # Complaints handling
+                32: 'TP11',  # Communal areas clean
+                33: 'TP12',  # Anti-social behaviour
+            }
+            
+            # Select only the columns we need
+            selected_columns = list(column_mapping.keys())
+            df = df.iloc[:, selected_columns]
+            
+            # Rename columns
+            df.columns = [column_mapping[col] for col in selected_columns]
+            
+            # Remove rows with no provider code
+            df = df[df['provider_code'].notna()]
+            
+            # Convert TP columns to numeric
+            for tp_col in self.tp_codes:
+                if tp_col in df.columns:
+                    df[tp_col] = pd.to_numeric(df[tp_col], errors='coerce')
+            
+            # Remove providers with no data
+            df = df.dropna(subset=self.tp_codes, how='all')
+            
+            self.log(f"✅ Loaded {len(df)} providers with {len(df.columns)} columns")
+            self.log(f"  Columns: {list(df.columns)}")
+            
+            return df
+            
+        except Exception as e:
+            self.log(f"Error loading Excel: {str(e)}")
+            raise ValueError(f"Failed to load TSM data: {str(e)}")
         
     def transform_to_long_format(self, df):
         """Transform wide format data to long format"""
@@ -51,7 +102,10 @@ class AnalyticsETL:
         id_vars = ['provider_code', 'provider_name'] if 'provider_name' in df.columns else ['provider_code']
         
         # Get TP measure columns
-        tp_cols = [col for col in df.columns if col.startswith('TP')]
+        tp_cols = [col for col in df.columns if col in self.tp_codes]
+        
+        if not tp_cols:
+            raise ValueError("No TP columns found in the data")
         
         # Melt the dataframe
         raw_scores_df = pd.melt(
