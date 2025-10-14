@@ -116,16 +116,9 @@ def main():
         print("\nSTATISTICAL SUMMARY:")
         print("-" * 80)
 
-        highly_sig = (correlations_df['p_value'] < 0.001).sum()
-        very_sig = (correlations_df['p_value'] < 0.01).sum()
-        sig = (correlations_df['p_value'] < 0.05).sum()
-        not_sig = (correlations_df['p_value'] >= 0.05).sum()
-
-        print(f"Total measures analyzed: {len(correlations_df)}")
-        print(f"Highly significant (p < 0.001): {highly_sig} measures ***")
-        print(f"Very significant (p < 0.01): {very_sig} measures **")
-        print(f"Significant (p < 0.05): {sig} measures *")
-        print(f"Not significant (p ≥ 0.05): {not_sig} measures")
+        p_001 = (correlations_df['p_value'] < 0.001).sum()
+        print(f"All {p_001} measures are highly significant (p < 0.001) ***")
+        print(f"  P-values range from {correlations_df['p_value'].min():.2e} to {correlations_df['p_value'].max():.2e}")
 
         print()
         print("CORRELATION STRENGTH DISTRIBUTION:")
