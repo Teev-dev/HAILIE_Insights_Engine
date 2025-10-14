@@ -153,7 +153,7 @@ def main():
         print("=" * 80)
         print("\n📚 INTERPRETATION GUIDE:")
         print("-" * 80)
-        print("""
+        print(f"""
 P-VALUE SIGNIFICANCE LEVELS:
   *** p < 0.001  : Extremely strong evidence against null hypothesis
   **  p < 0.01   : Very strong evidence against null hypothesis
