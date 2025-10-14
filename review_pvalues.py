@@ -147,7 +147,7 @@ def main():
         min_p = correlations_df['p_value'].min()
         max_p = correlations_df['p_value'].max()
         print(f"Minimum p-value: {min_p:.2e}")
-        print(f"Maximum p-value: {max_p:.6f}")
+        print(f"Maximum p-value: {max_p:.2e}")
 
         print()
         print("=" * 80)
