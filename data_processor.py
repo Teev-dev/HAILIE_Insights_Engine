@@ -8,6 +8,7 @@ import duckdb
 import streamlit as st
 from typing import Dict, List, Optional
 import os
+from error_handler import ErrorHandler
 
 
 class TSMDataProcessor:
@@ -26,7 +27,7 @@ class TSMDataProcessor:
         """Establish connection to DuckDB database"""
         if not os.path.exists(self.db_path):
             if not self.silent_mode:
-                st.error(f"❌ Analytics database not found at {self.db_path}. Please run build_analytics_db.py first.")
+                st.error("❌ Analytics database not found. Please ensure data is properly loaded.")
             return None
         
         try:
@@ -35,7 +36,7 @@ class TSMDataProcessor:
                 st.success("✅ Connected to analytics database")
         except Exception as e:
             if not self.silent_mode:
-                st.error(f"❌ Failed to connect to database: {str(e)}")
+                st.error(ErrorHandler.handle_database_error(e))
             self._connection = None
             
     def _log_info(self, msg):
@@ -74,7 +75,7 @@ class TSMDataProcessor:
             result = self._connection.execute(query, [provider_code]).df()
             return result
         except Exception as e:
-            self._log_error(f"Error fetching percentiles: {str(e)}")
+            self._log_error(ErrorHandler.handle_database_error(e))
             return pd.DataFrame()
             
     def get_all_correlations(self) -> pd.DataFrame:
@@ -93,7 +94,7 @@ class TSMDataProcessor:
             result = self._connection.execute(query).df()
             return result
         except Exception as e:
-            self._log_error(f"Error fetching correlations: {str(e)}")
+            self._log_error(ErrorHandler.handle_database_error(e))
             return pd.DataFrame()
             
     def get_provider_exists(self, provider_code: str) -> bool:
@@ -113,7 +114,7 @@ class TSMDataProcessor:
             result = self._connection.execute(query, [provider_code]).fetchone()
             return result is not None
         except Exception as e:
-            self._log_error(f"Error checking provider existence: {str(e)}")
+            self._log_error(ErrorHandler.handle_provider_error(e))
             return False
             
     def get_all_provider_codes(self) -> List[Dict[str, str]]:
@@ -133,7 +134,7 @@ class TSMDataProcessor:
             result = self._connection.execute(query).df()
             return result.to_dict('records')
         except Exception as e:
-            self._log_error(f"Error fetching provider codes: {str(e)}")
+            self._log_error(ErrorHandler.handle_database_error(e))
             return []
             
     def get_provider_scores(self, provider_code: str) -> Dict[str, float]:
@@ -153,7 +154,7 @@ class TSMDataProcessor:
             result = self._connection.execute(query, [provider_code]).df()
             return dict(zip(result['tp_measure'], result['score']))
         except Exception as e:
-            self._log_error(f"Error fetching provider scores: {str(e)}")
+            self._log_error(ErrorHandler.handle_database_error(e))
             return {}
             
     def get_all_providers_with_scores(self) -> pd.DataFrame:
@@ -177,7 +178,7 @@ class TSMDataProcessor:
                 return pd.DataFrame()
             return df
         except Exception as e:
-            self._log_error(f"Error fetching all providers: {str(e)}")
+            self._log_error(ErrorHandler.handle_database_error(e))
             return pd.DataFrame()
             
     def get_provider_options(self) -> List[str]:
@@ -223,7 +224,7 @@ class TSMDataProcessor:
                 return result.iloc[0].to_dict()
             return {}
         except Exception as e:
-            self._log_error(f"Error fetching measure statistics: {str(e)}")
+            self._log_error(ErrorHandler.handle_database_error(e))
             return {}
             
     def get_percentile_for_score(self, tp_measure: str, score: float) -> float:
@@ -248,7 +249,7 @@ class TSMDataProcessor:
                 return result[0]
             return 0.0
         except Exception as e:
-            self._log_error(f"Error calculating percentile: {str(e)}")
+            self._log_error(ErrorHandler.handle_calculation_error(e))
             return 0.0
             
     def load_default_data(self, provider_code: Optional[str] = None) -> Optional[pd.DataFrame]:
