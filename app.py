@@ -204,8 +204,8 @@ def main():
             st.error(f"❌ Provider '{provider_code}' not found. Please check the code and try again.")
             return
 
-        # Get the dataset type for this provider
-        dataset_type = data_processor.get_provider_dataset_type(provider_code)
+        # Get the dataset type for this provider (use the full name with suffix)
+        dataset_type = data_processor.get_provider_dataset_type(provider_code, selected_provider)
         if not dataset_type:
             st.error(f"❌ Could not determine dataset type for provider '{provider_code}'")
             return
@@ -217,8 +217,8 @@ def main():
         # Display dataset indicator
         render_dataset_indicator(dataset_type, peer_count)
         
-        # Load provider data with automatic dataset detection
-        df = data_processor.load_default_data(provider_code)
+        # Load provider data with automatic dataset detection (pass provider name with suffix)
+        df = data_processor.load_default_data(provider_code, selected_provider)
         
         if df is None or df.empty:
             st.error("❌ Unable to load provider data. Please try again later.")
