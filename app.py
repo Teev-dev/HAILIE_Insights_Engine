@@ -181,20 +181,25 @@ def main():
             help="Start typing to search for your provider - includes both LCRA and LCHO providers",
             format_func=lambda x: "Select a provider..." if x == "" else x)
 
-        # Extract provider code from selection
+        # Extract provider code and name from selection
         if selected_provider and selected_provider != "":
             # Format is "Provider Name (CODE)"
             if "(" in selected_provider and ")" in selected_provider:
                 provider_code = selected_provider.split("(")[-1].replace(")", "")
+                # Extract just the provider name without the code part for dataset detection
+                provider_name_only = selected_provider.rsplit("(", 1)[0].strip()
             else:
                 provider_code = None
+                provider_name_only = selected_provider
         else:
             provider_code = None
             selected_provider = None
+            provider_name_only = None
     else:
         st.error("❌ Unable to load provider list. Please try refreshing the page.")
         provider_code = None
         selected_provider = None
+        provider_name_only = None
 
     # Process the selected provider
     if provider_code:
@@ -208,8 +213,8 @@ def main():
             st.error(f"❌ Provider '{provider_code}' not found. Please check the code and try again.")
             return
 
-        # Get the dataset type for this provider (use the full name with suffix)
-        dataset_type = data_processor.get_provider_dataset_type(provider_code, selected_provider)
+        # Get the dataset type for this provider (use the name without the code part)
+        dataset_type = data_processor.get_provider_dataset_type(provider_code, provider_name_only)
         if not dataset_type:
             st.error(f"❌ Could not determine dataset type for provider '{provider_code}'")
             return
@@ -221,8 +226,8 @@ def main():
         # Display dataset indicator
         render_dataset_indicator(dataset_type, peer_count)
         
-        # Load provider data with automatic dataset detection (pass provider name with suffix)
-        df = data_processor.load_default_data(provider_code, selected_provider)
+        # Load provider data with automatic dataset detection (pass provider name without code)
+        df = data_processor.load_default_data(provider_code, provider_name_only)
         
         if df is None or df.empty:
             st.error("❌ Unable to load provider data. Please try again later.")
