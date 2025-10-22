@@ -61,14 +61,22 @@ class EnhancedTSMDataProcessor:
     def get_provider_dataset_type(self, provider_code: str) -> Optional[str]:
         """
         Get the dataset type for a specific provider (LCRA, LCHO, or COMBINED)
+        When a provider appears in both datasets, prioritize LCRA (full metrics)
         """
         if not self._connection:
             return None
             
+        # First check if provider exists in multiple datasets
         query = """
         SELECT dataset_type 
         FROM provider_dataset_mapping 
-        WHERE provider_code = ?
+        WHERE provider_code = ? AND dataset_type != 'COMBINED'
+        ORDER BY 
+            CASE 
+                WHEN dataset_type = 'LCRA' THEN 1  -- Prioritize LCRA (full metrics)
+                WHEN dataset_type = 'LCHO' THEN 2
+                ELSE 3
+            END
         LIMIT 1
         """
         
@@ -303,6 +311,31 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching measure distribution: {str(e)}")
             return pd.DataFrame()
             
+    def get_all_providers_with_scores(self) -> pd.DataFrame:
+        """
+        Get all providers with their scores in wide format
+        Needed for TSMAnalytics rankings calculation
+        """
+        if not self._connection:
+            return pd.DataFrame()
+            
+        query = """
+        PIVOT raw_scores 
+        ON tp_measure 
+        USING first(score) 
+        GROUP BY provider_code, provider_name
+        """
+        
+        try:
+            df = self._connection.execute(query).df()
+            # Ensure it's a DataFrame
+            if not isinstance(df, pd.DataFrame):
+                return pd.DataFrame()
+            return df
+        except Exception as e:
+            self._log_error(f"Error fetching all providers: {str(e)}")
+            return pd.DataFrame()
+            
     def get_applicable_measures(self, dataset_type: str) -> List[str]:
         """
         Get the list of applicable TP measures for a dataset type
@@ -326,15 +359,15 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Provider {provider_code} not found in database")
             return None
             
-        # Get provider summary data
+        # Get provider summary data for the specific dataset
         query = """
         SELECT *
         FROM provider_summary
-        WHERE provider_code = ?
+        WHERE provider_code = ? AND dataset_type = ?
         """
         
         try:
-            result = self._connection.execute(query, [provider_code]).df()
+            result = self._connection.execute(query, [provider_code, dataset_type]).df()
             if not result.empty:
                 # Add metadata
                 result['loaded_dataset'] = dataset_type

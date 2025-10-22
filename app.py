@@ -244,7 +244,7 @@ def main():
         priority = analytics.identify_priority(df, provider_code)
 
         # Initialize and render dashboard
-        dashboard = ExecutiveDashboard(analytics)
+        dashboard = ExecutiveDashboard()
 
         # Executive Summary
         dashboard.render_executive_summary(provider_code, rankings, momentum,
