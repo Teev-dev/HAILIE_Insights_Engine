@@ -127,8 +127,9 @@ class EnhancedAnalyticsETL:
             # Remove providers with no data
             df = df.dropna(subset=tp_cols, how='all')
             
-            # Add dataset type
+            # Add dataset type and suffix to provider names
             df['dataset_type'] = 'LCRA'
+            df['provider_name'] = df['provider_name'] + ' - LCRA'
             
             self.log(f"✅ Loaded {len(df)} LCRA providers with {len(tp_cols)} TP measures")
             return df
@@ -171,8 +172,9 @@ class EnhancedAnalyticsETL:
             valid_tp_cols = [col for col in tp_cols if col not in ['TP02', 'TP03', 'TP04']]
             df = df.dropna(subset=valid_tp_cols, how='all')
             
-            # Add dataset type
+            # Add dataset type and suffix to provider names
             df['dataset_type'] = 'LCHO'
+            df['provider_name'] = df['provider_name'] + ' - LCHO'
             
             self.log(f"✅ Loaded {len(df)} LCHO providers with {len(valid_tp_cols)} applicable TP measures")
             self.log(f"  Note: TP02-TP04 marked as N/A for LCHO providers (repairs metrics don't apply)")
@@ -210,8 +212,9 @@ class EnhancedAnalyticsETL:
             # Remove providers with no data
             df = df.dropna(subset=tp_cols, how='all')
             
-            # Add dataset type
+            # Add dataset type and suffix to provider names
             df['dataset_type'] = 'COMBINED'
+            df['provider_name'] = df['provider_name'] + ' - COMBINED'
             
             self.log(f"✅ Loaded {len(df)} Combined providers")
             return df
