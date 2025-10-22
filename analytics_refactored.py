@@ -57,7 +57,7 @@ class TSMAnalytics:
                 for tp_col in self.tp_codes:
                     if tp_col in row:
                         value = row[tp_col]
-                        if pd.notna(value):
+                        if pd.notna(value) and value is not None:
                             tp_values.append(float(value))
                 
                 if tp_values:
@@ -151,8 +151,13 @@ class TSMAnalytics:
                 percentile_dict = dict(zip(provider_percentiles['tp_measure'], 
                                           provider_percentiles['percentile_rank']))
             
-            # Get pre-calculated correlations with TP01
-            correlations_df = self.data_processor.get_all_correlations()
+            # Get dataset type for the provider
+            dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+            if not dataset_type:
+                dataset_type = 'LCRA'  # Default fallback
+            
+            # Get pre-calculated correlations with TP01 for the specific dataset
+            correlations_df = self.data_processor.get_dataset_correlations(dataset_type)
             correlation_dict = {}
             if not correlations_df.empty:
                 correlation_dict = dict(zip(correlations_df['tp_measure'], 
