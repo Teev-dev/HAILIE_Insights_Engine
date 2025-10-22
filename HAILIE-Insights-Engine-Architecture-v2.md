@@ -100,7 +100,7 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 - Cache management for frequently accessed data
 
 **Implementation Files:**
-- `data_processor_refactored.py` - Database access layer
+- `data_processor_enhanced.py` - Enhanced database access layer with LCRA/LCHO support
 - SQL queries optimized for columnar storage
 
 ### 4. ETL Pipeline
@@ -119,8 +119,9 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 3. **Load:** Create optimized DuckDB database with pre-calculated analytics
 
 **Implementation Files:**
-- `build_analytics_db.py` - Complete ETL pipeline
-- Processes 355 providers with 4,260 data points
+- `build_analytics_db.py` - Complete ETL pipeline for LCRA dataset
+- `build_analytics_db_v2.py` - Enhanced ETL pipeline with LCRA/LCHO support
+- Processes 355 LCRA providers + 56 LCHO providers with full dataset isolation
 
 ### 5. Data Storage - DuckDB Analytics Database
 
