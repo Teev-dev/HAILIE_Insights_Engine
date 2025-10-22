@@ -57,8 +57,16 @@ class TSMAnalytics:
                 for tp_col in self.tp_codes:
                     if tp_col in row.index:
                         value = row[tp_col]
-                        if pd.notna(value) and value is not None:
-                            tp_values.append(float(value))
+                        # Use try-except to safely handle value checking and conversion
+                        try:
+                            # Convert to scalar if needed
+                            if hasattr(value, 'item'):
+                                value = value.item()
+                            if value is not None and str(value) != 'nan' and str(value) != '':
+                                tp_values.append(float(value))
+                        except (TypeError, ValueError, AttributeError):
+                            # Skip values that can't be converted
+                            continue
                 
                 if tp_values:
                     composite_score = np.mean(tp_values)
