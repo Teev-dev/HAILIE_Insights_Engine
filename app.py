@@ -322,14 +322,14 @@ def main():
             scores_df = data_processor.get_provider_scores(provider_code)
             if not scores_df.empty:
                 # Add descriptions
-                scores_df['description'] = scores_df['tp_measure'].map(data_processor.tp_descriptions)
+                scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
                 
-                # For LCHO, mark repairs metrics as N/A
+                # For LCHO, mark repairs metrics as N/A using NaN for numeric compatibility
                 if dataset_type == 'LCHO':
                     na_metrics = ['TP02', 'TP03', 'TP04']
                     for metric in na_metrics:
                         if metric in scores_df['tp_measure'].values:
-                            scores_df.loc[scores_df['tp_measure'] == metric, 'score'] = 'N/A'
+                            scores_df.loc[scores_df['tp_measure'] == metric, 'score'] = np.nan
                             scores_df.loc[scores_df['tp_measure'] == metric, 'description'] += ' (Not Applicable)'
                 
                 # Format for display
