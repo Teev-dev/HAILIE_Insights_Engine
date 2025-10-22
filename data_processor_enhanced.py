@@ -256,6 +256,9 @@ class EnhancedTSMDataProcessor:
         """
         
         try:
+            if not self._connection:
+                self._log_error("No database connection available")
+                return pd.DataFrame()
             result = self._connection.execute(query, [tp_measure, dataset_type]).df()
             return result
         except Exception as e:
@@ -393,6 +396,9 @@ class EnhancedTSMDataProcessor:
         """
         
         try:
+            if not self._connection:
+                self._log_error("No database connection available")
+                return None
             result = self._connection.execute(query, [provider_code, dataset_type]).df()
             if not result.empty:
                 # Add metadata
