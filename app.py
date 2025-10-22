@@ -242,7 +242,7 @@ def main():
         analytics = TSMAnalytics(data_processor)
 
         # Calculate key metrics using pre-calculated data within the correct peer group
-        rankings = analytics.calculate_rankings(df, "All Providers")
+        rankings = analytics.calculate_rankings(df, "All Providers", dataset_type)
         momentum = analytics.calculate_momentum(df, provider_code)
         
         # Get dataset-specific correlations for priority calculation

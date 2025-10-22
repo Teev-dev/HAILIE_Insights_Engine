@@ -32,14 +32,14 @@ class TSMAnalytics:
             'TP12': 'Satisfaction with landlord\'s approach to handling of anti-social behaviour'
         }
     
-    def calculate_rankings(self, df: pd.DataFrame, peer_group_filter: str = "All Providers") -> Dict:
+    def calculate_rankings(self, df: pd.DataFrame, peer_group_filter: str = "All Providers", dataset_type: Optional[str] = None) -> Dict:
         """
         Calculate provider rankings using pre-calculated percentiles
-        Note: df parameter maintained for backward compatibility but not used
+        Now supports dataset-specific rankings for LCRA/LCHO isolation
         """
         try:
-            # Get all providers with their scores
-            all_providers_df = self.data_processor.get_all_providers_with_scores()
+            # Get all providers with their scores, filtered by dataset if provided
+            all_providers_df = self.data_processor.get_all_providers_with_scores(dataset_type)
             
             if all_providers_df.empty:
                 return {"error": "No provider data available"}

@@ -317,29 +317,48 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching measure distribution: {str(e)}")
             return pd.DataFrame()
             
-    def get_all_providers_with_scores(self) -> pd.DataFrame:
+    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None) -> pd.DataFrame:
         """
         Get all providers with their scores in wide format
         Needed for TSMAnalytics rankings calculation
+        Now supports filtering by dataset type for isolated peer comparisons
         """
         if not self._connection:
             return pd.DataFrame()
             
-        query = """
-        PIVOT raw_scores 
-        ON tp_measure 
-        USING first(score) 
-        GROUP BY provider_code, provider_name
-        """
+        if dataset_type:
+            # Filter by dataset type for isolated peer group
+            query = """
+            PIVOT (
+                SELECT * FROM raw_scores 
+                WHERE dataset_type = ?
+            )
+            ON tp_measure 
+            USING first(score) 
+            GROUP BY provider_code, provider_name
+            """
+            params = [dataset_type]
+        else:
+            # Legacy behavior - get all providers (not recommended)
+            query = """
+            PIVOT raw_scores 
+            ON tp_measure 
+            USING first(score) 
+            GROUP BY provider_code, provider_name
+            """
+            params = []
         
         try:
-            df = self._connection.execute(query).df()
+            df = self._connection.execute(query, params).df() if params else self._connection.execute(query).df()
             # Ensure it's a DataFrame
             if not isinstance(df, pd.DataFrame):
                 return pd.DataFrame()
+            # Log dataset-specific counts for debugging
+            if dataset_type and not self.silent_mode:
+                st.info(f"📊 Found {len(df)} providers in {dataset_type} dataset for rankings")
             return df
         except Exception as e:
-            self._log_error(f"Error fetching all providers: {str(e)}")
+            self._log_error(f"Error fetching providers: {str(e)}")
             return pd.DataFrame()
             
     def get_applicable_measures(self, dataset_type: str) -> List[str]:
