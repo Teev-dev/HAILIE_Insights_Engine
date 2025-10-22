@@ -151,7 +151,7 @@ def main():
             else:
                 provider_code = None
     else:
-        st.error("No providers found in the database")
+        st.error("❌ Unable to load provider list. Please try refreshing the page.")
         provider_code = None
 
     # Process the selected provider
@@ -164,14 +164,14 @@ def main():
 
         # Check if provider exists in database
         if not data_processor.get_provider_exists(provider_code):
-            st.error(f"❌ Provider '{provider_code}' not found in the database")
+            st.error(f"❌ Provider '{provider_code}' not found. Please check the code and try again.")
             return
 
         # Load data (for backward compatibility with dashboard)
         df = data_processor.load_default_data()
         
         if df is None or df.empty:
-            st.error("❌ Failed to load provider data from analytics database")
+            st.error("❌ Unable to load provider data. Please try again later.")
             return
 
         st.success(f"✅ Loaded pre-calculated analytics for provider: {provider_code}")
