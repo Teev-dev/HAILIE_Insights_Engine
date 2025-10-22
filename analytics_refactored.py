@@ -136,11 +136,14 @@ class TSMAnalytics:
                 return {"error": f"Provider {provider_code} not found"}
             
             # Get provider's scores and percentiles
-            provider_scores = self.data_processor.get_provider_scores(provider_code)
+            provider_scores_df = self.data_processor.get_provider_scores(provider_code)
             provider_percentiles = self.data_processor.get_provider_percentiles(provider_code)
             
-            if not provider_scores:
+            if provider_scores_df.empty:
                 return {"error": "No scores found for priority analysis"}
+            
+            # Convert scores DataFrame to dict for easier access
+            provider_scores = dict(zip(provider_scores_df['tp_measure'], provider_scores_df['score']))
             
             # Convert percentiles DataFrame to dict for easier access
             percentile_dict = {}

@@ -58,15 +58,21 @@ class EnhancedTSMDataProcessor:
         if not self.silent_mode:
             st.error(message)
             
-    def get_provider_dataset_type(self, provider_code: str) -> Optional[str]:
+    def get_provider_dataset_type(self, provider_code: str, provider_name: Optional[str] = None) -> Optional[str]:
         """
         Get the dataset type for a specific provider (LCRA, LCHO, or COMBINED)
-        When a provider appears in both datasets, prioritize LCRA (full metrics)
+        Now uses provider name suffix to determine dataset type when available
         """
         if not self._connection:
             return None
+        
+        # If provider_name is provided and has a suffix, extract dataset type from it
+        if provider_name and ' - ' in provider_name:
+            suffix = provider_name.split(' - ')[-1]
+            if suffix in ['LCRA', 'LCHO', 'COMBINED']:
+                return suffix
             
-        # First check if provider exists in multiple datasets
+        # Otherwise, look it up in database (this shouldn't happen with new naming)
         query = """
         SELECT dataset_type 
         FROM provider_dataset_mapping 
@@ -346,15 +352,16 @@ class EnhancedTSMDataProcessor:
         else:
             return self.tp_codes
             
-    def load_default_data(self, provider_code: Optional[str] = None) -> Optional[pd.DataFrame]:
+    def load_default_data(self, provider_code: Optional[str] = None, provider_name: Optional[str] = None) -> Optional[pd.DataFrame]:
         """
         Load data for a specific provider with automatic dataset detection
+        Now uses provider_name to determine dataset type when available
         """
         if not provider_code:
             return None
             
-        # Get provider's dataset type
-        dataset_type = self.get_provider_dataset_type(provider_code)
+        # Get provider's dataset type (use provider_name if available)
+        dataset_type = self.get_provider_dataset_type(provider_code, provider_name)
         if not dataset_type:
             self._log_error(f"Provider {provider_code} not found in database")
             return None
