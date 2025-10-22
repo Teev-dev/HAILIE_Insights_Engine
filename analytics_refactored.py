@@ -55,7 +55,7 @@ class TSMAnalytics:
                 tp_values = []
                 
                 for tp_col in self.tp_codes:
-                    if tp_col in row:
+                    if tp_col in row.index:
                         value = row[tp_col]
                         if pd.notna(value) and value is not None:
                             tp_values.append(float(value))

@@ -188,9 +188,13 @@ def main():
                 provider_code = selected_provider.split("(")[-1].replace(")", "")
             else:
                 provider_code = None
+        else:
+            provider_code = None
+            selected_provider = None
     else:
         st.error("❌ Unable to load provider list. Please try refreshing the page.")
         provider_code = None
+        selected_provider = None
 
     # Process the selected provider
     if provider_code:
