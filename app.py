@@ -398,72 +398,72 @@ def main():
             with st.expander("📈 Measure Correlations", expanded=False):
                 st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
 
-            # Get dataset-specific correlations
-            correlations = data_processor.get_dataset_correlations(dataset_type)
+                # Get dataset-specific correlations
+                correlations = data_processor.get_dataset_correlations(dataset_type)
 
-            if dataset_type == 'LCHO':
-                st.info("Correlations calculated using LCHO providers only (excluding repairs metrics)")
-            else:
-                st.info("Correlations calculated using LCRA providers with all metrics")
-
-            dashboard.render_correlation_analysis(correlations, priority)
-
-        with st.expander("🎯 Priority Matrix", expanded=False):
-            st.markdown(f"### Priority Matrix - {dataset_type} Context")
-
-            # Filter priority matrix for LCHO if needed
-            if dataset_type == 'LCHO' and priority:
-                # Ensure repairs metrics aren't in the priority recommendations
-                if 'measure' in priority and priority['measure'] in ['TP02', 'TP03', 'TP04']:
-                    st.warning("Priority calculation adjusted for LCHO dataset")
-
-            dashboard.render_priority_matrix(priority, detailed_analysis)
-
-        with st.expander("📋 Raw Data", expanded=False):
-            st.markdown(f"### Raw Data - {dataset_type} Provider")
-
-            # Show provider's raw scores - FILTERED BY DATASET TYPE
-            scores_df = data_processor.get_provider_scores(provider_code)
-            
-            # Filter to only show the selected dataset type to avoid confusion
-            if not scores_df.empty and 'dataset_type' in scores_df.columns:
-                scores_df = scores_df[scores_df['dataset_type'] == dataset_type]
-            
-            if not scores_df.empty:
-                # Ensure scores_df is a DataFrame, not an array
-                if isinstance(scores_df, pd.DataFrame):
-                    # Add descriptions
-                    scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
-
-                    # Filter out non-applicable measures based on dataset type
-                    if dataset_type == 'LCHO':
-                        # Remove repairs metrics (TP02-TP04) for LCHO providers
-                        na_metrics = ['TP02', 'TP03', 'TP04']
-                        scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
-
-                        st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
-
-                    # Format for display
-                    display_df = scores_df[['tp_measure', 'description', 'score']].copy()
-                    display_df.columns = ['Measure', 'Description', 'Score (%)']
-
-                    # Format scores with 1 decimal place
-                    display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
-                    st.table(display_df)
+                if dataset_type == 'LCHO':
+                    st.info("Correlations calculated using LCHO providers only (excluding repairs metrics)")
                 else:
-                    st.warning("Data format issue - unable to display scores")
-                    display_df = pd.DataFrame()  # Empty dataframe for the peer comparison info
+                    st.info("Correlations calculated using LCRA providers with all metrics")
 
-                # Show peer comparison info
-                st.markdown(f"""
-                **Dataset Information:**
-                - Dataset Type: **{dataset_type}**
-                - Peer Group Size: **{peer_count} providers**
-                - Applicable Measures: **{len(applicable_measures)}**
-                - Measures Displayed: **{len(display_df)}**
-                """)
-            else:
-                st.warning("No score data available for this provider")
+                dashboard.render_correlation_analysis(correlations, priority)
+
+            with st.expander("🎯 Priority Matrix", expanded=False):
+                st.markdown(f"### Priority Matrix - {dataset_type} Context")
+
+                # Filter priority matrix for LCHO if needed
+                if dataset_type == 'LCHO' and priority:
+                    # Ensure repairs metrics aren't in the priority recommendations
+                    if 'measure' in priority and priority['measure'] in ['TP02', 'TP03', 'TP04']:
+                        st.warning("Priority calculation adjusted for LCHO dataset")
+
+                dashboard.render_priority_matrix(priority, detailed_analysis)
+
+            with st.expander("📋 Raw Data", expanded=False):
+                st.markdown(f"### Raw Data - {dataset_type} Provider")
+
+                # Show provider's raw scores - FILTERED BY DATASET TYPE
+                scores_df = data_processor.get_provider_scores(provider_code)
+                
+                # Filter to only show the selected dataset type to avoid confusion
+                if not scores_df.empty and 'dataset_type' in scores_df.columns:
+                    scores_df = scores_df[scores_df['dataset_type'] == dataset_type]
+                
+                if not scores_df.empty:
+                    # Ensure scores_df is a DataFrame, not an array
+                    if isinstance(scores_df, pd.DataFrame):
+                        # Add descriptions
+                        scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
+
+                        # Filter out non-applicable measures based on dataset type
+                        if dataset_type == 'LCHO':
+                            # Remove repairs metrics (TP02-TP04) for LCHO providers
+                            na_metrics = ['TP02', 'TP03', 'TP04']
+                            scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+
+                            st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
+
+                        # Format for display
+                        display_df = scores_df[['tp_measure', 'description', 'score']].copy()
+                        display_df.columns = ['Measure', 'Description', 'Score (%)']
+
+                        # Format scores with 1 decimal place
+                        display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+                        st.table(display_df)
+                    else:
+                        st.warning("Data format issue - unable to display scores")
+                        display_df = pd.DataFrame()  # Empty dataframe for the peer comparison info
+
+                    # Show peer comparison info
+                    st.markdown(f"""
+                    **Dataset Information:**
+                    - Dataset Type: **{dataset_type}**
+                    - Peer Group Size: **{peer_count} providers**
+                    - Applicable Measures: **{len(applicable_measures)}**
+                    - Measures Displayed: **{len(display_df)}**
+                    """)
+                else:
+                    st.warning("No score data available for this provider")
 
         # Footer
         st.markdown("---")
