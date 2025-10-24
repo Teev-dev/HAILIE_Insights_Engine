@@ -12,7 +12,7 @@ def get_main_css():
     /* Global Responsive Variables - Mobile First Approach */
     :root {
         --primary-color: #2E5BBA;
-        --primary-dark: #0F2557;
+        --primary-dark: #0A1D42;
         --secondary-color: #22C55E;
         --warning-color: #F59E0B;
         --danger-color: #EF4444;
