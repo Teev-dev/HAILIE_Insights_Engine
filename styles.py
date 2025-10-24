@@ -935,6 +935,8 @@ def get_main_css():
     .stDataFrame {
         overflow-x: auto;
         margin: var(--spacing-md) 0;
+        box-shadow: none !important;
+        border: 1px solid #E5E7EB;
     }
 
     .stDataFrame table {
