@@ -382,8 +382,13 @@ def main():
         with st.expander("📋 Raw Data", expanded=False):
             st.markdown(f"### Raw Data - {dataset_type} Provider")
 
-            # Show provider's raw scores
+            # Show provider's raw scores - FILTERED BY DATASET TYPE
             scores_df = data_processor.get_provider_scores(provider_code)
+            
+            # Filter to only show the selected dataset type to avoid confusion
+            if not scores_df.empty and 'dataset_type' in scores_df.columns:
+                scores_df = scores_df[scores_df['dataset_type'] == dataset_type]
+            
             if not scores_df.empty:
                 # Add descriptions
                 scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
