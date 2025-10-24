@@ -258,7 +258,7 @@ def get_main_css():
         color: white;
         padding: 4rem var(--spacing-xl) 4rem var(--spacing-xl);
         border-radius: 0;
-        margin: 0 calc(-1 * var(--spacing-sm)) var(--spacing-xl) calc(-1 * var(--spacing-sm));
+        margin: calc(-1 * var(--spacing-sm)) calc(-1 * var(--spacing-sm)) var(--spacing-xl) calc(-1 * var(--spacing-sm));
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
@@ -270,7 +270,7 @@ def get_main_css():
     @media (min-width: 769px) {
         .hero-section {
             padding: 5rem var(--spacing-2xl) 5rem var(--spacing-2xl);
-            margin: 0 calc(-1 * var(--spacing-lg)) var(--spacing-xl) calc(-1 * var(--spacing-lg));
+            margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-xl) calc(-1 * var(--spacing-lg));
             width: calc(100% + 2 * var(--spacing-lg));
         }
     }
