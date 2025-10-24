@@ -498,9 +498,6 @@ def main():
 
         # Close database connection when done
         data_processor.close()
-    
-    # Close content-section div
-    st.markdown('</div>', unsafe_allow_html=True)
 
     else:
         # Instructions when no provider is selected
@@ -514,7 +511,7 @@ def main():
         The system will instantly retrieve your pre-calculated analytics.
         """)
     
-    # Close content-section div
+    # Close content-section div (moved outside if/else block)
     st.markdown('</div>', unsafe_allow_html=True)
 
 
