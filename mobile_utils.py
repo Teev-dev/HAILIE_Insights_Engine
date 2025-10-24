@@ -8,70 +8,48 @@ import re
 
 def detect_mobile():
     """
-    Detect if the user is on a mobile device using multiple methods
+    Detect if the user is on a mobile device using viewport width detection
     Returns: bool - True if mobile device detected, False otherwise
+    
+    Note: This is called AFTER st.set_page_config() to avoid conflicts
     """
     
-    # Method 1: Check if running in Streamlit's mobile view
-    # This is a simple check based on whether we can access session state
+    # Initialize mobile detection in session state
     if 'is_mobile' not in st.session_state:
-        # Initialize with JavaScript-based detection
         st.session_state.is_mobile = False
+        st.session_state.mobile_detection_attempted = False
+    
+    # Check for manual override via query params
+    query_params = st.query_params
+    if 'mobile' in query_params:
+        override_value = query_params['mobile'].lower() == 'true'
+        st.session_state.is_mobile = override_value
+        return override_value
+    
+    # Use JavaScript injection to detect viewport width (runs once)
+    if not st.session_state.mobile_detection_attempted:
+        st.session_state.mobile_detection_attempted = True
         
-        # JavaScript to detect mobile and report back via query params
+        # Simple viewport-based detection
         mobile_detect_script = """
         <script>
-        function detectMobile() {
-            // Check viewport width
+        (function() {
             const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+            const isMobile = viewportWidth < 768;
             
-            // Check user agent for mobile devices
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+            // Log for debugging
+            console.log('HAILIE Mobile Detection - Viewport:', viewportWidth, 'px, Mobile:', isMobile);
             
-            // Check for touch support
-            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            
-            // Consider mobile if viewport < 768px OR mobile user agent detected
-            const isMobile = viewportWidth < 768 || isMobileUA || (hasTouch && viewportWidth < 1024);
-            
-            // Store in sessionStorage for persistence
-            sessionStorage.setItem('isMobile', isMobile);
-            
-            // Update display to show mobile status (for debugging)
-            console.log('Mobile detection - Width:', viewportWidth, 'UA Mobile:', isMobileUA, 'Touch:', hasTouch, 'Result:', isMobile);
-            
-            return isMobile;
-        }
-        
-        // Run detection on load and resize
-        window.addEventListener('load', detectMobile);
-        window.addEventListener('resize', detectMobile);
-        
-        // Initial detection
-        detectMobile();
+            // Store in sessionStorage
+            sessionStorage.setItem('hailie_mobile', isMobile ? 'true' : 'false');
+        })();
         </script>
         """
         
-        # Inject the detection script
+        # Inject detection script (silent, no visual output)
         html(mobile_detect_script, height=0)
     
-    # Method 2: Check viewport using Streamlit's internal state (if available)
-    # We can try to infer from the sidebar state
-    try:
-        # If sidebar is collapsed by default on small screens, might indicate mobile
-        # This is a heuristic approach
-        pass
-    except:
-        pass
-    
-    # Method 3: Simple session state flag that can be set manually
-    # Allow manual override via query params or session state
-    query_params = st.query_params
-    if 'mobile' in query_params:
-        st.session_state.is_mobile = query_params['mobile'].lower() == 'true'
-    
-    return st.session_state.get('is_mobile', False)
+    return st.session_state.is_mobile
 
 
 def get_mobile_config():
