@@ -395,6 +395,7 @@ def get_main_css():
         text-decoration: none !important;
         color: inherit;
         display: block;
+        cursor: pointer;
     }
     
     .feature-card-link:hover,
@@ -425,9 +426,10 @@ def get_main_css():
     .feature-card-clickable {
         cursor: pointer;
         user-select: none;
+        scroll-margin-top: 20px;
     }
     
-    .feature-card-clickable:active {
+    .feature-card-link:active .feature-card-clickable {
         transform: translateY(0px) scale(0.98);
     }
     
