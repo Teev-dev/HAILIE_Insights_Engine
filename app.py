@@ -34,30 +34,39 @@ def render_features_overview():
     """Render the key features overview section"""
     st.markdown("""
     <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon-professional rank-icon"></div>
-            <h3 class="feature-title">Your Rank</h3>
-            <p class="feature-description">
-                See exactly how your housing provider compares to peers with quartile-based scoring. 
-                Get clear visual indicators showing your competitive position.
-            </p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon-professional momentum-icon"></div>
-            <h3 class="feature-title">Your Momentum</h3>
-            <p class="feature-description">
-                Track your 12-month performance trajectory. Understand if you're improving, 
-                stable, or declining across key satisfaction measures.
-            </p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon-professional priority-icon"></div>
-            <h3 class="feature-title">Your Priority</h3>
-            <p class="feature-description">
-                Identify the single most critical area for improvement based on data-driven 
-                correlation analysis with overall tenant satisfaction.
-            </p>
-        </div>
+        <a href="#provider-search-section" class="feature-card-link">
+            <div class="feature-card feature-card-clickable">
+                <div class="feature-icon-professional rank-icon"></div>
+                <h3 class="feature-title">Your Rank</h3>
+                <p class="feature-description">
+                    See exactly how your housing provider compares to peers with quartile-based scoring. 
+                    Get clear visual indicators showing your competitive position.
+                </p>
+                <div class="feature-cta">Click to get started →</div>
+            </div>
+        </a>
+        <a href="#provider-search-section" class="feature-card-link">
+            <div class="feature-card feature-card-clickable">
+                <div class="feature-icon-professional momentum-icon"></div>
+                <h3 class="feature-title">Your Momentum</h3>
+                <p class="feature-description">
+                    Track your 12-month performance trajectory. Understand if you're improving, 
+                    stable, or declining across key satisfaction measures.
+                </p>
+                <div class="feature-cta">Click to get started →</div>
+            </div>
+        </a>
+        <a href="#provider-search-section" class="feature-card-link">
+            <div class="feature-card feature-card-clickable">
+                <div class="feature-icon-professional priority-icon"></div>
+                <h3 class="feature-title">Your Priority</h3>
+                <p class="feature-description">
+                    Identify the single most critical area for improvement based on data-driven 
+                    correlation analysis with overall tenant satisfaction.
+                </p>
+                <div class="feature-cta">Click to get started →</div>
+            </div>
+        </a>
     </div>
     """,
                 unsafe_allow_html=True)
@@ -167,6 +176,7 @@ def main():
         Data source: 2024 TSM Dataset
         """)
 
+    st.markdown('<div id="provider-search-section"></div>', unsafe_allow_html=True)
     st.markdown("## Select Your Provider")
 
     # Single column layout for provider selection
@@ -282,14 +292,30 @@ def main():
             detailed_analysis = analytics.get_detailed_performance_analysis(
                 df, provider_code)
             
+            # Debug logging
+            if show_advanced_logging:
+                st.write("Debug - detailed_analysis type:", type(detailed_analysis))
+                st.write("Debug - detailed_analysis value:", detailed_analysis)
+                st.write("Debug - detailed_analysis keys:", list(detailed_analysis.keys()) if detailed_analysis and isinstance(detailed_analysis, dict) else "None or not a dict")
+                st.write("Debug - dataset_type:", dataset_type)
+            
             # Filter out N/A metrics for LCHO
-            if dataset_type == 'LCHO' and detailed_analysis and 'measures' in detailed_analysis:
-                detailed_analysis['measures'] = {
-                    k: v for k, v in detailed_analysis['measures'].items() 
+            if dataset_type == 'LCHO' and detailed_analysis and "error" not in detailed_analysis:
+                original_count = len(detailed_analysis)
+                detailed_analysis = {
+                    k: v for k, v in detailed_analysis.items() 
                     if k not in ['TP02', 'TP03', 'TP04']
                 }
+                if show_advanced_logging:
+                    st.write(f"Debug - Filtered {original_count} measures down to {len(detailed_analysis)} for LCHO")
             
-            dashboard.render_performance_analysis(detailed_analysis)
+            # Check if we have any measures to display
+            if not detailed_analysis:
+                st.warning("No performance data available to display")
+            elif "error" in detailed_analysis:
+                st.error(f"Error loading performance data: {detailed_analysis['error']}")
+            else:
+                dashboard.render_performance_analysis(detailed_analysis)
 
         with tab2:
             st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
@@ -324,21 +350,24 @@ def main():
                 # Add descriptions
                 scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
                 
-                # For LCHO, mark repairs metrics as N/A using NaN for numeric compatibility
+                # Filter out non-applicable measures based on dataset type
                 if dataset_type == 'LCHO':
+                    # Remove repairs metrics (TP02-TP04) for LCHO providers
                     na_metrics = ['TP02', 'TP03', 'TP04']
-                    for metric in na_metrics:
-                        if metric in scores_df['tp_measure'].values:
-                            scores_df.loc[scores_df['tp_measure'] == metric, 'score'] = np.nan
-                            scores_df.loc[scores_df['tp_measure'] == metric, 'description'] += ' (Not Applicable)'
+                    scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+                    
+                    st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
                 
                 # Format for display
                 display_df = scores_df[['tp_measure', 'description', 'score']].copy()
                 display_df.columns = ['Measure', 'Description', 'Score (%)']
                 
+                # Format scores with 1 decimal place
+                display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+                
                 st.dataframe(
                     display_df,
-                    use_container_width=True,
+                    width='stretch',
                     hide_index=True
                 )
                 
@@ -348,6 +377,7 @@ def main():
                 - Dataset Type: **{dataset_type}**
                 - Peer Group Size: **{peer_count} providers**
                 - Applicable Measures: **{len(applicable_measures)}**
+                - Measures Displayed: **{len(display_df)}**
                 """)
             else:
                 st.warning("No score data available for this provider")

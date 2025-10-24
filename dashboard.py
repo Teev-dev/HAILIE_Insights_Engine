@@ -763,11 +763,15 @@ class ExecutiveDashboard:
         """
         Render performance analysis visualization
         """
+        if not detailed_analysis:
+            st.warning("No performance analysis data available")
+            return
+            
         if "error" in detailed_analysis:
             st.error(detailed_analysis["error"])
             return
             
-        if detailed_analysis:
+        if detailed_analysis and len(detailed_analysis) > 0:
             st.markdown("### Performance Analysis")
             
             # Create performance comparison chart

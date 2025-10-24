@@ -261,13 +261,25 @@ class TSMAnalytics:
             if not self.data_processor.get_provider_exists(provider_code):
                 return {"error": f"Provider {provider_code} not found"}
             
+            # Get provider's dataset type for proper peer comparison
+            dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+            if not dataset_type:
+                return {"error": "Could not determine dataset type"}
+            
             # Get provider's scores and percentiles
-            provider_scores = self.data_processor.get_provider_scores(provider_code)
+            provider_scores_df = self.data_processor.get_provider_scores(provider_code)
+            
+            if provider_scores_df is None or provider_scores_df.empty:
+                return {"error": "No scores found for this provider"}
+            
+            # Convert scores DataFrame to dict
+            provider_scores = dict(zip(provider_scores_df['tp_measure'], provider_scores_df['score']))
+            
             provider_percentiles = self.data_processor.get_provider_percentiles(provider_code)
             
             # Convert percentiles DataFrame to dict
             percentile_dict = {}
-            if not provider_percentiles.empty:
+            if provider_percentiles is not None and not provider_percentiles.empty:
                 percentile_dict = dict(zip(provider_percentiles['tp_measure'], 
                                           provider_percentiles['percentile_rank']))
             
@@ -276,14 +288,21 @@ class TSMAnalytics:
             for tp_measure in self.tp_codes:
                 if tp_measure not in provider_scores:
                     continue
-                    
+                
                 score = provider_scores[tp_measure]
                 
+                # Skip NaN values
+                if pd.isna(score):
+                    continue
+                    
                 # Get percentile from pre-calculated data
                 percentile = percentile_dict.get(tp_measure, 0)
                 
-                # Get measure statistics
-                stats = self.data_processor.get_measure_statistics(tp_measure)
+                # Get measure statistics for the same dataset type
+                stats = self.data_processor.get_measure_statistics(tp_measure, dataset_type)
+                
+                if stats is None:
+                    stats = {}
                 
                 detailed_analysis[tp_measure] = {
                     'score': score,
@@ -294,6 +313,9 @@ class TSMAnalytics:
                     'top_quartile_threshold': stats.get('mean_score', 0) + stats.get('std_dev', 0),
                     'bottom_quartile_threshold': stats.get('mean_score', 0) - stats.get('std_dev', 0)
                 }
+            
+            if not detailed_analysis:
+                return {"error": "No valid performance data available"}
             
             return detailed_analysis
             
