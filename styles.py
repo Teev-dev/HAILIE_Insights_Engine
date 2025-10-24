@@ -294,6 +294,15 @@ def get_main_css():
         touch-action: manipulation;
     }
     
+    .feature-card-clickable {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .feature-card-clickable:active {
+        transform: translateY(0px) scale(0.98);
+    }
+    
     @media (min-width: 768px) {
         .feature-card {
             padding: var(--spacing-xl);
@@ -320,12 +329,30 @@ def get_main_css():
         .feature-card:hover::before {
             left: 100%;
         }
+        
+        .feature-card-clickable:hover {
+            border-top-color: var(--primary-dark);
+        }
     }
     
     @media (max-width: 768px) {
         .feature-card:hover {
             transform: translateY(-2px) scale(1.01);
         }
+    }
+    
+    .feature-cta {
+        margin-top: var(--spacing-md);
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: clamp(0.85rem, 2vw, 0.95rem);
+        opacity: 0.9;
+        transition: all 0.2s ease;
+    }
+    
+    .feature-card-clickable:hover .feature-cta {
+        opacity: 1;
+        transform: translateX(4px);
     }
     
     .feature-icon,
