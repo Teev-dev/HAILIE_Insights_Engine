@@ -86,11 +86,31 @@ def get_main_css():
 
     /* Enhanced body and container styles */
     body {
-        margin: 0;
-        padding: 0;
+        margin: 0 !important;
+        padding: 0 !important;
         overflow-x: hidden;
         overflow-y: auto !important;
         min-height: 100vh !important;
+    }
+    
+    /* Remove all default Streamlit padding and margins */
+    .main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    section.main > div {
+        padding-top: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    [data-testid="stAppViewContainer"] {
+        padding: 0 !important;
+    }
+    
+    [data-testid="stHeader"] {
+        background-color: transparent;
     }
 
     /* Prevent any parent containers from hiding content */
@@ -256,12 +276,14 @@ def get_main_css():
     .content-section {
         padding-left: var(--spacing-sm);
         padding-right: var(--spacing-sm);
+        padding-top: var(--spacing-lg);
     }
 
     @media (min-width: 769px) {
         .content-section {
             padding-left: var(--spacing-lg);
             padding-right: var(--spacing-lg);
+            padding-top: var(--spacing-xl);
         }
     }
 
@@ -279,14 +301,14 @@ def get_main_css():
         padding: 4rem var(--spacing-xl) 4rem var(--spacing-xl);
         border-radius: 0;
         margin: 0;
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
         overflow: visible !important;
         min-height: auto !important;
         width: 100vw;
-        margin-left: 0;
-        margin-right: 0;
     }
     
     @media (min-width: 769px) {
