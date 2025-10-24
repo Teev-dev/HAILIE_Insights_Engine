@@ -411,7 +411,7 @@ def get_main_css():
     }
 
     .feature-card {
-        background: #FFFFFF;
+        background: var(--bg-primary);
         padding: var(--spacing-lg);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--shadow-md);
@@ -516,13 +516,13 @@ def get_main_css():
     .feature-title {
         font-size: clamp(1.1rem, 3vw, 1.4rem);
         font-weight: 700;
-        color: #1E293B;
+        color: var(--text-primary);
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
 
     .feature-description {
-        color: #1E293B;
+        color: var(--text-primary);
         font-size: clamp(0.9rem, 2.5vw, 1rem);
         line-height: 1.6;
     }
@@ -883,7 +883,7 @@ def get_main_css():
     .quartile-high,
     .quartile-mid,
     .quartile-low {
-        background: #FFFFFF !important;
+        background: var(--bg-primary) !important;
         border-left: 3px solid var(--secondary-color) !important;
     }
 
@@ -912,12 +912,12 @@ def get_main_css():
     }
 
     .priority-high {
-        background: #FFFFFF;
+        background: var(--bg-primary);
         border-left: 3px solid #EF4444 !important;
     }
 
     .main-title {
-        color: #1E293B;
+        color: var(--text-primary);
         font-size: clamp(1.75rem, 4vw, 2.5rem);
         font-weight: 700;
         margin-bottom: 0.5rem;
@@ -925,7 +925,7 @@ def get_main_css():
     }
 
     .subtitle {
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: clamp(1rem, 2.5vw, 1.2rem);
         margin-bottom: var(--spacing-xl);
         line-height: 1.4;
