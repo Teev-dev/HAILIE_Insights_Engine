@@ -27,6 +27,10 @@ def render_landing_hero():
     """Render the professional hero section"""
     is_mobile = detect_mobile()
     
+    # Debug: Show detection result (remove this after testing)
+    if st.sidebar.checkbox("Show mobile detection debug", value=False):
+        st.sidebar.info(f"Mobile detected: {is_mobile}")
+    
     if is_mobile:
         # Mobile version - styled gradient header
         st.markdown("""
@@ -220,6 +224,22 @@ def main():
 
     # Sidebar for analysis options
     with st.sidebar:
+        # Device view toggle
+        st.header("View Settings")
+        force_mobile = st.checkbox(
+            "📱 Use Mobile View",
+            value=detect_mobile(),
+            help="Toggle mobile-optimized layout"
+        )
+        
+        # Override detection if manually toggled
+        if force_mobile:
+            st.session_state.force_mobile_view = True
+        else:
+            st.session_state.force_mobile_view = False
+        
+        st.markdown("---")
+        
         # Analysis options
         st.header("Analysis Options")
         include_confidence = st.checkbox("Include confidence intervals",

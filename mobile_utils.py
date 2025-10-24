@@ -1,55 +1,61 @@
+
 """
 Mobile detection utilities for the HAILIE TSM Insights Engine
 """
 
 import streamlit as st
-from streamlit.components.v1 import html
 import re
 
 def detect_mobile():
     """
-    Detect if the user is on a mobile device using viewport width detection
+    Detect if the user is on a mobile device using user agent string
     Returns: bool - True if mobile device detected, False otherwise
-    
-    Note: This is called AFTER st.set_page_config() to avoid conflicts
     """
     
-    # Initialize mobile detection in session state
-    if 'is_mobile' not in st.session_state:
-        st.session_state.is_mobile = False
-        st.session_state.mobile_detection_attempted = False
+    # Check for manual toggle in session state
+    if hasattr(st.session_state, 'force_mobile_view'):
+        return st.session_state.force_mobile_view
     
     # Check for manual override via query params
     query_params = st.query_params
     if 'mobile' in query_params:
         override_value = query_params['mobile'].lower() == 'true'
-        st.session_state.is_mobile = override_value
         return override_value
     
-    # Use JavaScript injection to detect viewport width (runs once)
-    if not st.session_state.mobile_detection_attempted:
-        st.session_state.mobile_detection_attempted = True
-        
-        # Simple viewport-based detection
-        mobile_detect_script = """
-        <script>
-        (function() {
-            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-            const isMobile = viewportWidth < 769;
+    # Try to get user agent from headers (most reliable method)
+    try:
+        # Access the user agent from the request context
+        from streamlit.web.server.websocket_headers import _get_websocket_headers
+        headers = _get_websocket_headers()
+        if headers:
+            user_agent = headers.get('User-Agent', '').lower()
             
-            // Log for debugging
-            console.log('HAILIE Mobile Detection - Viewport:', viewportWidth, 'px, Mobile:', isMobile);
+            # Check for mobile indicators in user agent
+            mobile_indicators = [
+                'iphone', 'ipad', 'ipod',  # iOS devices
+                'android',                  # Android devices
+                'mobile',                   # Generic mobile
+                'webos', 'blackberry',      # Other mobile OS
+                'windows phone'             # Windows mobile
+            ]
             
-            // Store in sessionStorage
-            sessionStorage.setItem('hailie_mobile', isMobile ? 'true' : 'false');
-        })();
-        </script>
-        """
-        
-        # Inject detection script (silent, no visual output)
-        html(mobile_detect_script, height=0)
+            is_mobile = any(indicator in user_agent for indicator in mobile_indicators)
+            
+            # Also check for tablet-specific patterns (treat as non-mobile for better UX)
+            tablet_indicators = ['ipad', 'tablet']
+            is_tablet = any(indicator in user_agent for indicator in tablet_indicators)
+            
+            # iPads and tablets get desktop view
+            if is_tablet:
+                return False
+                
+            return is_mobile
+    except:
+        # Fallback: assume desktop if we can't detect
+        pass
     
-    return st.session_state.is_mobile
+    # Default to desktop view if detection fails
+    return False
 
 
 def get_mobile_config():
