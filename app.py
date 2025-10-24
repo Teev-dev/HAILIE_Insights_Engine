@@ -283,9 +283,9 @@ def main():
                 df, provider_code)
             
             # Filter out N/A metrics for LCHO
-            if dataset_type == 'LCHO' and detailed_analysis and 'measures' in detailed_analysis:
-                detailed_analysis['measures'] = {
-                    k: v for k, v in detailed_analysis['measures'].items() 
+            if dataset_type == 'LCHO' and detailed_analysis and not "error" in detailed_analysis:
+                detailed_analysis = {
+                    k: v for k, v in detailed_analysis.items() 
                     if k not in ['TP02', 'TP03', 'TP04']
                 }
             
