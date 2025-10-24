@@ -936,19 +936,28 @@ def get_main_css():
         overflow-x: auto;
         margin: var(--spacing-md) 0;
         box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
         border: 1px solid #E5E7EB;
+        filter: none !important;
     }
 
     .stDataFrame > div {
         box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
         border: none !important;
+        filter: none !important;
     }
 
     .stDataFrame table {
         min-width: 100%;
         font-size: clamp(0.8rem, 2vw, 0.9rem);
         box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
         border: none !important;
+        filter: none !important;
     }
 
     /* AGGRESSIVE shadow removal for dataframes - targeting all possible elements */
@@ -1042,6 +1051,30 @@ def get_main_css():
         box-shadow: none !important;
         -webkit-box-shadow: none !important;
         -moz-box-shadow: none !important;
+    }
+    
+    /* Global override for any element with dataframe in its class or id */
+    [id*="dataframe"],
+    [id*="dataframe"] *,
+    [class*="dataframe"],
+    [class*="dataframe"] *,
+    [data-testid*="dataframe" i],
+    [data-testid*="dataframe" i] * {
+        box-shadow: 0 0 0 transparent !important;
+        -webkit-box-shadow: 0 0 0 transparent !important;
+        -moz-box-shadow: 0 0 0 transparent !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
+    
+    /* Nuclear option: override ALL box shadows in dataframe contexts with maximum specificity */
+    html body [data-testid="stDataFrame"],
+    html body [data-testid="stDataFrame"] * {
+        box-shadow: 0 0 0 0 transparent !important;
+        -webkit-box-shadow: 0 0 0 0 transparent !important;
+        -moz-box-shadow: 0 0 0 0 transparent !important;
+        outline: none !important;
+        border-image: none !important;
     }
 
     @media (max-width: 768px) {
