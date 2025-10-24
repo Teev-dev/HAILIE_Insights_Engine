@@ -282,14 +282,28 @@ def main():
             detailed_analysis = analytics.get_detailed_performance_analysis(
                 df, provider_code)
             
+            # Debug logging
+            if show_advanced_logging:
+                st.write("Debug - detailed_analysis keys:", list(detailed_analysis.keys()) if detailed_analysis else "None")
+                st.write("Debug - dataset_type:", dataset_type)
+            
             # Filter out N/A metrics for LCHO
-            if dataset_type == 'LCHO' and detailed_analysis and not "error" in detailed_analysis:
+            if dataset_type == 'LCHO' and detailed_analysis and "error" not in detailed_analysis:
+                original_count = len(detailed_analysis)
                 detailed_analysis = {
                     k: v for k, v in detailed_analysis.items() 
                     if k not in ['TP02', 'TP03', 'TP04']
                 }
+                if show_advanced_logging:
+                    st.write(f"Debug - Filtered {original_count} measures down to {len(detailed_analysis)} for LCHO")
             
-            dashboard.render_performance_analysis(detailed_analysis)
+            # Check if we have any measures to display
+            if not detailed_analysis:
+                st.warning("No performance data available to display")
+            elif "error" in detailed_analysis:
+                st.error(f"Error loading performance data: {detailed_analysis['error']}")
+            else:
+                dashboard.render_performance_analysis(detailed_analysis)
 
         with tab2:
             st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
