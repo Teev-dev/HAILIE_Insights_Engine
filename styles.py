@@ -838,6 +838,14 @@ def get_main_css():
         border-color: #D1D5DB;
     }
     
+    /* Clean white theme for quartile cards - remove colored backgrounds */
+    .quartile-top,
+    .quartile-high,
+    .quartile-mid,
+    .quartile-low {
+        background: #FFFFFF !important;
+    }
+    
     
     .metric-value {
         font-size: clamp(2.5rem, 6vw, 3.5rem);
@@ -857,24 +865,24 @@ def get_main_css():
         letter-spacing: 0.05em;
     }
     
-    .quartile-top {
-        background: #FFFFFF;
+    .quartile-top,
+    .quartile-high,
+    .quartile-mid,
+    .quartile-low {
+        background: #FFFFFF !important;
         border-left: 3px solid var(--secondary-color) !important;
     }
     
     .quartile-high {
-        background: #FFFFFF;
-        border-left: 3px solid #84CC16 !important;
+        border-left-color: #84CC16 !important;
     }
     
     .quartile-mid {
-        background: #FFFFFF;
-        border-left: 3px solid var(--warning-color) !important;
+        border-left-color: var(--warning-color) !important;
     }
     
     .quartile-low {
-        background: #FFFFFF;
-        border-left: 3px solid var(--danger-color) !important;
+        border-left-color: var(--danger-color) !important;
     }
     
     .momentum-up {
