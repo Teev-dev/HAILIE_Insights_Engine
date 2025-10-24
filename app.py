@@ -5,15 +5,21 @@ from data_processor_enhanced import EnhancedTSMDataProcessor
 from analytics_refactored import TSMAnalytics
 from dashboard import ExecutiveDashboard
 from styles import apply_css
+from mobile_utils import detect_mobile, get_device_config, mobile_friendly_columns, render_mobile_info, should_show_component
 import traceback
 from contextlib import contextmanager
 import os
 
-# Page configuration
-st.set_page_config(page_title="HAILIE TSM Insights Engine",
-                   page_icon="✓",
-                   layout="wide",
-                   initial_sidebar_state="expanded")
+# Get device configuration
+device_config = get_device_config()
+
+# Page configuration - adaptive based on device
+st.set_page_config(
+    page_title="HAILIE TSM Insights Engine",
+    page_icon="✓",
+    layout=device_config['layout'],
+    initial_sidebar_state=device_config['sidebar_state']
+)
 
 # Apply custom CSS styles from styles module
 apply_css(st)
@@ -21,46 +27,71 @@ apply_css(st)
 
 def render_landing_hero():
     """Render the professional hero section"""
-    st.markdown("""
-    <div class="hero-section">
-        <h1 class="hero-title">TSM Insights by HAILIE</h1>
-        <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
-    </div>
-    """,
-                unsafe_allow_html=True)
+    is_mobile = detect_mobile()
+    
+    if is_mobile:
+        # Mobile version - use native Streamlit components
+        st.title("TSM Insights by HAILIE")
+        st.subheader("Transform Your TSM Performance Into Executive Intelligence")
+    else:
+        # Desktop version - use custom HTML
+        st.markdown("""
+        <div class="hero-section">
+            <h1 class="hero-title">TSM Insights by HAILIE</h1>
+            <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
+        </div>
+        """,
+                    unsafe_allow_html=True)
 
 
 def render_features_overview():
     """Render the key features overview section"""
-    st.markdown("""
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon-professional rank-icon"></div>
-            <h3 class="feature-title">Your Rank</h3>
-            <p class="feature-description">
-                See exactly how your housing provider compares to peers with quartile-based scoring. 
-                Get clear visual indicators showing your competitive position.
-            </p>
+    is_mobile = detect_mobile()
+    
+    if is_mobile:
+        # Mobile version - use native Streamlit components in single column
+        st.markdown("### Key Insights We Provide")
+        
+        with st.container():
+            st.markdown("**📊 Your Rank**")
+            st.markdown("See exactly how your housing provider compares to peers with quartile-based scoring.")
+            
+            st.markdown("**📈 Your Momentum**")
+            st.markdown("Track your 12-month performance trajectory across key satisfaction measures.")
+            
+            st.markdown("**🎯 Your Priority**")
+            st.markdown("Identify the single most critical area for improvement based on data-driven analysis.")
+    else:
+        # Desktop version - use custom HTML grid
+        st.markdown("""
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-professional rank-icon"></div>
+                <h3 class="feature-title">Your Rank</h3>
+                <p class="feature-description">
+                    See exactly how your housing provider compares to peers with quartile-based scoring. 
+                    Get clear visual indicators showing your competitive position.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-professional momentum-icon"></div>
+                <h3 class="feature-title">Your Momentum</h3>
+                <p class="feature-description">
+                    Track your 12-month performance trajectory. Understand if you're improving, 
+                    stable, or declining across key satisfaction measures.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-professional priority-icon"></div>
+                <h3 class="feature-title">Your Priority</h3>
+                <p class="feature-description">
+                    Identify the single most critical area for improvement based on data-driven 
+                    correlation analysis with overall tenant satisfaction.
+                </p>
+            </div>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon-professional momentum-icon"></div>
-            <h3 class="feature-title">Your Momentum</h3>
-            <p class="feature-description">
-                Track your 12-month performance trajectory. Understand if you're improving, 
-                stable, or declining across key satisfaction measures.
-            </p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon-professional priority-icon"></div>
-            <h3 class="feature-title">Your Priority</h3>
-            <p class="feature-description">
-                Identify the single most critical area for improvement based on data-driven 
-                correlation analysis with overall tenant satisfaction.
-            </p>
-        </div>
-    </div>
-    """,
-                unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
 
 def check_database_exists():
