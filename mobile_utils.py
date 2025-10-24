@@ -1,55 +1,99 @@
+
 """
 Mobile detection utilities for the HAILIE TSM Insights Engine
 """
 
 import streamlit as st
-from streamlit.components.v1 import html
-import re
+import streamlit.components.v1 as components
 
 def detect_mobile():
     """
-    Detect if the user is on a mobile device using viewport width detection
+    Detect if the user is on a mobile device using JavaScript injection
     Returns: bool - True if mobile device detected, False otherwise
-    
-    Note: This is called AFTER st.set_page_config() to avoid conflicts
     """
     
-    # Initialize mobile detection in session state
-    if 'is_mobile' not in st.session_state:
-        st.session_state.is_mobile = False
-        st.session_state.mobile_detection_attempted = False
+    # Check for manual toggle in session state
+    if hasattr(st.session_state, 'force_mobile_view'):
+        return st.session_state.force_mobile_view
     
     # Check for manual override via query params
     query_params = st.query_params
     if 'mobile' in query_params:
         override_value = query_params['mobile'].lower() == 'true'
-        st.session_state.is_mobile = override_value
         return override_value
     
-    # Use JavaScript injection to detect viewport width (runs once)
-    if not st.session_state.mobile_detection_attempted:
-        st.session_state.mobile_detection_attempted = True
-        
-        # Simple viewport-based detection
-        mobile_detect_script = """
-        <script>
-        (function() {
-            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-            const isMobile = viewportWidth < 768;
-            
-            // Log for debugging
-            console.log('HAILIE Mobile Detection - Viewport:', viewportWidth, 'px, Mobile:', isMobile);
-            
-            // Store in sessionStorage
-            sessionStorage.setItem('hailie_mobile', isMobile ? 'true' : 'false');
-        })();
-        </script>
-        """
-        
-        # Inject detection script (silent, no visual output)
-        html(mobile_detect_script, height=0)
+    # Initialize session state for mobile detection if not exists
+    if 'is_mobile_device' not in st.session_state:
+        st.session_state.is_mobile_device = False
     
-    return st.session_state.is_mobile
+    # Use JavaScript to detect mobile device
+    # This runs on the client side and stores result in session state
+    mobile_check_js = """
+    <script>
+        function checkMobile() {
+            // Check multiple indicators
+            const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const smallScreen = window.innerWidth <= 768;
+            
+            // Consider it mobile if user agent matches OR (touch + small screen)
+            const mobile = isMobile || (hasTouch && smallScreen);
+            
+            // Send result back to Streamlit
+            if (window.parent) {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: mobile
+                }, '*');
+            }
+            
+            // Also update URL parameter for persistence
+            if (mobile) {
+                const url = new URL(window.location);
+                url.searchParams.set('mobile', 'true');
+                window.history.replaceState({}, '', url);
+            }
+        }
+        
+        // Run check when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', checkMobile);
+        } else {
+            checkMobile();
+        }
+    </script>
+    """
+    
+    # Inject the JavaScript (only once per session)
+    if 'mobile_check_injected' not in st.session_state:
+        components.html(mobile_check_js, height=0)
+        st.session_state.mobile_check_injected = True
+    
+    # Fallback: Try headers API as backup
+    try:
+        headers = st.context.headers
+        if headers:
+            user_agent = headers.get('User-Agent', '').lower()
+            
+            mobile_indicators = [
+                'iphone', 'ipod', 'android', 'mobile',
+                'webos', 'blackberry', 'windows phone'
+            ]
+            
+            is_mobile = any(indicator in user_agent for indicator in mobile_indicators)
+            
+            # Don't treat tablets as mobile
+            if 'ipad' in user_agent or 'tablet' in user_agent:
+                is_mobile = False
+            
+            # Store in session state
+            st.session_state.is_mobile_device = is_mobile
+            return is_mobile
+    except Exception:
+        pass
+    
+    # Return stored value or default to False
+    return st.session_state.get('is_mobile_device', False)
 
 
 def get_mobile_config():
@@ -58,15 +102,15 @@ def get_mobile_config():
     Returns: dict - Configuration settings
     """
     return {
-        'layout': 'centered',  # Use centered instead of wide for mobile
-        'sidebar_state': 'collapsed',  # Collapse sidebar on mobile
-        'show_tables': False,  # Don't show data tables on mobile
-        'show_charts': True,  # Show charts but simplified
-        'chart_height': 300,  # Smaller chart height for mobile
-        'max_columns': 1,  # Single column layout
-        'show_expanders': False,  # Hide detailed expanders on mobile
-        'touch_target_size': 48,  # Minimum touch target size in pixels
-        'font_size_multiplier': 1.1,  # Slightly larger fonts for readability
+        'layout': 'centered',
+        'sidebar_state': 'collapsed',
+        'show_tables': False,
+        'show_charts': True,
+        'chart_height': 300,
+        'max_columns': 1,
+        'show_expanders': False,
+        'touch_target_size': 48,
+        'font_size_multiplier': 1.1,
     }
 
 
@@ -76,15 +120,15 @@ def get_desktop_config():
     Returns: dict - Configuration settings
     """
     return {
-        'layout': 'wide',  # Wide layout for desktop
-        'sidebar_state': 'expanded',  # Expanded sidebar on desktop
-        'show_tables': True,  # Show all data tables
-        'show_charts': True,  # Show all charts
-        'chart_height': 500,  # Full chart height
-        'max_columns': 3,  # Multi-column layout
-        'show_expanders': True,  # Show all detailed expanders
-        'touch_target_size': 40,  # Standard target size
-        'font_size_multiplier': 1.0,  # Standard font size
+        'layout': 'wide',
+        'sidebar_state': 'expanded',
+        'show_tables': True,
+        'show_charts': True,
+        'chart_height': 500,
+        'max_columns': 3,
+        'show_expanders': True,
+        'touch_target_size': 40,
+        'font_size_multiplier': 1.0,
     }
 
 
@@ -106,10 +150,8 @@ def mobile_friendly_columns(num_columns, gaps='medium'):
     config = get_device_config()
     
     if config['max_columns'] == 1:
-        # Mobile: Return a list with a single container
         return [st.container()]
     else:
-        # Desktop: Return normal columns
         return st.columns(num_columns, gap=gaps)
 
 
@@ -142,8 +184,8 @@ def should_show_component(component_type):
         'table': config.get('show_tables', True),
         'chart': config.get('show_charts', True),
         'expander': config.get('show_expanders', True),
-        'detailed_analysis': not config['max_columns'] == 1,  # Hide on mobile
-        'raw_data': not config['max_columns'] == 1,  # Hide on mobile
+        'detailed_analysis': not config['max_columns'] == 1,
+        'raw_data': not config['max_columns'] == 1,
     }
     
     return component_map.get(component_type, True)

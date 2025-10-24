@@ -28,9 +28,33 @@ def render_landing_hero():
     is_mobile = detect_mobile()
     
     if is_mobile:
-        # Mobile version - use native Streamlit components
-        st.title("TSM Insights by HAILIE")
-        st.subheader("Transform Your TSM Performance Into Executive Intelligence")
+        # Mobile version - styled gradient header
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #2E5BBA 0%, #050B1F 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        ">
+            <h1 style="
+                font-size: 1.75rem;
+                font-weight: 800;
+                margin-bottom: 0.5rem;
+                line-height: 1.2;
+                color: white;
+            ">TSM Insights by HAILIE</h1>
+            <p style="
+                font-size: 1rem;
+                margin: 0;
+                opacity: 0.95;
+                color: white;
+                line-height: 1.4;
+            ">Transform Your TSM Performance Into Executive Intelligence</p>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         # Desktop version - use custom HTML
         st.markdown("""

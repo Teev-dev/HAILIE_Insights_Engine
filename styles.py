@@ -53,7 +53,7 @@ def get_main_css():
     }
 
     /* Tablet and up spacing adjustments */
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         :root {
             --spacing-xs: 0.5rem;
             --spacing-sm: 0.75rem;
@@ -78,7 +78,7 @@ def get_main_css():
         }
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         html {
             font-size: 16px;
         }
@@ -89,19 +89,29 @@ def get_main_css():
         margin: 0;
         padding: 0;
         overflow-x: hidden;
+        overflow-y: auto !important;
+        min-height: 100vh !important;
+    }
+
+    /* Prevent any parent containers from hiding content */
+    #root, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+        overflow: visible !important;
+        min-height: 100vh !important;
     }
 
     /* Streamlit container improvements */
     .main .block-container {
-        padding-top: var(--spacing-md) !important;
+        padding-top: 0 !important;
         padding-left: var(--spacing-sm) !important;
         padding-right: var(--spacing-sm) !important;
         max-width: none !important;
+        overflow: visible !important;
+        position: relative !important;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .main .block-container {
-            padding-top: var(--spacing-xl) !important;
+            padding-top: 0 !important;
             padding-left: var(--spacing-lg) !important;
             padding-right: var(--spacing-lg) !important;
         }
@@ -114,13 +124,19 @@ def get_main_css():
         }
     }
 
+    /* Ensure all main containers are visible */
+    .main, .main > div, section[data-testid="stAppViewContainer"] {
+        overflow: visible !important;
+        min-height: auto !important;
+    }
+
     /* Streamlit sidebar responsive improvements */
     .sidebar .sidebar-content {
         padding: var(--spacing-sm) !important;
         width: 100% !important;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .sidebar .sidebar-content {
             padding: var(--spacing-lg) !important;
         }
@@ -147,7 +163,7 @@ def get_main_css():
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         button, .stButton > button {
             min-height: var(--button-height-desktop);
         }
@@ -182,6 +198,45 @@ def get_main_css():
         body {
             -webkit-overflow-scrolling: touch;
             position: relative;
+            overflow-y: auto !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Prevent horizontal scroll issues but allow vertical */
+        .main .block-container {
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Ensure all main content is visible */
+        .main, main, [data-testid="stMain"] {
+            display: block !important;
+            visibility: visible !important;
+            overflow: visible !important;
+            min-height: 100vh !important;
+        }
+
+        /* Better mobile spacing for sections */
+        section[data-testid="stSidebar"] {
+            min-width: 260px !important;
+        }
+
+        /* Force all major containers to be visible */
+        .metric-card, .feature-card, .hero-section, .workflow-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+        }
+    }
+
+    @media (max-width: 767px) {
+        body {
+            -webkit-overflow-scrolling: touch;
+            position: relative;
         }
 
         /* Prevent horizontal scroll issues */
@@ -195,127 +250,35 @@ def get_main_css():
         }
     }
 
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --primary-color: #3B82F6;
-            --primary-dark: #2563EB;
-            --secondary-color: #10B981;
-            --warning-color: #F59E0B;
-            --danger-color: #EF4444;
-            --text-primary: #F1F5F9;
-            --text-secondary: #CBD5E1;
-            --text-light: #94A3B8;
-            --bg-primary: #1E293B;
-            --bg-secondary: #0F172A;
-            --bg-tertiary: #334155;
-            --border-color: #334155;
-        }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-        }
-
-        /* Dark mode card adjustments */
-        .metric-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-        }
-
-        .feature-card {
-            background: var(--bg-secondary);
-            border-top-color: var(--primary-color);
-        }
-
-        .quartile-top {
-            background: var(--bg-secondary) !important;
-            border-left: 3px solid var(--secondary-color) !important;
-        }
-
-        .quartile-high {
-            background: var(--bg-secondary) !important;
-            border-left: 3px solid #84CC16 !important;
-        }
-
-        .quartile-mid {
-            background: var(--bg-secondary) !important;
-            border-left: 3px solid var(--warning-color) !important;
-        }
-
-        .quartile-low {
-            background: var(--bg-secondary) !important;
-            border-left: 3px solid var(--danger-color) !important;
-        }
-
-        .data-card {
-            background: var(--bg-tertiary);
-            border-left-color: var(--primary-color);
-        }
-
-        .workflow-step {
-            background: var(--bg-tertiary);
-            border-color: var(--border-color);
-        }
-
-        .workflow-step:hover {
-            background: var(--bg-secondary);
-        }
-
-        .result-item {
-            background: var(--bg-secondary);
-            border-left-color: var(--primary-color);
-        }
-
-        .results-preview {
-            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
-            border-color: var(--border-color);
-        }
-
-        .cta-section {
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
-            border-color: var(--border-color);
-        }
-
-        /* Improve text contrast in dark mode */
-        .hero-description,
-        .hero-tagline {
-            opacity: 0.95;
-        }
-
-        .feature-description,
-        .workflow-step-description,
-        .result-description {
-            color: var(--text-secondary);
-        }
-
-        /* Dark mode table improvements */
-        .stDataFrame {
-            background-color: var(--bg-secondary);
-        }
-
-        /* Dark mode button improvements */
-        button, .stButton > button {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        button:hover, .stButton > button:hover {
-            background-color: var(--primary-dark);
-        }
-    }
+    /* Dark mode removed - using consistent light theme only */
 
     /* Landing Page Styles */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: var(--spacing-2xl) var(--spacing-xl);
-        border-radius: var(--border-radius-xl);
-        margin-bottom: var(--spacing-xl);
+        padding: 4rem var(--spacing-xl) 4rem var(--spacing-xl);
+        border-radius: 0;
+        margin: 0 calc(-1 * var(--spacing-sm)) var(--spacing-xl) calc(-1 * var(--spacing-sm));
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
-        overflow: hidden;
+        overflow: visible !important;
+        min-height: auto !important;
+        width: calc(100% + 2 * var(--spacing-sm));
+    }
+    
+    @media (min-width: 769px) {
+        .hero-section {
+            padding: 5rem var(--spacing-2xl) 5rem var(--spacing-2xl);
+            margin: 0 calc(-1 * var(--spacing-lg)) var(--spacing-xl) calc(-1 * var(--spacing-lg));
+            width: calc(100% + 2 * var(--spacing-lg));
+        }
+    }
+    
+    @media (min-width: 1200px) {
+        .hero-section {
+            padding: 6rem var(--spacing-2xl) 6rem var(--spacing-2xl);
+        }
     }
 
     .hero-section::before {
@@ -327,18 +290,25 @@ def get_main_css():
         bottom: 0;
         background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
         pointer-events: none;
+        z-index: 0;
+    }
+
+    .hero-section > * {
+        position: relative;
+        z-index: 1;
     }
 
     @media (max-width: 768px) {
         .hero-section {
-            padding: var(--spacing-xl) var(--spacing-lg);
+            padding: 3rem var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
+            overflow: visible !important;
         }
     }
 
     @media (max-width: 480px) {
         .hero-section {
-            padding: var(--spacing-lg) var(--spacing-md);
+            padding: 2.5rem var(--spacing-md);
         }
     }
 
@@ -419,6 +389,11 @@ def get_main_css():
         text-align: center;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         touch-action: manipulation;
+        overflow: visible !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
     }
 
     .feature-card-clickable {
@@ -431,7 +406,7 @@ def get_main_css():
         transform: translateY(0px) scale(0.98);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .feature-card {
             padding: var(--spacing-xl);
         }
@@ -448,7 +423,7 @@ def get_main_css():
         }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .feature-card:hover {
             transform: translateY(-2px);
         }
@@ -548,7 +523,7 @@ def get_main_css():
         background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .cta-section {
             padding: var(--spacing-lg);
         }
@@ -573,7 +548,7 @@ def get_main_css():
         border: 1px solid var(--border-color);
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .workflow-container {
             padding: var(--spacing-lg);
             margin: var(--spacing-lg) 0;
@@ -830,8 +805,11 @@ def get_main_css():
         margin-bottom: var(--spacing-md);
         transition: all 0.3s ease;
         position: relative;
-        overflow: hidden;
+        overflow: visible !important;
         touch-action: manipulation;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     @media (min-width: 576px) {
@@ -840,7 +818,7 @@ def get_main_css():
         }
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .metric-card {
             padding: var(--spacing-xl);
         }
@@ -1134,7 +1112,7 @@ def get_main_css():
         filter: none !important;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .stDataFrame {
             border-radius: var(--border-radius-md);
             box-shadow: none;
@@ -1164,7 +1142,7 @@ def get_main_css():
         height: auto !important;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .js-plotly-plot {
             margin: var(--spacing-sm) 0 !important;
         }
@@ -1179,7 +1157,7 @@ def get_main_css():
         text-align: center;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .mobile-center {
             text-align: left;
         }
@@ -1191,7 +1169,7 @@ def get_main_css():
         gap: var(--spacing-sm);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .mobile-stack {
             flex-direction: row;
             align-items: center;
@@ -1231,7 +1209,7 @@ def get_main_css():
         touch-action: manipulation;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .data-card {
             padding: var(--spacing-xl);
         }
