@@ -1076,6 +1076,46 @@ def get_main_css():
         outline: none !important;
         border-image: none !important;
     }
+    
+    /* Remove ALL shadows from Streamlit tabs and tab panels */
+    [data-testid="stTabs"],
+    [data-testid="stTabs"] *,
+    [data-testid="stTabContent"],
+    [data-testid="stTabContent"] *,
+    .stTabs,
+    .stTabs *,
+    div[role="tabpanel"],
+    div[role="tabpanel"] *,
+    div[role="tablist"],
+    div[role="tablist"] * {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+        filter: none !important;
+        border: none !important;
+        outline: none !important;
+    }
+    
+    /* Remove shadows from expanders */
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] *,
+    .streamlit-expanderHeader,
+    .streamlit-expanderHeader *,
+    .streamlit-expanderContent,
+    .streamlit-expanderContent * {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+        filter: none !important;
+    }
+    
+    /* Remove shadows from all Streamlit containers */
+    [class*="st"],
+    [data-testid*="st"] {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+    }
 
     @media (max-width: 768px) {
         .stDataFrame {
