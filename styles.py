@@ -941,20 +941,40 @@ def get_main_css():
 
     .stDataFrame > div {
         box-shadow: none !important;
+        border: none !important;
     }
 
     .stDataFrame table {
         min-width: 100%;
         font-size: clamp(0.8rem, 2vw, 0.9rem);
         box-shadow: none !important;
+        border: none !important;
     }
 
     /* Remove any shadows from Streamlit's default dataframe styling */
     [data-testid="stDataFrame"] {
         box-shadow: none !important;
+        border: 1px solid #E5E7EB !important;
     }
 
     [data-testid="stDataFrame"] > div {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    [data-testid="stDataFrame"] > div > div {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Target the dataframe wrapper specifically */
+    div[data-testid="stDataFrame"] div[data-testid="stDataFrameResizable"] {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Remove shadows from all nested dataframe elements */
+    .stDataFrame * {
         box-shadow: none !important;
     }
 
