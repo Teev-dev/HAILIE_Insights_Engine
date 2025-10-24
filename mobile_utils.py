@@ -35,7 +35,7 @@ def detect_mobile():
         <script>
         (function() {
             const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-            const isMobile = viewportWidth < 768;
+            const isMobile = viewportWidth < 769;
             
             // Log for debugging
             console.log('HAILIE Mobile Detection - Viewport:', viewportWidth, 'px, Mobile:', isMobile);

@@ -53,7 +53,7 @@ def get_main_css():
     }
 
     /* Tablet and up spacing adjustments */
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         :root {
             --spacing-xs: 0.5rem;
             --spacing-sm: 0.75rem;
@@ -78,7 +78,7 @@ def get_main_css():
         }
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         html {
             font-size: 16px;
         }
@@ -99,7 +99,7 @@ def get_main_css():
         max-width: none !important;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .main .block-container {
             padding-top: var(--spacing-xl) !important;
             padding-left: var(--spacing-lg) !important;
@@ -120,7 +120,7 @@ def get_main_css():
         width: 100% !important;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .sidebar .sidebar-content {
             padding: var(--spacing-lg) !important;
         }
@@ -147,7 +147,7 @@ def get_main_css():
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         button, .stButton > button {
             min-height: var(--button-height-desktop);
         }
@@ -178,7 +178,7 @@ def get_main_css():
     }
 
     /* Better mobile scrolling and viewport handling */
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         body {
             -webkit-overflow-scrolling: touch;
             position: relative;
@@ -329,7 +329,7 @@ def get_main_css():
         pointer-events: none;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .hero-section {
             padding: var(--spacing-xl) var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
@@ -431,7 +431,7 @@ def get_main_css():
         transform: translateY(0px) scale(0.98);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .feature-card {
             padding: var(--spacing-xl);
         }
@@ -448,7 +448,7 @@ def get_main_css():
         }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .feature-card:hover {
             transform: translateY(-2px);
         }
@@ -548,7 +548,7 @@ def get_main_css():
         background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .cta-section {
             padding: var(--spacing-lg);
         }
@@ -573,7 +573,7 @@ def get_main_css():
         border: 1px solid var(--border-color);
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .workflow-container {
             padding: var(--spacing-lg);
             margin: var(--spacing-lg) 0;
@@ -840,7 +840,7 @@ def get_main_css():
         }
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .metric-card {
             padding: var(--spacing-xl);
         }
@@ -1134,7 +1134,7 @@ def get_main_css():
         filter: none !important;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .stDataFrame {
             border-radius: var(--border-radius-md);
             box-shadow: none;
@@ -1164,7 +1164,7 @@ def get_main_css():
         height: auto !important;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 767px) {
         .js-plotly-plot {
             margin: var(--spacing-sm) 0 !important;
         }
@@ -1179,7 +1179,7 @@ def get_main_css():
         text-align: center;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .mobile-center {
             text-align: left;
         }
@@ -1191,7 +1191,7 @@ def get_main_css():
         gap: var(--spacing-sm);
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .mobile-stack {
             flex-direction: row;
             align-items: center;
@@ -1231,7 +1231,7 @@ def get_main_css():
         touch-action: manipulation;
     }
 
-    @media (min-width: 768px) {
+    @media (min-width: 769px) {
         .data-card {
             padding: var(--spacing-xl);
         }
