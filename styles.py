@@ -256,7 +256,7 @@ def get_main_css():
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: var(--spacing-2xl) var(--spacing-xl);
+        padding: 4rem var(--spacing-xl);
         border-radius: var(--border-radius-xl);
         margin-bottom: var(--spacing-xl);
         text-align: center;
@@ -264,6 +264,18 @@ def get_main_css():
         position: relative;
         overflow: visible !important;
         min-height: auto !important;
+    }
+    
+    @media (min-width: 769px) {
+        .hero-section {
+            padding: 5rem var(--spacing-2xl);
+        }
+    }
+    
+    @media (min-width: 1200px) {
+        .hero-section {
+            padding: 6rem var(--spacing-2xl);
+        }
     }
 
     .hero-section::before {
@@ -285,22 +297,15 @@ def get_main_css():
 
     @media (max-width: 768px) {
         .hero-section {
-            padding: var(--spacing-xl) var(--spacing-lg);
+            padding: 3rem var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
             overflow: visible !important;
         }
     }
 
-    @media (max-width: 767px) {
-        .hero-section {
-            padding: var(--spacing-xl) var(--spacing-lg);
-            margin-bottom: var(--spacing-lg);
-        }
-    }
-
     @media (max-width: 480px) {
         .hero-section {
-            padding: var(--spacing-lg) var(--spacing-md);
+            padding: 2.5rem var(--spacing-md);
         }
     }
 
