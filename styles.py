@@ -17,7 +17,7 @@ def get_main_css():
         --warning-color: #F59E0B;
         --danger-color: #EF4444;
         --text-primary: #1E293B;
-        --text-secondary: #64748B;
+        --text-secondary: #111827;
         --text-light: #94A3B8;
         --bg-primary: #FFFFFF;
         --bg-secondary: #F8FAFC;
@@ -228,10 +228,6 @@ def get_main_css():
             border-top-color: var(--primary-color);
         }
         
-        .feature-card::before {
-            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.05), transparent);
-        }
-        
         .quartile-top {
             background: linear-gradient(135deg, #064E3B, #065F46) !important;
         }
@@ -395,6 +391,7 @@ def get_main_css():
         text-decoration: none !important;
         color: inherit;
         display: block;
+        cursor: pointer;
     }
     
     .feature-card-link:hover,
@@ -410,24 +407,23 @@ def get_main_css():
     }
     
     .feature-card {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         padding: var(--spacing-lg);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--shadow-md);
         border-top: 4px solid var(--primary-color);
         text-align: center;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
         touch-action: manipulation;
     }
     
     .feature-card-clickable {
         cursor: pointer;
         user-select: none;
+        scroll-margin-top: 20px;
     }
     
-    .feature-card-clickable:active {
+    .feature-card-link:active .feature-card-clickable {
         transform: translateY(0px) scale(0.98);
     }
     
@@ -437,25 +433,10 @@ def get_main_css():
         }
     }
     
-    .feature-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(46, 91, 186, 0.03), transparent);
-        transition: left 0.5s ease;
-    }
-    
     @media (hover: hover) {
         .feature-card:hover {
-            transform: translateY(-4px) scale(1.02);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-xl);
-        }
-        
-        .feature-card:hover::before {
-            left: 100%;
         }
         
         .feature-card-clickable:hover {
@@ -465,7 +446,7 @@ def get_main_css():
     
     @media (max-width: 768px) {
         .feature-card:hover {
-            transform: translateY(-2px) scale(1.01);
+            transform: translateY(-2px);
         }
     }
     

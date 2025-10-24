@@ -34,48 +34,61 @@ def render_features_overview():
     """Render the key features overview section"""
     st.markdown("""
     <div class="features-grid">
-        <a href="#provider-search-section" class="feature-card-link">
-            <div class="feature-card feature-card-clickable">
-                <div class="feature-icon-professional rank-icon"></div>
-                <h3 class="feature-title">Your Rank</h3>
-                <p class="feature-description">
-                    See exactly how your housing provider compares to peers with quartile-based scoring. 
-                    Get clear visual indicators showing your competitive position.
-                </p>
-                <div class="feature-cta">Click to get started →</div>
-            </div>
-        </a>
-        <a href="#provider-search-section" class="feature-card-link">
-            <div class="feature-card feature-card-clickable">
-                <div class="feature-icon-professional momentum-icon"></div>
-                <h3 class="feature-title">Your Momentum</h3>
-                <p class="feature-description">
-                    Track your 12-month performance trajectory. Understand if you're improving, 
-                    stable, or declining across key satisfaction measures.
-                </p>
-                <div class="feature-cta">Click to get started →</div>
-            </div>
-        </a>
-        <a href="#provider-search-section" class="feature-card-link">
-            <div class="feature-card feature-card-clickable">
-                <div class="feature-icon-professional priority-icon"></div>
-                <h3 class="feature-title">Your Priority</h3>
-                <p class="feature-description">
-                    Identify the single most critical area for improvement based on data-driven 
-                    correlation analysis with overall tenant satisfaction.
-                </p>
-                <div class="feature-cta">Click to get started →</div>
-            </div>
-        </a>
+        <div class="feature-card feature-card-clickable">
+            <div class="feature-icon-professional rank-icon"></div>
+            <h3 class="feature-title">Your Rank</h3>
+            <p class="feature-description">
+                See exactly how your housing provider compares to peers with quartile-based scoring. 
+                Get clear visual indicators showing your competitive position.
+            </p>
+            <div class="feature-cta">Scroll down to get started →</div>
+        </div>
+        <div class="feature-card feature-card-clickable">
+            <div class="feature-icon-professional momentum-icon"></div>
+            <h3 class="feature-title">Your Momentum</h3>
+            <p class="feature-description">
+                Track your 12-month performance trajectory. Understand if you're improving, 
+                stable, or declining across key satisfaction measures.
+            </p>
+            <div class="feature-cta">Scroll down to get started →</div>
+        </div>
+        <div class="feature-card feature-card-clickable">
+            <div class="feature-icon-professional priority-icon"></div>
+            <h3 class="feature-title">Your Priority</h3>
+            <p class="feature-description">
+                Identify the single most critical area for improvement based on data-driven 
+                correlation analysis with overall tenant satisfaction.
+            </p>
+            <div class="feature-cta">Scroll down to get started →</div>
+        </div>
     </div>
     """,
                 unsafe_allow_html=True)
 
 
 def check_database_exists():
-    """Check if the enhanced analytics database exists"""
+    """Check if the enhanced analytics database exists and is accessible"""
     db_path = "attached_assets/hailie_analytics_v2.duckdb"
-    return os.path.exists(db_path)
+    
+    # Check if file exists
+    if not os.path.exists(db_path):
+        return False
+    
+    # Check if file is readable
+    if not os.access(db_path, os.R_OK):
+        st.error(f"❌ Database file exists but is not readable: {db_path}")
+        return False
+    
+    # Check if it's a valid DuckDB file (basic check)
+    try:
+        import duckdb
+        conn = duckdb.connect(db_path, read_only=True)
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"❌ Database file exists but appears corrupted: {str(e)}")
+        return False
 
 
 def render_dataset_indicator(dataset_type: str, peer_count: int):
