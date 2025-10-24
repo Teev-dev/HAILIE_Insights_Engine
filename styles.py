@@ -512,13 +512,13 @@ def get_main_css():
     .feature-title {
         font-size: clamp(1.1rem, 3vw, 1.4rem);
         font-weight: 700;
-        color: var(--primary-color);
+        color: #1E293B;
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
     
     .feature-description {
-        color: var(--text-secondary);
+        color: #1E293B;
         font-size: clamp(0.9rem, 2.5vw, 1rem);
         line-height: 1.6;
     }
