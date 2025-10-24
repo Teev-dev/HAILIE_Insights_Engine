@@ -1,0 +1,581 @@
+TSM Insights by HAILIE
+Transform Your TSM Performance Into Executive Intelligence
+
+Your Rank
+See exactly how your housing provider compares to peers with quartile-based scoring. Get clear visual indicators showing your competitive position.
+
+Your Momentum
+Track your 12-month performance trajectory. Understand if you're improving, stable, or declining across key satisfaction measures.
+
+Your Priority
+Identify the single most critical area for improvement based on data-driven correlation analysis with overall tenant satisfaction.
+
+Select Your Provider
+Search by Provider Name
+All LCRA and LCHO providers available
+
+Type or select your provider:
+
+English Rural Housing Association Limited - LCHO (L4004)
+Dataset: LCHO
+Large-scale Voluntary Transfer Organizations
+Core TSM metrics (repairs metrics not applicable)
+📊 Comparing with 55 peer providers in LCHO group
+✅ Loaded LCHO analytics for provider: L4004
+
+Executive Summary
+Provider: L4004
+
+Understanding Your Dashboard
+
+YOUR RANK
+
+#28
+
+of 56 providers
+
+High Quartile (50.0th percentile)
+
+Based on 9 satisfaction measures
+
+How Your Rank Works
+
+YOUR MOMENTUM
+
+⏳
+
+Coming in 2026
+
+Requires multi-year TSM data for true momentum analysis
+
+How Momentum Works
+
+YOUR PRIORITY
+
+Critical
+
+TP05
+
+Satisfaction that home is well-maintained
+
+Current: 28.6th percentile
+
+Improvement potential: 71.4%
+
+TP01 correlation: Strong (88.0%)
+
+How Priority Works
+
+Detailed Analysis
+📊 Performance Analysis
+
+Performance Analysis - LCHO Peer Group
+ℹ️ Note for LCHO Providers: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this analysis. All comparisons are made within your LCHO peer group only.
+
+Performance Analysis
+Detailed Scores
+ 
+
+Measure
+
+Description
+
+Your Score
+
+Percentile
+
+Peer Avg
+
+0
+
+TP01
+
+Overall satisfaction
+
+55.9
+
+71.4%
+
+70.6
+
+1
+
+TP05
+
+Satisfaction that home is well-maintaine...
+
+60.5
+
+28.6%
+
+76.0
+
+2
+
+TP06
+
+Satisfaction that home is safe
+
+37.5
+
+53.6%
+
+59.9
+
+3
+
+TP07
+
+Satisfaction with neighbourhood
+
+54.1
+
+55.4%
+
+69.3
+
+4
+
+TP08
+
+Satisfaction with landlord's contributio...
+
+59.2
+
+51.8%
+
+75.9
+
+5
+
+TP09
+
+Satisfaction with approach to handling o...
+
+22.7
+
+67.9%
+
+34.7
+
+6
+
+TP10
+
+Agreement that landlord treats residents...
+
+36.2
+
+19.6%
+
+64.6
+
+7
+
+TP11
+
+Agreement that landlord listens to resid...
+
+41.8
+
+58.9%
+
+62.5
+
+8
+
+TP12
+
+Satisfaction with landlord's approach to...
+
+32.9
+
+42.9%
+
+57.9
+
+📈 Measure Correlations
+
+Correlation Analysis - LCHO Dataset
+Correlations calculated using LCHO providers only (excluding repairs metrics)
+
+Correlation Analysis
+Correlation Details
+ 
+
+Measure
+
+Correlation
+
+P-Value
+
+0
+
+TP06
+
+0.918
+
+p<0.05 (statistically significant)
+
+1
+
+TP05
+
+0.885
+
+p<0.05 (statistically significant)
+
+2
+
+TP08
+
+0.858
+
+p<0.05 (statistically significant)
+
+3
+
+TP11
+
+0.809
+
+p<0.05 (statistically significant)
+
+4
+
+TP07
+
+0.773
+
+p<0.05 (statistically significant)
+
+5
+
+TP12
+
+0.745
+
+p<0.05 (statistically significant)
+
+6
+
+TP09
+
+0.743
+
+p<0.05 (statistically significant)
+
+7
+
+TP10
+
+0.484
+
+0.0002
+
+🎯 Priority Matrix
+
+Priority Matrix - LCHO Context
+Priority Matrix
+Priority Ranking
+ 
+
+Rank
+
+Measure
+
+Priority Score
+
+Improvement Potential
+
+Correlation
+
+0
+
+1
+
+TP05
+
+78.0
+
+71.4%
+
+0.9%
+
+1
+
+2
+
+TP10
+
+75.3
+
+80.4%
+
+0.7%
+
+2
+
+3
+
+TP02
+
+71.8
+
+59.4%
+
+0.9%
+
+3
+
+4
+
+TP04
+
+64.2
+
+43.7%
+
+1.0%
+
+4
+
+5
+
+TP06
+
+64.1
+
+46.4%
+
+0.9%
+
+5
+
+6
+
+TP08
+
+63.5
+
+48.2%
+
+0.9%
+
+6
+
+7
+
+TP03
+
+60.6
+
+42.8%
+
+0.9%
+
+7
+
+8
+
+TP12
+
+59.6
+
+57.1%
+
+0.6%
+
+8
+
+9
+
+TP07
+
+58.9
+
+44.6%
+
+0.8%
+
+9
+
+10
+
+TP11
+
+53.0
+
+41.1%
+
+0.7%
+
+10
+
+11
+
+TP09
+
+52.5
+
+32.1%
+
+0.8%
+
+📋 Raw Data
+
+Raw Data - LCHO Provider
+ℹ️ Note: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.
+
+ 
+
+Measure
+
+Description
+
+Score (%)
+
+0
+
+TP01
+
+Overall satisfaction
+
+74.3
+
+4
+
+TP05
+
+Home well-maintained
+
+80.4
+
+5
+
+TP06
+
+Home is safe
+
+54.6
+
+6
+
+TP07
+
+Listens to views
+
+63.1
+
+7
+
+TP08
+
+Keeps informed
+
+71.1
+
+8
+
+TP09
+
+Treats fairly
+
+43.3
+
+9
+
+TP10
+
+Complaints handling
+
+39.7
+
+10
+
+TP11
+
+Communal areas clean
+
+50.6
+
+11
+
+TP12
+
+Anti-social behaviour
+
+48.2
+
+12
+
+TP01
+
+Overall satisfaction
+
+55.9
+
+13
+
+TP05
+
+Home well-maintained
+
+60.5
+
+14
+
+TP06
+
+Home is safe
+
+37.5
+
+15
+
+TP07
+
+Listens to views
+
+54.1
+
+16
+
+TP08
+
+Keeps informed
+
+59.2
+
+17
+
+TP09
+
+Treats fairly
+
+22.7
+
+18
+
+TP10
+
+Complaints handling
+
+36.2
+
+19
+
+TP11
+
+Communal areas clean
+
+41.8
+
+20
+
+TP12
+
+Anti-social behaviour
+
+32.9
+
