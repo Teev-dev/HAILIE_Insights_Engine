@@ -195,6 +195,116 @@ def get_main_css():
         }
     }
 
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #2563EB;
+            --secondary-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --text-primary: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-light: #94A3B8;
+            --bg-primary: #1E293B;
+            --bg-secondary: #0F172A;
+            --bg-tertiary: #334155;
+            --border-color: #334155;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Dark mode card adjustments */
+        .metric-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border-left-color: var(--primary-color);
+        }
+        
+        .feature-card {
+            background: var(--bg-secondary);
+            border-top-color: var(--primary-color);
+        }
+        
+        .feature-card::before {
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.05), transparent);
+        }
+        
+        .quartile-top {
+            background: linear-gradient(135deg, #064E3B, #065F46) !important;
+        }
+        
+        .quartile-high {
+            background: linear-gradient(135deg, #1E3A8A, #1E40AF) !important;
+        }
+        
+        .quartile-mid {
+            background: linear-gradient(135deg, #78350F, #92400E) !important;
+        }
+        
+        .quartile-low {
+            background: linear-gradient(135deg, #7F1D1D, #991B1B) !important;
+        }
+        
+        .data-card {
+            background: var(--bg-tertiary);
+            border-left-color: var(--primary-color);
+        }
+        
+        .workflow-step {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
+        }
+        
+        .workflow-step:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .result-item {
+            background: var(--bg-secondary);
+            border-left-color: var(--primary-color);
+        }
+        
+        .results-preview {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+            border-color: var(--border-color);
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border-color: var(--border-color);
+        }
+        
+        /* Improve text contrast in dark mode */
+        .hero-description,
+        .hero-tagline {
+            opacity: 0.95;
+        }
+        
+        .feature-description,
+        .workflow-step-description,
+        .result-description {
+            color: var(--text-secondary);
+        }
+        
+        /* Dark mode table improvements */
+        .stDataFrame {
+            background-color: var(--bg-secondary);
+        }
+        
+        /* Dark mode button improvements */
+        button, .stButton > button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        button:hover, .stButton > button:hover {
+            background-color: var(--primary-dark);
+        }
+    }
+    
     /* Landing Page Styles */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
