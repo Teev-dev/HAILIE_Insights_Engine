@@ -2,6 +2,19 @@
 headless = true
 address = "0.0.0.0"
 port = 5000
+enableCORS = false
+enableXsrfProtection = true
+maxUploadSize = 200
+enableWebsocketCompression = true
+
+[browser]
+gatherUsageStats = false
+serverAddress = "0.0.0.0"
+serverPort = 5000
+
+[runner]
+magicEnabled = false
+fastReruns = true
 
 [theme]
 primaryColor = "#2E5BBA"

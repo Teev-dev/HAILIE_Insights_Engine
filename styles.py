@@ -12,12 +12,12 @@ def get_main_css():
     /* Global Responsive Variables - Mobile First Approach */
     :root {
         --primary-color: #2E5BBA;
-        --primary-dark: #1E40AF;
+        --primary-dark: #050B1F;
         --secondary-color: #22C55E;
         --warning-color: #F59E0B;
         --danger-color: #EF4444;
         --text-primary: #1E293B;
-        --text-secondary: #64748B;
+        --text-secondary: #111827;
         --text-light: #94A3B8;
         --bg-primary: #FFFFFF;
         --bg-secondary: #F8FAFC;
@@ -195,6 +195,116 @@ def get_main_css():
         }
     }
 
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #2563EB;
+            --secondary-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --text-primary: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-light: #94A3B8;
+            --bg-primary: #1E293B;
+            --bg-secondary: #0F172A;
+            --bg-tertiary: #334155;
+            --border-color: #334155;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* Dark mode card adjustments */
+        .metric-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .feature-card {
+            background: var(--bg-secondary);
+            border-top-color: var(--primary-color);
+        }
+        
+        .quartile-top {
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--secondary-color) !important;
+        }
+        
+        .quartile-high {
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid #84CC16 !important;
+        }
+        
+        .quartile-mid {
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--warning-color) !important;
+        }
+        
+        .quartile-low {
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--danger-color) !important;
+        }
+        
+        .data-card {
+            background: var(--bg-tertiary);
+            border-left-color: var(--primary-color);
+        }
+        
+        .workflow-step {
+            background: var(--bg-tertiary);
+            border-color: var(--border-color);
+        }
+        
+        .workflow-step:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .result-item {
+            background: var(--bg-secondary);
+            border-left-color: var(--primary-color);
+        }
+        
+        .results-preview {
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+            border-color: var(--border-color);
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border-color: var(--border-color);
+        }
+        
+        /* Improve text contrast in dark mode */
+        .hero-description,
+        .hero-tagline {
+            opacity: 0.95;
+        }
+        
+        .feature-description,
+        .workflow-step-description,
+        .result-description {
+            color: var(--text-secondary);
+        }
+        
+        /* Dark mode table improvements */
+        .stDataFrame {
+            background-color: var(--bg-secondary);
+        }
+        
+        /* Dark mode button improvements */
+        button, .stButton > button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        button:hover, .stButton > button:hover {
+            background-color: var(--primary-dark);
+        }
+    }
+    
     /* Landing Page Styles */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
@@ -281,17 +391,44 @@ def get_main_css():
         }
     }
     
+    .feature-card-link {
+        text-decoration: none !important;
+        color: inherit;
+        display: block;
+        cursor: pointer;
+    }
+    
+    .feature-card-link:hover,
+    .feature-card-link:focus,
+    .feature-card-link:active,
+    .feature-card-link:visited {
+        text-decoration: none !important;
+        color: inherit;
+    }
+    
+    .feature-card-link * {
+        text-decoration: none !important;
+    }
+    
     .feature-card {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         padding: var(--spacing-lg);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--shadow-md);
         border-top: 4px solid var(--primary-color);
         text-align: center;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
         touch-action: manipulation;
+    }
+    
+    .feature-card-clickable {
+        cursor: pointer;
+        user-select: none;
+        scroll-margin-top: 20px;
+    }
+    
+    .feature-card-link:active .feature-card-clickable {
+        transform: translateY(0px) scale(0.98);
     }
     
     @media (min-width: 768px) {
@@ -300,32 +437,35 @@ def get_main_css():
         }
     }
     
-    .feature-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(46, 91, 186, 0.03), transparent);
-        transition: left 0.5s ease;
-    }
-    
     @media (hover: hover) {
         .feature-card:hover {
-            transform: translateY(-4px) scale(1.02);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-xl);
         }
         
-        .feature-card:hover::before {
-            left: 100%;
+        .feature-card-clickable:hover {
+            border-top-color: var(--primary-dark);
         }
     }
     
     @media (max-width: 768px) {
         .feature-card:hover {
-            transform: translateY(-2px) scale(1.01);
+            transform: translateY(-2px);
         }
+    }
+    
+    .feature-cta {
+        margin-top: var(--spacing-md);
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: clamp(0.85rem, 2vw, 0.95rem);
+        opacity: 0.9;
+        transition: all 0.2s ease;
+    }
+    
+    .feature-card-clickable:hover .feature-cta {
+        opacity: 1;
+        transform: translateX(4px);
     }
     
     .feature-icon,
@@ -376,13 +516,13 @@ def get_main_css():
     .feature-title {
         font-size: clamp(1.1rem, 3vw, 1.4rem);
         font-weight: 700;
-        color: var(--text-primary);
+        color: #1E293B;
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
     
     .feature-description {
-        color: var(--text-secondary);
+        color: #1E293B;
         font-size: clamp(0.9rem, 2.5vw, 1rem);
         line-height: 1.6;
     }
@@ -666,13 +806,13 @@ def get_main_css():
         color: var(--text-secondary);
     }
     
-    /* Enhanced existing styles */
+    /* Enhanced existing styles - Clean White Theme */
     .metric-card {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         padding: var(--spacing-md);
         border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
-        border-left: 4px solid var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
         margin-bottom: var(--spacing-md);
         transition: all 0.3s ease;
         position: relative;
@@ -683,7 +823,6 @@ def get_main_css():
     @media (min-width: 576px) {
         .metric-card {
             padding: var(--spacing-lg);
-            border-left: 6px solid var(--primary-color);
         }
     }
     
@@ -693,25 +832,18 @@ def get_main_css():
         }
     }
     
-    .metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(180deg, transparent, var(--primary-color), transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
     .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-xl);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border-color: #D1D5DB;
     }
     
-    .metric-card:hover::before {
-        opacity: 1;
+    /* Clean white theme for quartile cards - remove colored backgrounds */
+    .quartile-top,
+    .quartile-high,
+    .quartile-mid,
+    .quartile-low {
+        background: #FFFFFF !important;
     }
     
     
@@ -719,38 +851,38 @@ def get_main_css():
         font-size: clamp(2.5rem, 6vw, 3.5rem);
         font-weight: 800;
         margin: 0;
-        color: var(--text-primary);
+        color: #4B5563;
         line-height: 1;
         letter-spacing: -0.02em;
     }
     
     .metric-label {
         font-size: clamp(1rem, 2.5vw, 1.2rem);
-        color: var(--text-secondary);
+        color: #4B5563;
         margin: 0;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
     
-    .quartile-top {
-        border-left-color: var(--secondary-color) !important;
-        background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
+    .quartile-top,
+    .quartile-high,
+    .quartile-mid,
+    .quartile-low {
+        background: #FFFFFF !important;
+        border-left: 3px solid var(--secondary-color) !important;
     }
     
     .quartile-high {
         border-left-color: #84CC16 !important;
-        background: linear-gradient(135deg, #F7FEE7, #ECFDF5);
     }
     
     .quartile-mid {
         border-left-color: var(--warning-color) !important;
-        background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
     }
     
     .quartile-low {
         border-left-color: var(--danger-color) !important;
-        background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
     }
     
     .momentum-up {
@@ -766,8 +898,8 @@ def get_main_css():
     }
     
     .priority-high {
-        background: #FEF2F2;
-        border-left-color: #EF4444 !important;
+        background: #FFFFFF;
+        border-left: 3px solid #EF4444 !important;
     }
     
     .main-title {
