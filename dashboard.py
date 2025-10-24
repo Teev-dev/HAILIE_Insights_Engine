@@ -872,11 +872,14 @@ class ExecutiveDashboard:
         st.markdown("#### Correlation Details")
         table_data = correlations[['tp_measure', 'correlation_with_tp01', 'p_value']].copy()
         table_data.columns = ['Measure', 'Correlation', 'P-Value']
-        table_data['Correlation'] = table_data['Correlation'].apply(lambda x: f"{x:.3f}")
-        # Display p<0.05 for statistically significant values (smaller than 4 decimal places)
-        table_data['P-Value'] = table_data['P-Value'].apply(
-            lambda x: "p<0.05 (statistically significant)" if x < 0.0001 else f"{x:.4f}"
-        )
+        
+        # Ensure we're working with a DataFrame
+        if isinstance(table_data, pd.DataFrame):
+            table_data['Correlation'] = table_data['Correlation'].apply(lambda x: f"{x:.3f}")
+            # Display p<0.05 for statistically significant values (smaller than 4 decimal places)
+            table_data['P-Value'] = table_data['P-Value'].apply(
+                lambda x: "p<0.05 (statistically significant)" if x < 0.0001 else f"{x:.4f}"
+            )
 
         st.table(table_data)
 
