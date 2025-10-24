@@ -5,15 +5,19 @@ from data_processor_enhanced import EnhancedTSMDataProcessor
 from analytics_refactored import TSMAnalytics
 from dashboard import ExecutiveDashboard
 from styles import apply_css
+from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_info, should_show_component
 import traceback
 from contextlib import contextmanager
 import os
 
-# Page configuration
-st.set_page_config(page_title="HAILIE TSM Insights Engine",
-                   page_icon="✓",
-                   layout="wide",
-                   initial_sidebar_state="expanded")
+# Page configuration - MUST be first Streamlit command
+# Using 'wide' layout for all devices, content adapts responsively
+st.set_page_config(
+    page_title="HAILIE TSM Insights Engine",
+    page_icon="✓",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Apply custom CSS styles from styles module
 apply_css(st)
@@ -21,46 +25,124 @@ apply_css(st)
 
 def render_landing_hero():
     """Render the professional hero section"""
-    st.markdown("""
-    <div class="hero-section">
-        <h1 class="hero-title">TSM Insights by HAILIE</h1>
-        <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
-    </div>
-    """,
-                unsafe_allow_html=True)
+    is_mobile = detect_mobile()
+    
+    # Debug: Show detection result
+    if st.sidebar.checkbox("Show mobile detection debug", value=False):
+        st.sidebar.markdown("### 🔍 Mobile Detection Debug")
+        st.sidebar.info(f"**Mobile detected:** {is_mobile}")
+        
+        # Show detection method
+        if hasattr(st.session_state, 'force_mobile_view'):
+            st.sidebar.success("✓ Using manual toggle")
+        elif 'mobile' in st.query_params:
+            st.sidebar.success("✓ Using URL parameter")
+        elif 'is_mobile_device' in st.session_state:
+            st.sidebar.success("✓ Using JavaScript detection")
+        else:
+            st.sidebar.warning("⚠ Using fallback detection")
+        
+        # Show user agent for debugging
+        try:
+            headers = st.context.headers
+            user_agent = headers.get('User-Agent', 'Not available')
+            st.sidebar.text_area("User Agent:", user_agent, height=100)
+        except Exception as e:
+            st.sidebar.error(f"Headers not available: {str(e)}")
+        
+        # Show screen info from JavaScript
+        st.sidebar.markdown("**Detection sources:**")
+        st.sidebar.caption("• User Agent check")
+        st.sidebar.caption("• Touch capability check")
+        st.sidebar.caption("• Screen width check")
+    
+    if is_mobile:
+        # Mobile version - styled gradient header
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #2E5BBA 0%, #050B1F 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        ">
+            <h1 style="
+                font-size: 1.75rem;
+                font-weight: 800;
+                margin-bottom: 0.5rem;
+                line-height: 1.2;
+                color: white;
+            ">TSM Insights by HAILIE</h1>
+            <p style="
+                font-size: 1rem;
+                margin: 0;
+                opacity: 0.95;
+                color: white;
+                line-height: 1.4;
+            ">Transform Your TSM Performance Into Executive Intelligence</p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Desktop version - use custom HTML
+        st.markdown("""
+        <div class="hero-section">
+            <h1 class="hero-title">TSM Insights by HAILIE</h1>
+            <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
+        </div>
+        """,
+                    unsafe_allow_html=True)
 
 
 def render_features_overview():
     """Render the key features overview section"""
-    st.markdown("""
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon-professional rank-icon"></div>
-            <h3 class="feature-title">Your Rank</h3>
-            <p class="feature-description">
-                See exactly how your housing provider compares to peers with quartile-based scoring. 
-                Get clear visual indicators showing your competitive position.
-            </p>
+    is_mobile = detect_mobile()
+    
+    if is_mobile:
+        # Mobile version - use native Streamlit components in single column
+        st.markdown("### Key Insights We Provide")
+        
+        with st.container():
+            st.markdown("**📊 Your Rank**")
+            st.markdown("See exactly how your housing provider compares to peers with quartile-based scoring.")
+            
+            st.markdown("**📈 Your Momentum**")
+            st.markdown("Track your 12-month performance trajectory across key satisfaction measures.")
+            
+            st.markdown("**🎯 Your Priority**")
+            st.markdown("Identify the single most critical area for improvement based on data-driven analysis.")
+    else:
+        # Desktop version - use custom HTML grid
+        st.markdown("""
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon-professional rank-icon"></div>
+                <h3 class="feature-title">Your Rank</h3>
+                <p class="feature-description">
+                    See exactly how your housing provider compares to peers with quartile-based scoring. 
+                    Get clear visual indicators showing your competitive position.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-professional momentum-icon"></div>
+                <h3 class="feature-title">Your Momentum</h3>
+                <p class="feature-description">
+                    Track your 12-month performance trajectory. Understand if you're improving, 
+                    stable, or declining across key satisfaction measures.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-professional priority-icon"></div>
+                <h3 class="feature-title">Your Priority</h3>
+                <p class="feature-description">
+                    Identify the single most critical area for improvement based on data-driven 
+                    correlation analysis with overall tenant satisfaction.
+                </p>
+            </div>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon-professional momentum-icon"></div>
-            <h3 class="feature-title">Your Momentum</h3>
-            <p class="feature-description">
-                Track your 12-month performance trajectory. Understand if you're improving, 
-                stable, or declining across key satisfaction measures.
-            </p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon-professional priority-icon"></div>
-            <h3 class="feature-title">Your Priority</h3>
-            <p class="feature-description">
-                Identify the single most critical area for improvement based on data-driven 
-                correlation analysis with overall tenant satisfaction.
-            </p>
-        </div>
-    </div>
-    """,
-                unsafe_allow_html=True)
+        """,
+                    unsafe_allow_html=True)
 
 
 def check_database_exists():
@@ -167,6 +249,22 @@ def main():
 
     # Sidebar for analysis options
     with st.sidebar:
+        # Device view toggle
+        st.header("View Settings")
+        force_mobile = st.checkbox(
+            "📱 Use Mobile View",
+            value=detect_mobile(),
+            help="Toggle mobile-optimized layout"
+        )
+        
+        # Override detection if manually toggled
+        if force_mobile:
+            st.session_state.force_mobile_view = True
+        else:
+            st.session_state.force_mobile_view = False
+        
+        st.markdown("---")
+        
         # Analysis options
         st.header("Analysis Options")
         include_confidence = st.checkbox("Include confidence intervals",
@@ -311,110 +409,128 @@ def main():
         dashboard.render_executive_summary(provider_code, rankings, momentum,
                                           priority)
 
-        # Detailed Analysis Sections
-        st.markdown("---")
-        st.markdown("## Detailed Analysis")
+        # Check if mobile
+        is_mobile = detect_mobile()
         
-        with st.expander("📊 Performance Analysis", expanded=True):
-            st.markdown(f"### Performance Analysis - {dataset_type} Peer Group")
+        # Show mobile info message if applicable
+        if is_mobile:
+            st.markdown("---")
+            render_mobile_info()
+        
+        # Detailed Analysis Sections - Only on desktop
+        if not is_mobile:
+            st.markdown("---")
+            st.markdown("## Detailed Analysis")
+            
+            with st.expander("📊 Performance Analysis", expanded=True):
+                st.markdown(f"### Performance Analysis - {dataset_type} Peer Group")
 
-            # Show note for LCHO providers about missing metrics
-            if dataset_type == 'LCHO':
-                st.info("""
-                ℹ️ **Note for LCHO Providers**: 
-                Repairs metrics (TP02-TP04) are not applicable to LCHO providers 
-                and are excluded from this analysis. All comparisons are made 
-                within your LCHO peer group only.
-                """)
-
-            detailed_analysis = analytics.get_detailed_performance_analysis(
-                df, provider_code)
-
-            # Debug logging
-            if show_advanced_logging:
-                st.write("Debug - detailed_analysis type:", type(detailed_analysis))
-                st.write("Debug - detailed_analysis value:", detailed_analysis)
-                st.write("Debug - detailed_analysis keys:", list(detailed_analysis.keys()) if detailed_analysis and isinstance(detailed_analysis, dict) else "None or not a dict")
-                st.write("Debug - dataset_type:", dataset_type)
-
-            # Filter out N/A metrics for LCHO
-            if dataset_type == 'LCHO' and detailed_analysis and "error" not in detailed_analysis:
-                original_count = len(detailed_analysis)
-                detailed_analysis = {
-                    k: v for k, v in detailed_analysis.items() 
-                    if k not in ['TP02', 'TP03', 'TP04']
-                }
-                if show_advanced_logging:
-                    st.write(f"Debug - Filtered {original_count} measures down to {len(detailed_analysis)} for LCHO")
-
-            # Check if we have any measures to display
-            if not detailed_analysis:
-                st.warning("No performance data available to display")
-            elif "error" in detailed_analysis:
-                st.error(f"Error loading performance data: {detailed_analysis['error']}")
-            else:
-                dashboard.render_performance_analysis(detailed_analysis)
-
-        with st.expander("📈 Measure Correlations", expanded=False):
-            st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
-
-            # Get dataset-specific correlations
-            correlations = data_processor.get_dataset_correlations(dataset_type)
-
-            if dataset_type == 'LCHO':
-                st.info("Correlations calculated using LCHO providers only (excluding repairs metrics)")
-            else:
-                st.info("Correlations calculated using LCRA providers with all metrics")
-
-            dashboard.render_correlation_analysis(correlations, priority)
-
-        with st.expander("🎯 Priority Matrix", expanded=False):
-            st.markdown(f"### Priority Matrix - {dataset_type} Context")
-
-            # Filter priority matrix for LCHO if needed
-            if dataset_type == 'LCHO' and priority:
-                # Ensure repairs metrics aren't in the priority recommendations
-                if 'measure' in priority and priority['measure'] in ['TP02', 'TP03', 'TP04']:
-                    st.warning("Priority calculation adjusted for LCHO dataset")
-
-            dashboard.render_priority_matrix(priority, detailed_analysis)
-
-        with st.expander("📋 Raw Data", expanded=False):
-            st.markdown(f"### Raw Data - {dataset_type} Provider")
-
-            # Show provider's raw scores
-            scores_df = data_processor.get_provider_scores(provider_code)
-            if not scores_df.empty:
-                # Add descriptions
-                scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
-
-                # Filter out non-applicable measures based on dataset type
+                # Show note for LCHO providers about missing metrics
                 if dataset_type == 'LCHO':
-                    # Remove repairs metrics (TP02-TP04) for LCHO providers
-                    na_metrics = ['TP02', 'TP03', 'TP04']
-                    scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+                    st.info("""
+                    ℹ️ **Note for LCHO Providers**: 
+                    Repairs metrics (TP02-TP04) are not applicable to LCHO providers 
+                    and are excluded from this analysis. All comparisons are made 
+                    within your LCHO peer group only.
+                    """)
 
-                    st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
+                detailed_analysis = analytics.get_detailed_performance_analysis(
+                    df, provider_code)
 
-                # Format for display
-                display_df = scores_df[['tp_measure', 'description', 'score']].copy()
-                display_df.columns = ['Measure', 'Description', 'Score (%)']
+                # Debug logging
+                if show_advanced_logging:
+                    st.write("Debug - detailed_analysis type:", type(detailed_analysis))
+                    st.write("Debug - detailed_analysis value:", detailed_analysis)
+                    st.write("Debug - detailed_analysis keys:", list(detailed_analysis.keys()) if detailed_analysis and isinstance(detailed_analysis, dict) else "None or not a dict")
+                    st.write("Debug - dataset_type:", dataset_type)
 
-                # Format scores with 1 decimal place
-                display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+                # Filter out N/A metrics for LCHO
+                if dataset_type == 'LCHO' and detailed_analysis and "error" not in detailed_analysis:
+                    original_count = len(detailed_analysis)
+                    detailed_analysis = {
+                        k: v for k, v in detailed_analysis.items() 
+                        if k not in ['TP02', 'TP03', 'TP04']
+                    }
+                    if show_advanced_logging:
+                        st.write(f"Debug - Filtered {original_count} measures down to {len(detailed_analysis)} for LCHO")
 
-                st.table(display_df)
+                # Check if we have any measures to display
+                if not detailed_analysis:
+                    st.warning("No performance data available to display")
+                elif "error" in detailed_analysis:
+                    st.error(f"Error loading performance data: {detailed_analysis['error']}")
+                else:
+                    dashboard.render_performance_analysis(detailed_analysis)
 
-                # Show peer comparison info
-                st.markdown(f"""
-                **Dataset Information:**
-                - Dataset Type: **{dataset_type}**
-                - Peer Group Size: **{peer_count} providers**
-                - Applicable Measures: **{len(applicable_measures)}**
-                - Measures Displayed: **{len(display_df)}**
-                """)
-            else:
-                st.warning("No score data available for this provider")
+            with st.expander("📈 Measure Correlations", expanded=False):
+                st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
+
+                # Get dataset-specific correlations
+                correlations = data_processor.get_dataset_correlations(dataset_type)
+
+                if dataset_type == 'LCHO':
+                    st.info("Correlations calculated using LCHO providers only (excluding repairs metrics)")
+                else:
+                    st.info("Correlations calculated using LCRA providers with all metrics")
+
+                dashboard.render_correlation_analysis(correlations, priority)
+
+            with st.expander("🎯 Priority Matrix", expanded=False):
+                st.markdown(f"### Priority Matrix - {dataset_type} Context")
+
+                # Filter priority matrix for LCHO if needed
+                if dataset_type == 'LCHO' and priority:
+                    # Ensure repairs metrics aren't in the priority recommendations
+                    if 'measure' in priority and priority['measure'] in ['TP02', 'TP03', 'TP04']:
+                        st.warning("Priority calculation adjusted for LCHO dataset")
+
+                dashboard.render_priority_matrix(priority, detailed_analysis)
+
+            with st.expander("📋 Raw Data", expanded=False):
+                st.markdown(f"### Raw Data - {dataset_type} Provider")
+
+                # Show provider's raw scores - FILTERED BY DATASET TYPE
+                scores_df = data_processor.get_provider_scores(provider_code)
+                
+                # Filter to only show the selected dataset type to avoid confusion
+                if not scores_df.empty and 'dataset_type' in scores_df.columns:
+                    scores_df = scores_df[scores_df['dataset_type'] == dataset_type]
+                
+                if not scores_df.empty:
+                    # Ensure scores_df is a DataFrame, not an array
+                    if isinstance(scores_df, pd.DataFrame):
+                        # Add descriptions
+                        scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
+
+                        # Filter out non-applicable measures based on dataset type
+                        if dataset_type == 'LCHO':
+                            # Remove repairs metrics (TP02-TP04) for LCHO providers
+                            na_metrics = ['TP02', 'TP03', 'TP04']
+                            scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+
+                            st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
+
+                        # Format for display
+                        display_df = scores_df[['tp_measure', 'description', 'score']].copy()
+                        display_df.columns = ['Measure', 'Description', 'Score (%)']
+
+                        # Format scores with 1 decimal place
+                        display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+                        st.table(display_df)
+                    else:
+                        st.warning("Data format issue - unable to display scores")
+                        display_df = pd.DataFrame()  # Empty dataframe for the peer comparison info
+
+                    # Show peer comparison info
+                    st.markdown(f"""
+                    **Dataset Information:**
+                    - Dataset Type: **{dataset_type}**
+                    - Peer Group Size: **{peer_count} providers**
+                    - Applicable Measures: **{len(applicable_measures)}**
+                    - Measures Displayed: **{len(display_df)}**
+                    """)
+                else:
+                    st.warning("No score data available for this provider")
 
         # Footer
         st.markdown("---")

@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, Any
 from tooltip_definitions import TooltipDefinitions
+from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
 
 class ExecutiveDashboard:
     """
@@ -19,23 +20,31 @@ class ExecutiveDashboard:
         tooltips = TooltipDefinitions()
         metric_tooltips = tooltips.get_metric_tooltips()
         technical_tooltips = tooltips.get_technical_tooltips()
+        
+        # Check if mobile
+        is_mobile = detect_mobile()
 
-        col_header1, col_header2 = st.columns([4, 1], gap="medium")
-        with col_header1:
+        if not is_mobile:
+            col_header1, col_header2 = st.columns([4, 1], gap="medium")
+            with col_header1:
+                st.markdown("## Executive Summary")
+                st.markdown(f"**Provider:** {provider_code}")
+            with col_header2:
+                # Add overall help for the executive summary
+                with st.expander("Understanding Your Dashboard", expanded=False):
+                    st.markdown("""
+                    **Your dashboard shows three key insights:**
+
+                    **Your Rank**: How you compare to other housing providers
+                    **Your Momentum**: Your performance trend over time  
+                    **Your Priority**: Most important area to focus on
+
+                    Click the help icons (?) next to each metric for detailed explanations.
+                    """)
+        else:
+            # Mobile: Simpler header
             st.markdown("## Executive Summary")
             st.markdown(f"**Provider:** {provider_code}")
-        with col_header2:
-            # Add overall help for the executive summary
-            with st.expander("Understanding Your Dashboard", expanded=False):
-                st.markdown("""
-                **Your dashboard shows three key insights:**
-
-                **Your Rank**: How you compare to other housing providers
-                **Your Momentum**: Your performance trend over time  
-                **Your Priority**: Most important area to focus on
-
-                Click the help icons (?) next to each metric for detailed explanations.
-                """)
 
         st.markdown("---")
 
@@ -60,28 +69,43 @@ class ExecutiveDashboard:
         provider_ranking = rankings[provider_code]
 
         # Create responsive columns for the key metrics - mobile-friendly
-        col1, col2, col3 = st.columns([1, 1, 1], gap="medium")
+        if is_mobile:
+            # Mobile: Single column layout with native components
+            cols = [st.container(), st.container(), st.container()]
+        else:
+            cols = st.columns([1, 1, 1], gap="medium")
 
         # YOUR RANK
-        with col1:
-            quartile_class = f"quartile-{provider_ranking['quartile'].lower()}"
-
-            # Add help expandable section for ranking
-            st.markdown(f"""
-            <div class="metric-card {quartile_class}">
-                <p class="metric-label">YOUR RANK</p>
-                <p class="metric-value">#{provider_ranking['rank']}</p>
-                <p style="font-size: 1.1rem; margin: 0.5rem 0; color: #64748B;">
-                    of {provider_ranking['total_providers']} providers
-                </p>
-                <p style="font-size: 1rem; font-weight: 600; color: {provider_ranking['quartile_color']};">
-                    {provider_ranking['quartile']} Quartile ({provider_ranking['percentile']:.1f}th percentile)
-                </p>
-                <p style="font-size: 0.9rem; color: #64748B; margin-top: 0.5rem;">
-                    Based on {provider_ranking['measures_count']} satisfaction measures
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+        with cols[0]:
+            if is_mobile:
+                # Mobile: Use native Streamlit components
+                st.markdown("### 📊 YOUR RANK")
+                st.metric(
+                    label="Position",
+                    value=f"#{provider_ranking['rank']}",
+                    delta=f"of {provider_ranking['total_providers']} providers"
+                )
+                st.markdown(f"**{provider_ranking['quartile']} Quartile**")
+                st.markdown(f"{provider_ranking['percentile']:.1f}th percentile")
+                st.caption(f"Based on {provider_ranking['measures_count']} satisfaction measures")
+            else:
+                # Desktop: Use custom HTML
+                quartile_class = f"quartile-{provider_ranking['quartile'].lower()}"
+                st.markdown(f"""
+                <div class="metric-card {quartile_class}">
+                    <p class="metric-label">YOUR RANK</p>
+                    <p class="metric-value">#{provider_ranking['rank']}</p>
+                    <p style="font-size: 1.1rem; margin: 0.5rem 0; color: #64748B;">
+                        of {provider_ranking['total_providers']} providers
+                    </p>
+                    <p style="font-size: 1rem; font-weight: 600; color: {provider_ranking['quartile_color']};">
+                        {provider_ranking['quartile']} Quartile ({provider_ranking['percentile']:.1f}th percentile)
+                    </p>
+                    <p style="font-size: 0.9rem; color: #64748B; margin-top: 0.5rem;">
+                        Based on {provider_ranking['measures_count']} satisfaction measures
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
 
             # Add expandable help section
             with st.expander("How Your Rank Works", expanded=False):
@@ -95,37 +119,55 @@ class ExecutiveDashboard:
                 """)
 
         # YOUR MOMENTUM
-        with col2:
-            if momentum.get('disabled', False):
-                st.markdown(f"""
-                <div class="metric-card">
-                    <p class="metric-label">YOUR MOMENTUM</p>
-                    <p class="metric-value" style="color: {momentum['momentum_color']};">
-                        {momentum['momentum_icon']}
-                    </p>
-                    <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
-                        {momentum['momentum_text']}
-                    </p>
-                    <p style="font-size: 0.9rem; color: #64748B;">
-                        Requires multi-year TSM data for true momentum analysis
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+        with cols[1]:
+            if is_mobile:
+                # Mobile: Use native Streamlit components
+                st.markdown("### 📈 YOUR MOMENTUM")
+                if momentum.get('disabled', False):
+                    st.metric(
+                        label="Trend",
+                        value=momentum['momentum_text'],
+                        delta=None
+                    )
+                    st.caption("Requires multi-year TSM data for true momentum analysis")
+                else:
+                    st.metric(
+                        label="Trend",
+                        value=momentum['momentum_text'],
+                        delta=f"{momentum['relative_performance']:+.1f} vs peers"
+                    )
             else:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <p class="metric-label">YOUR MOMENTUM</p>
-                    <p class="metric-value" style="color: {momentum['momentum_color']};">
-                        {momentum['momentum_icon']}
-                    </p>
-                    <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
-                        {momentum['momentum_text']}
-                    </p>
-                    <p style="font-size: 0.9rem; color: #64748B;">
-                        Relative to peer average: {momentum['relative_performance']:+.1f} points
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
+                # Desktop: Use custom HTML
+                if momentum.get('disabled', False):
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <p class="metric-label">YOUR MOMENTUM</p>
+                        <p class="metric-value" style="color: {momentum['momentum_color']};">
+                            {momentum['momentum_icon']}
+                        </p>
+                        <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
+                            {momentum['momentum_text']}
+                        </p>
+                        <p style="font-size: 0.9rem; color: #64748B;">
+                            Requires multi-year TSM data for true momentum analysis
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <p class="metric-label">YOUR MOMENTUM</p>
+                        <p class="metric-value" style="color: {momentum['momentum_color']};">
+                            {momentum['momentum_icon']}
+                        </p>
+                        <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
+                            {momentum['momentum_text']}
+                        </p>
+                        <p style="font-size: 0.9rem; color: #64748B;">
+                            Relative to peer average: {momentum['relative_performance']:+.1f} points
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             # Add expandable help section for momentum
             with st.expander("How Momentum Works", expanded=False):
@@ -148,45 +190,54 @@ class ExecutiveDashboard:
                     """)
 
         # YOUR PRIORITY
-        with col3:
-            priority_class = "priority-high" if priority.get('priority_level', '') in ['Critical', 'High'] else ""
-
-            # Format correlation strength for display
-            # Get correlation either from correlation_strength or calculate from correlation_with_tp01
+        with cols[2]:
+            # Format data for display
             corr_strength = priority.get('correlation_strength', 0)
             if corr_strength == 0 and 'correlation_with_tp01' in priority:
                 corr_strength = abs(priority['correlation_with_tp01']) * 100
             corr_text = "Strong" if corr_strength > 70 else "Moderate" if corr_strength > 40 else "Weak"
 
-            # Get the measure and description with fallbacks for both formats
             measure_code = priority.get('priority_measure', priority.get('measure', 'N/A'))
             measure_desc = priority.get('priority_description', priority.get('measure_name', 'No priority identified'))
             current_percentile = priority.get('percentile', priority.get('current_percentile', 0))
             improvement = priority.get('improvement_potential', 0)
-
-            st.markdown(f"""
-            <div class="metric-card {priority_class}">
-                <p class="metric-label">YOUR PRIORITY</p>
-                <p class="metric-value" style="font-size: 1.8rem; color: {priority.get('priority_color', '#2E5BBA')};">
-                    {priority.get('priority_level', 'Medium')}
-                </p>
-                <p style="font-size: 1.3rem; font-weight: 700; margin: 0.3rem 0; color: #2E5BBA;">
-                    {measure_code}
-                </p>
-                <p style="font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; color: #1E293B;">
-                    {measure_desc}
-                </p>
-                <p style="font-size: 0.9rem; color: #64748B;">
-                    Current: {current_percentile:.1f}th percentile
-                </p>
-                <p style="font-size: 0.9rem; color: {priority.get('priority_color', '#2E5BBA')}; font-weight: 500;">
-                    Improvement potential: {improvement:.1f}%
-                </p>
-                <p style="font-size: 0.85rem; color: #475569; margin-top: 0.3rem;">
-                    TP01 correlation: {corr_text} ({corr_strength:.1f}%)
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
+            
+            if is_mobile:
+                # Mobile: Use native Streamlit components
+                st.markdown("### 🎯 YOUR PRIORITY")
+                st.metric(
+                    label=measure_code,
+                    value=priority.get('priority_level', 'Medium'),
+                    delta=f"{improvement:.1f}% improvement potential"
+                )
+                st.markdown(f"**{measure_desc}**")
+                st.caption(f"Current: {current_percentile:.1f}th percentile")
+            else:
+                # Desktop: Use custom HTML
+                priority_class = "priority-high" if priority.get('priority_level', '') in ['Critical', 'High'] else ""
+                st.markdown(f"""
+                <div class="metric-card {priority_class}">
+                    <p class="metric-label">YOUR PRIORITY</p>
+                    <p class="metric-value" style="font-size: 1.8rem; color: {priority.get('priority_color', '#2E5BBA')};">
+                        {priority.get('priority_level', 'Medium')}
+                    </p>
+                    <p style="font-size: 1.3rem; font-weight: 700; margin: 0.3rem 0; color: #2E5BBA;">
+                        {measure_code}
+                    </p>
+                    <p style="font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; color: #1E293B;">
+                        {measure_desc}
+                    </p>
+                    <p style="font-size: 0.9rem; color: #64748B;">
+                        Current: {current_percentile:.1f}th percentile
+                    </p>
+                    <p style="font-size: 0.9rem; color: {priority.get('priority_color', '#2E5BBA')}; font-weight: 500;">
+                        Improvement potential: {improvement:.1f}%
+                    </p>
+                    <p style="font-size: 0.85rem; color: #475569; margin-top: 0.3rem;">
+                        TP01 correlation: {corr_text} ({corr_strength:.1f}%)
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
 
             # Add expandable help section for priority
             with st.expander("How Priority Works", expanded=False):
@@ -872,11 +923,14 @@ class ExecutiveDashboard:
         st.markdown("#### Correlation Details")
         table_data = correlations[['tp_measure', 'correlation_with_tp01', 'p_value']].copy()
         table_data.columns = ['Measure', 'Correlation', 'P-Value']
-        table_data['Correlation'] = table_data['Correlation'].apply(lambda x: f"{x:.3f}")
-        # Display p<0.05 for statistically significant values (smaller than 4 decimal places)
-        table_data['P-Value'] = table_data['P-Value'].apply(
-            lambda x: "p<0.05 (statistically significant)" if x < 0.0001 else f"{x:.4f}"
-        )
+        
+        # Ensure we're working with a DataFrame
+        if isinstance(table_data, pd.DataFrame):
+            table_data['Correlation'] = table_data['Correlation'].apply(lambda x: f"{x:.3f}")
+            # Display p<0.05 for statistically significant values (smaller than 4 decimal places)
+            table_data['P-Value'] = table_data['P-Value'].apply(
+                lambda x: "p<0.05 (statistically significant)" if x < 0.0001 else f"{x:.4f}"
+            )
 
         st.table(table_data)
 
