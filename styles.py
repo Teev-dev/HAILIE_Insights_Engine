@@ -1116,6 +1116,23 @@ def get_main_css():
         -webkit-box-shadow: none !important;
         -moz-box-shadow: none !important;
     }
+    
+    /* Remove shadows from st.table elements */
+    table,
+    .stTable,
+    [data-testid="stTable"],
+    [data-testid="stTable"] *,
+    table *,
+    thead,
+    tbody,
+    tr,
+    td,
+    th {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+        filter: none !important;
+    }
 
     @media (max-width: 768px) {
         .stDataFrame {
