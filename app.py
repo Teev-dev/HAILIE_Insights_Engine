@@ -143,8 +143,27 @@ def main():
     show_advanced_logging = False
 
     # Initialize enhanced data processor to get provider options
-    data_processor_for_options = EnhancedTSMDataProcessor(silent_mode=True)
-    provider_options = data_processor_for_options.get_provider_options()
+    try:
+        data_processor_for_options = EnhancedTSMDataProcessor(silent_mode=True)
+        provider_options = data_processor_for_options.get_provider_options()
+    except ConnectionError as e:
+        st.error(f"""
+        ❌ **Database Connection Failed**
+        
+        Unable to connect to the analytics database: {str(e)}
+        
+        Please ensure the database file exists at:
+        `attached_assets/hailie_analytics_v2.duckdb`
+        
+        If the database is missing, run:
+        ```bash
+        python build_analytics_db_v2.py
+        ```
+        """)
+        return
+    except Exception as e:
+        st.error(f"❌ Unexpected error initializing data processor: {str(e)}")
+        return
 
     provider_code = None
     selected_dataset_type = None
@@ -229,7 +248,20 @@ def main():
         st.markdown("---")
 
         # Initialize enhanced data processor and analytics with database connection
-        data_processor = EnhancedTSMDataProcessor(silent_mode=not show_advanced_logging)
+        try:
+            data_processor = EnhancedTSMDataProcessor(silent_mode=not show_advanced_logging)
+        except ConnectionError as e:
+            st.error(f"""
+            ❌ **Database Connection Failed**
+            
+            Unable to connect to the analytics database: {str(e)}
+            
+            The database file may be corrupted or inaccessible.
+            """)
+            return
+        except Exception as e:
+            st.error(f"❌ Unexpected error: {str(e)}")
+            return
         
         # Check if provider exists in database
         if not data_processor.get_provider_exists(provider_code):
