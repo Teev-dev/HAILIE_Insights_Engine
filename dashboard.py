@@ -221,9 +221,6 @@ class ExecutiveDashboard:
             st.error(detailed_analysis["error"])
             return
 
-        # Create tabs for different views with help tooltips
-        tab1, tab2, tab3 = st.tabs(["Performance Comparison", "Correlation Analysis", "Priority Matrix"])
-
         # Add help information for the detailed analysis section
         with st.expander("Understanding Detailed Analysis", expanded=False):
             st.markdown("""
@@ -238,7 +235,8 @@ class ExecutiveDashboard:
             **Tip**: Hover over charts for detailed information about each data point.
             """)
 
-        with tab1:
+        # Performance Comparison Section
+        with st.expander("📊 Performance Comparison", expanded=True):
             # Create performance comparison chart
             if detailed_analysis:
                 measures = []
@@ -325,9 +323,10 @@ class ExecutiveDashboard:
                     })
 
                 table_df = pd.DataFrame(table_data)
-                st.dataframe(table_df, width='stretch')
+                st.table(table_df)
 
-        with tab2:
+        # Correlation Analysis Section
+        with st.expander("📈 Correlation Analysis", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -455,13 +454,14 @@ class ExecutiveDashboard:
                         })
                     display_df = pd.DataFrame(display_data)
 
-                    st.dataframe(display_df, width='stretch')
+                    st.table(display_df)
                 else:
                     st.warning("Insufficient data to calculate correlations with TP01")
             else:
                 st.warning("Correlation analysis not available")
 
-        with tab3:
+        # Priority Matrix Section
+        with st.expander("🎯 Priority Matrix", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -678,7 +678,7 @@ class ExecutiveDashboard:
                 })
 
             completeness_df = pd.DataFrame(completeness_data)
-            st.dataframe(completeness_df, width='stretch')
+            st.table(completeness_df)
 
         # Data ranges
         if quality_report.get('data_ranges'):
@@ -694,7 +694,7 @@ class ExecutiveDashboard:
                 })
 
             ranges_df = pd.DataFrame(ranges_data)
-            st.dataframe(ranges_df, width='stretch')
+            st.table(ranges_df)
 
     def render_insights_summary(self, rankings: Dict, momentum: Dict, priority: Dict, provider_code: str):
         """
@@ -829,7 +829,7 @@ class ExecutiveDashboard:
                 })
 
             table_df = pd.DataFrame(table_data)
-            st.dataframe(table_df, width='stretch')
+            st.table(table_df)
 
     def render_correlation_analysis(self, correlations: pd.DataFrame, priority: Dict):
         """
@@ -878,7 +878,7 @@ class ExecutiveDashboard:
             lambda x: "p<0.05 (statistically significant)" if x < 0.0001 else f"{x:.4f}"
         )
 
-        st.dataframe(table_data, width='stretch')
+        st.table(table_data)
 
     def render_priority_matrix(self, priority: Dict, detailed_analysis: Dict):
         """
@@ -962,6 +962,6 @@ class ExecutiveDashboard:
                 })
 
             table_df = pd.DataFrame(table_data)
-            st.dataframe(table_df, width='stretch')
+            st.table(table_df)
         else:
             st.info("Priority matrix data not available")
