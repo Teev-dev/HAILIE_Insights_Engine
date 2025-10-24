@@ -219,8 +219,8 @@ def get_main_css():
         
         /* Dark mode card adjustments */
         .metric-card {
-            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-            border-left-color: var(--primary-color);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
         }
         
         .feature-card {
@@ -229,19 +229,23 @@ def get_main_css():
         }
         
         .quartile-top {
-            background: linear-gradient(135deg, #064E3B, #065F46) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--secondary-color) !important;
         }
         
         .quartile-high {
-            background: linear-gradient(135deg, #1E3A8A, #1E40AF) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid #84CC16 !important;
         }
         
         .quartile-mid {
-            background: linear-gradient(135deg, #78350F, #92400E) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--warning-color) !important;
         }
         
         .quartile-low {
-            background: linear-gradient(135deg, #7F1D1D, #991B1B) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--danger-color) !important;
         }
         
         .data-card {
@@ -802,13 +806,13 @@ def get_main_css():
         color: var(--text-secondary);
     }
     
-    /* Enhanced existing styles */
+    /* Enhanced existing styles - Clean White Theme */
     .metric-card {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         padding: var(--spacing-md);
         border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
-        border-left: 4px solid var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
         margin-bottom: var(--spacing-md);
         transition: all 0.3s ease;
         position: relative;
@@ -819,7 +823,6 @@ def get_main_css():
     @media (min-width: 576px) {
         .metric-card {
             padding: var(--spacing-lg);
-            border-left: 6px solid var(--primary-color);
         }
     }
     
@@ -829,25 +832,10 @@ def get_main_css():
         }
     }
     
-    .metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(180deg, transparent, var(--primary-color), transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
     .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-xl);
-    }
-    
-    .metric-card:hover::before {
-        opacity: 1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border-color: #D1D5DB;
     }
     
     
@@ -870,23 +858,23 @@ def get_main_css():
     }
     
     .quartile-top {
-        border-left-color: var(--secondary-color) !important;
-        background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
+        background: #FFFFFF;
+        border-left: 3px solid var(--secondary-color) !important;
     }
     
     .quartile-high {
-        border-left-color: #84CC16 !important;
-        background: linear-gradient(135deg, #F7FEE7, #ECFDF5);
+        background: #FFFFFF;
+        border-left: 3px solid #84CC16 !important;
     }
     
     .quartile-mid {
-        border-left-color: var(--warning-color) !important;
-        background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+        background: #FFFFFF;
+        border-left: 3px solid var(--warning-color) !important;
     }
     
     .quartile-low {
-        border-left-color: var(--danger-color) !important;
-        background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
+        background: #FFFFFF;
+        border-left: 3px solid var(--danger-color) !important;
     }
     
     .momentum-up {
@@ -902,8 +890,8 @@ def get_main_css():
     }
     
     .priority-high {
-        background: #FEF2F2;
-        border-left-color: #EF4444 !important;
+        background: #FFFFFF;
+        border-left: 3px solid #EF4444 !important;
     }
     
     .main-title {
