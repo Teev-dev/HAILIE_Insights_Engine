@@ -48,6 +48,19 @@ class EnhancedTSMDataProcessor:
                 st.error(f"❌ Failed to connect to database: {str(e)}")
             self._connection = None
 
+    def _ensure_connection(self):
+        """Ensure database connection is active, reconnect if needed"""
+        if self._connection is None:
+            self._connect_to_db()
+        else:
+            # Test if connection is still alive
+            try:
+                self._connection.execute("SELECT 1").fetchone()
+            except Exception:
+                # Connection is dead, reconnect
+                self._connection = None
+                self._connect_to_db()
+
     def _log_info(self, message):
         """Log info message"""
         if not self.silent_mode:
@@ -63,6 +76,7 @@ class EnhancedTSMDataProcessor:
         Get the dataset type for a specific provider (LCRA, LCHO, or COMBINED)
         Now uses provider name suffix to determine dataset type when available
         """
+        self._ensure_connection()
         if not self._connection:
             return None
 
@@ -98,6 +112,7 @@ class EnhancedTSMDataProcessor:
         Get pre-calculated percentile ranks for a specific provider
         Within their appropriate peer group (LCRA or LCHO)
         """
+        self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
@@ -128,6 +143,7 @@ class EnhancedTSMDataProcessor:
         """
         Get correlations for a specific dataset type
         """
+        self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
@@ -151,20 +167,24 @@ class EnhancedTSMDataProcessor:
 
     def get_provider_exists(self, provider_code: str) -> bool:
         """Check if a provider exists in the database"""
-        if not self._connection:
-            return False
-
-        query = "SELECT COUNT(*) FROM provider_dataset_mapping WHERE provider_code = ?"
-
         try:
-            result = self._connection.execute(query, [provider_code]).fetchone()
+            self._ensure_connection()
+
+            result = self._connection.execute("""
+                SELECT COUNT(*) as count 
+                FROM raw_scores 
+                WHERE provider_code = ?
+            """, [provider_code]).fetchone()
+
             return result[0] > 0 if result else False
         except Exception as e:
-            self._log_error(f"Error checking provider existence: {str(e)}")
+            if not self.silent_mode:
+                st.error(f"Error checking provider existence: {str(e)}")
             return False
 
     def get_all_provider_codes(self) -> List[Dict[str, str]]:
         """Get all unique provider codes and names with dataset info"""
+        self._ensure_connection()
         if not self._connection:
             return []
 
@@ -211,6 +231,7 @@ class EnhancedTSMDataProcessor:
         """
         Get raw scores for a specific provider
         """
+        self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
@@ -234,6 +255,10 @@ class EnhancedTSMDataProcessor:
         """
         Get comparison data for a specific measure within the same dataset
         """
+        self._ensure_connection()
+        if not self._connection:
+            return pd.DataFrame()
+            
         # Get provider's dataset type
         dataset_type = self.get_provider_dataset_type(provider_code)
         if not dataset_type:
@@ -256,9 +281,6 @@ class EnhancedTSMDataProcessor:
         """
 
         try:
-            if not self._connection:
-                self._log_error("No database connection available")
-                return pd.DataFrame()
             result = self._connection.execute(query, [tp_measure, dataset_type]).df()
             return result
         except Exception as e:
@@ -269,6 +291,7 @@ class EnhancedTSMDataProcessor:
         """
         Get summary statistics for a specific dataset
         """
+        self._ensure_connection()
         if not self._connection:
             return {}
 
@@ -298,6 +321,7 @@ class EnhancedTSMDataProcessor:
         """
         Get the distribution of scores for a specific measure within a dataset
         """
+        self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
@@ -326,6 +350,7 @@ class EnhancedTSMDataProcessor:
         Needed for TSMAnalytics rankings calculation
         Now supports filtering by dataset type for isolated peer comparisons
         """
+        self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
@@ -394,7 +419,8 @@ class EnhancedTSMDataProcessor:
         Load data for a specific provider with automatic dataset detection
         Now uses provider_name to determine dataset type when available
         """
-        if not provider_code:
+        self._ensure_connection()
+        if not provider_code or not self._connection:
             return None
 
         # Get provider's dataset type (use provider_name if available)
@@ -411,9 +437,6 @@ class EnhancedTSMDataProcessor:
         """
 
         try:
-            if not self._connection:
-                self._log_error("No database connection available")
-                return None
             result = self._connection.execute(query, [provider_code, dataset_type]).df()
             if not result.empty:
                 # Add metadata
@@ -433,10 +456,15 @@ class EnhancedTSMDataProcessor:
             return None
 
     def close(self):
-        """Close database connection"""
+        """Close the database connection safely"""
         if self._connection:
-            self._connection.close()
-            self._connection = None
+            try:
+                self._connection.close()
+            except Exception as e:
+                if not self.silent_mode:
+                    st.warning(f"⚠️ Error closing database connection: {str(e)}")
+            finally:
+                self._connection = None
 
 
     def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None) -> Optional[Dict]:
@@ -444,6 +472,7 @@ class EnhancedTSMDataProcessor:
         Get statistical summary for a specific measure
         Optionally filtered by dataset type
         """
+        self._ensure_connection()
         if not self._connection:
             return None
 

@@ -67,9 +67,28 @@ def render_features_overview():
 
 
 def check_database_exists():
-    """Check if the enhanced analytics database exists"""
+    """Check if the enhanced analytics database exists and is accessible"""
     db_path = "attached_assets/hailie_analytics_v2.duckdb"
-    return os.path.exists(db_path)
+    
+    # Check if file exists
+    if not os.path.exists(db_path):
+        return False
+    
+    # Check if file is readable
+    if not os.access(db_path, os.R_OK):
+        st.error(f"❌ Database file exists but is not readable: {db_path}")
+        return False
+    
+    # Check if it's a valid DuckDB file (basic check)
+    try:
+        import duckdb
+        conn = duckdb.connect(db_path, read_only=True)
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"❌ Database file exists but appears corrupted: {str(e)}")
+        return False
 
 
 def render_dataset_indicator(dataset_type: str, peer_count: int):
