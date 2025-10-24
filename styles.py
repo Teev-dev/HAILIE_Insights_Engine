@@ -858,7 +858,7 @@ def get_main_css():
     
     .metric-label {
         font-size: clamp(1rem, 2.5vw, 1.2rem);
-        color: var(--text-secondary);
+        color: #4B5563;
         margin: 0;
         font-weight: 600;
         text-transform: uppercase;
