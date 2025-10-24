@@ -851,7 +851,7 @@ def get_main_css():
         font-size: clamp(2.5rem, 6vw, 3.5rem);
         font-weight: 800;
         margin: 0;
-        color: var(--text-primary);
+        color: #4B5563;
         line-height: 1;
         letter-spacing: -0.02em;
     }
