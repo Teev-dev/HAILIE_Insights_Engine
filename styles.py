@@ -951,52 +951,97 @@ def get_main_css():
         border: none !important;
     }
 
-    /* Remove any shadows from Streamlit's default dataframe styling */
-    [data-testid="stDataFrame"] {
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    [data-testid="stDataFrame"] > div {
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    [data-testid="stDataFrame"] > div > div {
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    /* Target the dataframe wrapper specifically */
-    div[data-testid="stDataFrame"] div[data-testid="stDataFrameResizable"] {
-        box-shadow: none !important;
-        border: none !important;
-    }
-
-    /* Remove shadows and borders from all nested dataframe elements */
-    .stDataFrame *,
+    /* AGGRESSIVE shadow removal for dataframes - targeting all possible elements */
+    [data-testid="stDataFrame"],
     [data-testid="stDataFrame"] *,
-    [data-testid="stDataFrame"] {
+    [data-testid="stDataFrameResizable"],
+    [data-testid="stDataFrameResizable"] *,
+    div[data-testid="stDataFrame"],
+    div[data-testid="stDataFrame"] *,
+    .stDataFrame,
+    .stDataFrame *,
+    .dataframe,
+    .dataframe *,
+    [class*="dataframe"],
+    [class*="dataframe"] * {
         box-shadow: none !important;
-        border-bottom: none !important;
-        border-top: none !important;
-        border-left: none !important;
-        border-right: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+        filter: drop-shadow(0 0 0 transparent) !important;
+        text-shadow: none !important;
     }
     
-    /* Specifically target the table element itself */
-    [data-testid="stDataFrame"] table {
+    /* Remove all borders except table cell borders */
+    [data-testid="stDataFrame"],
+    [data-testid="stDataFrameResizable"],
+    div[data-testid="stDataFrame"],
+    .stDataFrame {
+        border: none !important;
+        outline: none !important;
+    }
+    
+    /* Target various iframe and embed elements that might contain dataframes */
+    [data-testid="stDataFrame"] iframe,
+    [data-testid="stDataFrame"] embed,
+    [data-testid="stDataFrame"] object,
+    .stDataFrame iframe,
+    .stDataFrame embed,
+    .stDataFrame object {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+        filter: none !important;
+        border: none !important;
+    }
+    
+    /* Target any wrapper divs with inline styles */
+    div[style*="box-shadow"][data-testid*="DataFrame"],
+    div[style*="box-shadow"] [data-testid*="DataFrame"],
+    [data-testid="stDataFrame"] div[style*="box-shadow"],
+    [data-testid="stDataFrame"] [style*="box-shadow"] {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+    }
+    
+    /* Override any transform shadows */
+    [data-testid="stDataFrame"]:before,
+    [data-testid="stDataFrame"]:after,
+    [data-testid="stDataFrame"] *:before,
+    [data-testid="stDataFrame"] *:after {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
+        content: none !important;
+    }
+    
+    /* Specifically target the table element */
+    [data-testid="stDataFrame"] table,
+    .stDataFrame table {
         border: none !important;
         border-collapse: collapse !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
     }
     
-    /* Remove borders from table cells */
+    /* Style table cells with subtle borders */
     [data-testid="stDataFrame"] th,
-    [data-testid="stDataFrame"] td {
+    [data-testid="stDataFrame"] td,
+    .stDataFrame th,
+    .stDataFrame td {
+        border: none !important;
         border-bottom: 1px solid #E5E7EB !important;
-        border-top: none !important;
-        border-left: none !important;
-        border-right: none !important;
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+    }
+    
+    /* Remove any parent container shadows */
+    [data-testid="stHorizontalBlock"]:has([data-testid="stDataFrame"]),
+    [data-testid="stVerticalBlock"]:has([data-testid="stDataFrame"]),
+    [data-testid="column"]:has([data-testid="stDataFrame"]) {
+        box-shadow: none !important;
+        -webkit-box-shadow: none !important;
+        -moz-box-shadow: none !important;
     }
 
     @media (max-width: 768px) {
