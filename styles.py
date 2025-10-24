@@ -17,7 +17,7 @@ def get_main_css():
         --warning-color: #F59E0B;
         --danger-color: #EF4444;
         --text-primary: #1E293B;
-        --text-secondary: #64748B;
+        --text-secondary: #111827;
         --text-light: #94A3B8;
         --bg-primary: #FFFFFF;
         --bg-secondary: #F8FAFC;
