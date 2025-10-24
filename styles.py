@@ -303,28 +303,6 @@ def get_main_css():
         button:hover, .stButton > button:hover {
             background-color: var(--primary-dark);
         }
-
-        /* Ensure all Streamlit text is visible in dark mode */
-        .stMarkdown, .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, 
-        .stMarkdown h4, .stMarkdown h5, .stMarkdown h6, .stMarkdown strong, 
-        .stMarkdown em, .stMarkdown span, .stMarkdown div {
-            color: var(--text-primary) !important;
-        }
-
-        /* Ensure main content area has proper background */
-        .main, .main .block-container, section.main > div {
-            background-color: transparent !important;
-        }
-
-        /* Fix Streamlit headings in dark mode */
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--text-primary) !important;
-        }
-
-        /* Fix paragraph text */
-        p {
-            color: var(--text-primary) !important;
-        }
     }
 
     /* Landing Page Styles */
@@ -433,7 +411,7 @@ def get_main_css():
     }
 
     .feature-card {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         padding: var(--spacing-lg);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--shadow-md);
@@ -538,13 +516,13 @@ def get_main_css():
     .feature-title {
         font-size: clamp(1.1rem, 3vw, 1.4rem);
         font-weight: 700;
-        color: var(--text-primary);
+        color: #1E293B;
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
 
     .feature-description {
-        color: var(--text-primary);
+        color: #1E293B;
         font-size: clamp(0.9rem, 2.5vw, 1rem);
         line-height: 1.6;
     }
@@ -905,7 +883,7 @@ def get_main_css():
     .quartile-high,
     .quartile-mid,
     .quartile-low {
-        background: var(--bg-primary) !important;
+        background: #FFFFFF !important;
         border-left: 3px solid var(--secondary-color) !important;
     }
 
@@ -934,12 +912,12 @@ def get_main_css():
     }
 
     .priority-high {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         border-left: 3px solid #EF4444 !important;
     }
 
     .main-title {
-        color: var(--text-primary);
+        color: #1E293B;
         font-size: clamp(1.75rem, 4vw, 2.5rem);
         font-weight: 700;
         margin-bottom: 0.5rem;
@@ -947,7 +925,7 @@ def get_main_css():
     }
 
     .subtitle {
-        color: var(--text-secondary);
+        color: #64748B;
         font-size: clamp(1rem, 2.5vw, 1.2rem);
         margin-bottom: var(--spacing-xl);
         line-height: 1.4;
