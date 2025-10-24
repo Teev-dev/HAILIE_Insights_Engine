@@ -221,9 +221,6 @@ class ExecutiveDashboard:
             st.error(detailed_analysis["error"])
             return
 
-        # Create tabs for different views with help tooltips
-        tab1, tab2, tab3 = st.tabs(["Performance Comparison", "Correlation Analysis", "Priority Matrix"])
-
         # Add help information for the detailed analysis section
         with st.expander("Understanding Detailed Analysis", expanded=False):
             st.markdown("""
@@ -238,7 +235,8 @@ class ExecutiveDashboard:
             **Tip**: Hover over charts for detailed information about each data point.
             """)
 
-        with tab1:
+        # Performance Comparison Section
+        with st.expander("📊 Performance Comparison", expanded=True):
             # Create performance comparison chart
             if detailed_analysis:
                 measures = []
@@ -327,7 +325,8 @@ class ExecutiveDashboard:
                 table_df = pd.DataFrame(table_data)
                 st.dataframe(table_df, width='stretch')
 
-        with tab2:
+        # Correlation Analysis Section
+        with st.expander("📈 Correlation Analysis", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -461,7 +460,8 @@ class ExecutiveDashboard:
             else:
                 st.warning("Correlation analysis not available")
 
-        with tab3:
+        # Priority Matrix Section
+        with st.expander("🎯 Priority Matrix", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
