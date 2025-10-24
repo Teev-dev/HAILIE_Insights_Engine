@@ -281,6 +281,12 @@ def get_main_css():
         }
     }
     
+    .feature-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+    
     .feature-card {
         background: var(--bg-primary);
         padding: var(--spacing-lg);

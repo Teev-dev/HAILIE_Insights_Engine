@@ -22,14 +22,6 @@ apply_css(st)
 def render_landing_hero():
     """Render the professional hero section"""
     st.markdown("""
-    <script>
-    function scrollToProviderSearch() {
-        const element = document.getElementById('provider-search-section');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-    </script>
     <div class="hero-section">
         <h1 class="hero-title">TSM Insights by HAILIE</h1>
         <p class="hero-tagline">Transform Your TSM Performance Into Executive Intelligence</p>
@@ -42,33 +34,39 @@ def render_features_overview():
     """Render the key features overview section"""
     st.markdown("""
     <div class="features-grid">
-        <div class="feature-card feature-card-clickable" onclick="scrollToProviderSearch()">
-            <div class="feature-icon-professional rank-icon"></div>
-            <h3 class="feature-title">Your Rank</h3>
-            <p class="feature-description">
-                See exactly how your housing provider compares to peers with quartile-based scoring. 
-                Get clear visual indicators showing your competitive position.
-            </p>
-            <div class="feature-cta">Click to get started →</div>
-        </div>
-        <div class="feature-card feature-card-clickable" onclick="scrollToProviderSearch()">
-            <div class="feature-icon-professional momentum-icon"></div>
-            <h3 class="feature-title">Your Momentum</h3>
-            <p class="feature-description">
-                Track your 12-month performance trajectory. Understand if you're improving, 
-                stable, or declining across key satisfaction measures.
-            </p>
-            <div class="feature-cta">Click to get started →</div>
-        </div>
-        <div class="feature-card feature-card-clickable" onclick="scrollToProviderSearch()">
-            <div class="feature-icon-professional priority-icon"></div>
-            <h3 class="feature-title">Your Priority</h3>
-            <p class="feature-description">
-                Identify the single most critical area for improvement based on data-driven 
-                correlation analysis with overall tenant satisfaction.
-            </p>
-            <div class="feature-cta">Click to get started →</div>
-        </div>
+        <a href="#provider-search-section" class="feature-card-link">
+            <div class="feature-card feature-card-clickable">
+                <div class="feature-icon-professional rank-icon"></div>
+                <h3 class="feature-title">Your Rank</h3>
+                <p class="feature-description">
+                    See exactly how your housing provider compares to peers with quartile-based scoring. 
+                    Get clear visual indicators showing your competitive position.
+                </p>
+                <div class="feature-cta">Click to get started →</div>
+            </div>
+        </a>
+        <a href="#provider-search-section" class="feature-card-link">
+            <div class="feature-card feature-card-clickable">
+                <div class="feature-icon-professional momentum-icon"></div>
+                <h3 class="feature-title">Your Momentum</h3>
+                <p class="feature-description">
+                    Track your 12-month performance trajectory. Understand if you're improving, 
+                    stable, or declining across key satisfaction measures.
+                </p>
+                <div class="feature-cta">Click to get started →</div>
+            </div>
+        </a>
+        <a href="#provider-search-section" class="feature-card-link">
+            <div class="feature-card feature-card-clickable">
+                <div class="feature-icon-professional priority-icon"></div>
+                <h3 class="feature-title">Your Priority</h3>
+                <p class="feature-description">
+                    Identify the single most critical area for improvement based on data-driven 
+                    correlation analysis with overall tenant satisfaction.
+                </p>
+                <div class="feature-cta">Click to get started →</div>
+            </div>
+        </a>
     </div>
     """,
                 unsafe_allow_html=True)
