@@ -101,7 +101,7 @@ def get_main_css():
 
     /* Streamlit container improvements */
     .main .block-container {
-        padding-top: var(--spacing-md) !important;
+        padding-top: 0 !important;
         padding-left: var(--spacing-sm) !important;
         padding-right: var(--spacing-sm) !important;
         max-width: none !important;
@@ -111,7 +111,7 @@ def get_main_css():
 
     @media (min-width: 769px) {
         .main .block-container {
-            padding-top: var(--spacing-xl) !important;
+            padding-top: 0 !important;
             padding-left: var(--spacing-lg) !important;
             padding-right: var(--spacing-lg) !important;
         }
@@ -256,25 +256,28 @@ def get_main_css():
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 4rem var(--spacing-xl);
-        border-radius: var(--border-radius-xl);
-        margin-bottom: var(--spacing-xl);
+        padding: 4rem var(--spacing-xl) 4rem var(--spacing-xl);
+        border-radius: 0;
+        margin: 0 calc(-1 * var(--spacing-sm)) var(--spacing-xl) calc(-1 * var(--spacing-sm));
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
         overflow: visible !important;
         min-height: auto !important;
+        width: calc(100% + 2 * var(--spacing-sm));
     }
     
     @media (min-width: 769px) {
         .hero-section {
-            padding: 5rem var(--spacing-2xl);
+            padding: 5rem var(--spacing-2xl) 5rem var(--spacing-2xl);
+            margin: 0 calc(-1 * var(--spacing-lg)) var(--spacing-xl) calc(-1 * var(--spacing-lg));
+            width: calc(100% + 2 * var(--spacing-lg));
         }
     }
     
     @media (min-width: 1200px) {
         .hero-section {
-            padding: 6rem var(--spacing-2xl);
+            padding: 6rem var(--spacing-2xl) 6rem var(--spacing-2xl);
         }
     }
 
