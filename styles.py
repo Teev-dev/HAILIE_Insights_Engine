@@ -282,9 +282,21 @@ def get_main_css():
     }
     
     .feature-card-link {
-        text-decoration: none;
+        text-decoration: none !important;
         color: inherit;
         display: block;
+    }
+    
+    .feature-card-link:hover,
+    .feature-card-link:focus,
+    .feature-card-link:active,
+    .feature-card-link:visited {
+        text-decoration: none !important;
+        color: inherit;
+    }
+    
+    .feature-card-link * {
+        text-decoration: none !important;
     }
     
     .feature-card {
