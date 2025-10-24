@@ -408,17 +408,7 @@ def main():
                 # Format scores with 1 decimal place
                 display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
 
-                # Use st.dataframe with column configuration for better text display
-                st.dataframe(
-                    display_df,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                        "Measure": st.column_config.TextColumn("Measure", width="small"),
-                        "Description": st.column_config.TextColumn("Description", width="large"),
-                        "Score (%)": st.column_config.TextColumn("Score (%)", width="small")
-                    }
-                )
+                st.table(display_df)
 
                 # Show peer comparison info
                 st.markdown(f"""
