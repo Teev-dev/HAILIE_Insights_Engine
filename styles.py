@@ -303,6 +303,28 @@ def get_main_css():
         button:hover, .stButton > button:hover {
             background-color: var(--primary-dark);
         }
+
+        /* Ensure all Streamlit text is visible in dark mode */
+        .stMarkdown, .stMarkdown p, .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, 
+        .stMarkdown h4, .stMarkdown h5, .stMarkdown h6, .stMarkdown strong, 
+        .stMarkdown em, .stMarkdown span, .stMarkdown div {
+            color: var(--text-primary) !important;
+        }
+
+        /* Ensure main content area has proper background */
+        .main, .main .block-container, section.main > div {
+            background-color: transparent !important;
+        }
+
+        /* Fix Streamlit headings in dark mode */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary) !important;
+        }
+
+        /* Fix paragraph text */
+        p {
+            color: var(--text-primary) !important;
+        }
     }
 
     /* Landing Page Styles */
