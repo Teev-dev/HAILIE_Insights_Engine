@@ -340,21 +340,24 @@ def main():
                 # Add descriptions
                 scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
                 
-                # For LCHO, mark repairs metrics as N/A using NaN for numeric compatibility
+                # Filter out non-applicable measures based on dataset type
                 if dataset_type == 'LCHO':
+                    # Remove repairs metrics (TP02-TP04) for LCHO providers
                     na_metrics = ['TP02', 'TP03', 'TP04']
-                    for metric in na_metrics:
-                        if metric in scores_df['tp_measure'].values:
-                            scores_df.loc[scores_df['tp_measure'] == metric, 'score'] = np.nan
-                            scores_df.loc[scores_df['tp_measure'] == metric, 'description'] += ' (Not Applicable)'
+                    scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+                    
+                    st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
                 
                 # Format for display
                 display_df = scores_df[['tp_measure', 'description', 'score']].copy()
                 display_df.columns = ['Measure', 'Description', 'Score (%)']
                 
+                # Format scores with 1 decimal place
+                display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+                
                 st.dataframe(
                     display_df,
-                    use_container_width=True,
+                    width='stretch',
                     hide_index=True
                 )
                 
@@ -364,6 +367,7 @@ def main():
                 - Dataset Type: **{dataset_type}**
                 - Peer Group Size: **{peer_count} providers**
                 - Applicable Measures: **{len(applicable_measures)}**
+                - Measures Displayed: **{len(display_df)}**
                 """)
             else:
                 st.warning("No score data available for this provider")
