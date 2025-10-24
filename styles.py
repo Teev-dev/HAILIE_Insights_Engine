@@ -88,29 +88,42 @@ def get_main_css():
     body {
         margin: 0 !important;
         padding: 0 !important;
-        overflow-x: hidden;
+        overflow-x: hidden !important;
         overflow-y: auto !important;
         min-height: 100vh !important;
+        max-width: 100vw !important;
     }
     
     /* Remove all default Streamlit padding and margins */
     .main {
         padding: 0 !important;
         margin: 0 !important;
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
     }
     
     section.main > div {
         padding-top: 0 !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
     }
     
     [data-testid="stAppViewContainer"] {
         padding: 0 !important;
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
     }
     
     [data-testid="stHeader"] {
         background-color: transparent;
+    }
+    
+    /* Prevent any element from causing horizontal scroll */
+    * {
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     /* Prevent any parent containers from hiding content */
@@ -274,16 +287,14 @@ def get_main_css():
 
     /* Content wrapper for sections after hero */
     .content-section {
-        padding-left: var(--spacing-sm);
-        padding-right: var(--spacing-sm);
-        padding-top: var(--spacing-lg);
+        padding: var(--spacing-lg) var(--spacing-sm);
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     @media (min-width: 769px) {
         .content-section {
-            padding-left: var(--spacing-lg);
-            padding-right: var(--spacing-lg);
-            padding-top: var(--spacing-xl);
+            padding: var(--spacing-xl) var(--spacing-lg);
         }
     }
 
@@ -291,6 +302,7 @@ def get_main_css():
         .content-section {
             max-width: 1200px;
             margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-2xl);
         }
     }
 
@@ -298,30 +310,27 @@ def get_main_css():
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 4rem var(--spacing-xl) 4rem var(--spacing-xl);
+        padding: 4rem 1rem;
         border-radius: 0;
         margin: 0;
-        margin-left: calc(-50vw + 50%);
-        margin-right: calc(-50vw + 50%);
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
-        overflow: visible !important;
-        min-height: auto !important;
-        width: 100vw;
+        overflow: hidden;
+        min-height: auto;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     @media (min-width: 769px) {
         .hero-section {
-            padding: 5rem var(--spacing-2xl) 5rem var(--spacing-2xl);
-            margin: 0;
-            width: 100vw;
+            padding: 5rem 2rem;
         }
     }
     
     @media (min-width: 1200px) {
         .hero-section {
-            padding: 6rem var(--spacing-2xl) 6rem var(--spacing-2xl);
+            padding: 6rem 3rem;
         }
     }
 
