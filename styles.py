@@ -954,7 +954,7 @@ def get_main_css():
     /* Remove any shadows from Streamlit's default dataframe styling */
     [data-testid="stDataFrame"] {
         box-shadow: none !important;
-        border: 1px solid #E5E7EB !important;
+        border: none !important;
     }
 
     [data-testid="stDataFrame"] > div {
@@ -973,9 +973,30 @@ def get_main_css():
         border: none !important;
     }
 
-    /* Remove shadows from all nested dataframe elements */
-    .stDataFrame * {
+    /* Remove shadows and borders from all nested dataframe elements */
+    .stDataFrame *,
+    [data-testid="stDataFrame"] *,
+    [data-testid="stDataFrame"] {
         box-shadow: none !important;
+        border-bottom: none !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
+    
+    /* Specifically target the table element itself */
+    [data-testid="stDataFrame"] table {
+        border: none !important;
+        border-collapse: collapse !important;
+    }
+    
+    /* Remove borders from table cells */
+    [data-testid="stDataFrame"] th,
+    [data-testid="stDataFrame"] td {
+        border-bottom: 1px solid #E5E7EB !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
     }
 
     @media (max-width: 768px) {
