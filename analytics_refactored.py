@@ -261,6 +261,11 @@ class TSMAnalytics:
             if not self.data_processor.get_provider_exists(provider_code):
                 return {"error": f"Provider {provider_code} not found"}
             
+            # Get provider's dataset type for proper peer comparison
+            dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+            if not dataset_type:
+                return {"error": "Could not determine dataset type"}
+            
             # Get provider's scores and percentiles
             provider_scores_df = self.data_processor.get_provider_scores(provider_code)
             
@@ -293,8 +298,8 @@ class TSMAnalytics:
                 # Get percentile from pre-calculated data
                 percentile = percentile_dict.get(tp_measure, 0)
                 
-                # Get measure statistics
-                stats = self.data_processor.get_measure_statistics(tp_measure)
+                # Get measure statistics for the same dataset type
+                stats = self.data_processor.get_measure_statistics(tp_measure, dataset_type)
                 
                 if stats is None:
                     stats = {}

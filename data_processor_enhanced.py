@@ -347,6 +347,59 @@ class EnhancedTSMDataProcessor:
                         {', '.join(pivot_cols)}
                     FROM raw_scores
                     WHERE dataset_type = ?
+
+    
+    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None) -> Optional[Dict]:
+        """
+        Get statistical summary for a specific measure
+        Optionally filtered by dataset type
+        """
+        if not self._connection:
+            return None
+            
+        if dataset_type:
+            query = """
+            SELECT 
+                AVG(score) as mean_score,
+                MEDIAN(score) as median_score,
+                STDDEV(score) as std_dev,
+                MIN(score) as min_score,
+                MAX(score) as max_score,
+                COUNT(*) as sample_size
+            FROM raw_scores
+            WHERE tp_measure = ? AND dataset_type = ? AND score IS NOT NULL
+            """
+            params = [tp_measure, dataset_type]
+        else:
+            query = """
+            SELECT 
+                AVG(score) as mean_score,
+                MEDIAN(score) as median_score,
+                STDDEV(score) as std_dev,
+                MIN(score) as min_score,
+                MAX(score) as max_score,
+                COUNT(*) as sample_size
+            FROM raw_scores
+            WHERE tp_measure = ? AND score IS NOT NULL
+            """
+            params = [tp_measure]
+        
+        try:
+            result = self._connection.execute(query, params).fetchone()
+            if result:
+                return {
+                    'mean_score': result[0] if result[0] is not None else 0,
+                    'median_score': result[1] if result[1] is not None else 0,
+                    'std_dev': result[2] if result[2] is not None else 0,
+                    'min_score': result[3] if result[3] is not None else 0,
+                    'max_score': result[4] if result[4] is not None else 0,
+                    'sample_size': result[5] if result[5] is not None else 0
+                }
+            return None
+        except Exception as e:
+            self._log_error(f"Error fetching measure statistics: {str(e)}")
+            return None
+
                     GROUP BY provider_code, provider_name
                 """
                 
