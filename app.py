@@ -5,20 +5,18 @@ from data_processor_enhanced import EnhancedTSMDataProcessor
 from analytics_refactored import TSMAnalytics
 from dashboard import ExecutiveDashboard
 from styles import apply_css
-from mobile_utils import detect_mobile, get_device_config, mobile_friendly_columns, render_mobile_info, should_show_component
+from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_info, should_show_component
 import traceback
 from contextlib import contextmanager
 import os
 
-# Get device configuration
-device_config = get_device_config()
-
-# Page configuration - adaptive based on device
+# Page configuration - MUST be first Streamlit command
+# Using 'wide' layout for all devices, content adapts responsively
 st.set_page_config(
     page_title="HAILIE TSM Insights Engine",
     page_icon="✓",
-    layout=device_config['layout'],
-    initial_sidebar_state=device_config['sidebar_state']
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # Apply custom CSS styles from styles module
