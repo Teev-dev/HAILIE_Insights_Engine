@@ -284,7 +284,9 @@ def main():
             
             # Debug logging
             if show_advanced_logging:
-                st.write("Debug - detailed_analysis keys:", list(detailed_analysis.keys()) if detailed_analysis else "None")
+                st.write("Debug - detailed_analysis type:", type(detailed_analysis))
+                st.write("Debug - detailed_analysis value:", detailed_analysis)
+                st.write("Debug - detailed_analysis keys:", list(detailed_analysis.keys()) if detailed_analysis and isinstance(detailed_analysis, dict) else "None or not a dict")
                 st.write("Debug - dataset_type:", dataset_type)
             
             # Filter out N/A metrics for LCHO
