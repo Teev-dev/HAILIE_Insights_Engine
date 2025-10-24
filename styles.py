@@ -89,6 +89,14 @@ def get_main_css():
         margin: 0;
         padding: 0;
         overflow-x: hidden;
+        overflow-y: auto !important;
+        min-height: 100vh !important;
+    }
+
+    /* Prevent any parent containers from hiding content */
+    #root, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+        overflow: visible !important;
+        min-height: 100vh !important;
     }
 
     /* Streamlit container improvements */
@@ -97,6 +105,8 @@ def get_main_css():
         padding-left: var(--spacing-sm) !important;
         padding-right: var(--spacing-sm) !important;
         max-width: none !important;
+        overflow: visible !important;
+        position: relative !important;
     }
 
     @media (min-width: 769px) {
@@ -112,6 +122,12 @@ def get_main_css():
             max-width: 1200px !important;
             margin: 0 auto !important;
         }
+    }
+
+    /* Ensure all main containers are visible */
+    .main, .main > div, section[data-testid="stAppViewContainer"] {
+        overflow: visible !important;
+        min-height: auto !important;
     }
 
     /* Streamlit sidebar responsive improvements */
@@ -178,6 +194,45 @@ def get_main_css():
     }
 
     /* Better mobile scrolling and viewport handling */
+    @media (max-width: 768px) {
+        body {
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            overflow-y: auto !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Prevent horizontal scroll issues but allow vertical */
+        .main .block-container {
+            overflow-x: hidden !important;
+            overflow-y: visible !important;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        /* Ensure all main content is visible */
+        .main, main, [data-testid="stMain"] {
+            display: block !important;
+            visibility: visible !important;
+            overflow: visible !important;
+            min-height: 100vh !important;
+        }
+
+        /* Better mobile spacing for sections */
+        section[data-testid="stSidebar"] {
+            min-width: 260px !important;
+        }
+
+        /* Force all major containers to be visible */
+        .metric-card, .feature-card, .hero-section, .workflow-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+        }
+    }
+
     @media (max-width: 767px) {
         body {
             -webkit-overflow-scrolling: touch;
@@ -315,7 +370,8 @@ def get_main_css():
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
-        overflow: hidden;
+        overflow: visible !important;
+        min-height: auto !important;
     }
 
     .hero-section::before {
@@ -327,6 +383,20 @@ def get_main_css():
         bottom: 0;
         background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
         pointer-events: none;
+        z-index: 0;
+    }
+
+    .hero-section > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: var(--spacing-xl) var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            overflow: visible !important;
+        }
     }
 
     @media (max-width: 767px) {
@@ -419,6 +489,11 @@ def get_main_css():
         text-align: center;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         touch-action: manipulation;
+        overflow: visible !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
     }
 
     .feature-card-clickable {
@@ -830,8 +905,11 @@ def get_main_css():
         margin-bottom: var(--spacing-md);
         transition: all 0.3s ease;
         position: relative;
-        overflow: hidden;
+        overflow: visible !important;
         touch-action: manipulation;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     @media (min-width: 576px) {
