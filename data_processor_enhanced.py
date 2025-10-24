@@ -44,9 +44,16 @@ class EnhancedTSMDataProcessor:
             if not self.silent_mode:
                 st.success("✅ Connected to enhanced analytics database")
         except Exception as e:
+            # Always log connection failures, even in silent mode
+            error_msg = f"❌ Failed to connect to database: {str(e)}"
             if not self.silent_mode:
-                st.error(f"❌ Failed to connect to database: {str(e)}")
+                st.error(error_msg)
+            else:
+                # In silent mode, at least print to console for debugging
+                print(error_msg)
             self._connection = None
+            # Raise exception to prevent the app from continuing with null connection
+            raise ConnectionError(f"Database connection failed: {str(e)}")
 
     def _ensure_connection(self):
         """Ensure database connection is active, reconnect if needed"""
@@ -56,8 +63,13 @@ class EnhancedTSMDataProcessor:
             # Test if connection is still alive
             try:
                 self._connection.execute("SELECT 1").fetchone()
-            except Exception:
+            except Exception as e:
                 # Connection is dead, reconnect
+                error_msg = f"⚠️ Database connection lost, attempting to reconnect: {str(e)}"
+                if not self.silent_mode:
+                    st.warning(error_msg)
+                else:
+                    print(error_msg)
                 self._connection = None
                 self._connect_to_db()
 

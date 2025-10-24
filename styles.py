@@ -12,7 +12,7 @@ def get_main_css():
     /* Global Responsive Variables - Mobile First Approach */
     :root {
         --primary-color: #2E5BBA;
-        --primary-dark: #0A1D42;
+        --primary-dark: #050B1F;
         --secondary-color: #22C55E;
         --warning-color: #F59E0B;
         --danger-color: #EF4444;
@@ -31,7 +31,7 @@ def get_main_css():
         --border-radius-md: 8px;
         --border-radius-lg: 12px;
         --border-radius-xl: 16px;
-        
+
         /* Mobile-first spacing */
         --spacing-xs: 0.25rem;
         --spacing-sm: 0.5rem;
@@ -39,19 +39,19 @@ def get_main_css():
         --spacing-lg: 1rem;
         --spacing-xl: 1.25rem;
         --spacing-2xl: 1.5rem;
-        
+
         /* Responsive breakpoints */
         --breakpoint-sm: 576px;
         --breakpoint-md: 768px;
         --breakpoint-lg: 992px;
         --breakpoint-xl: 1200px;
-        
+
         /* Touch-friendly sizing */
         --touch-target-min: 44px;
         --button-height-mobile: 48px;
         --button-height-desktop: 40px;
     }
-    
+
     /* Tablet and up spacing adjustments */
     @media (min-width: 768px) {
         :root {
@@ -71,26 +71,26 @@ def get_main_css():
         -ms-text-size-adjust: 100%;
         scroll-behavior: smooth;
     }
-    
+
     @media (min-width: 576px) {
         html {
             font-size: 15px;
         }
     }
-    
+
     @media (min-width: 768px) {
         html {
             font-size: 16px;
         }
     }
-    
+
     /* Enhanced body and container styles */
     body {
         margin: 0;
         padding: 0;
         overflow-x: hidden;
     }
-    
+
     /* Streamlit container improvements */
     .main .block-container {
         padding-top: var(--spacing-md) !important;
@@ -98,7 +98,7 @@ def get_main_css():
         padding-right: var(--spacing-sm) !important;
         max-width: none !important;
     }
-    
+
     @media (min-width: 768px) {
         .main .block-container {
             padding-top: var(--spacing-xl) !important;
@@ -106,26 +106,26 @@ def get_main_css():
             padding-right: var(--spacing-lg) !important;
         }
     }
-    
+
     @media (min-width: 1200px) {
         .main .block-container {
             max-width: 1200px !important;
             margin: 0 auto !important;
         }
     }
-    
+
     /* Streamlit sidebar responsive improvements */
     .sidebar .sidebar-content {
         padding: var(--spacing-sm) !important;
         width: 100% !important;
     }
-    
+
     @media (min-width: 768px) {
         .sidebar .sidebar-content {
             padding: var(--spacing-lg) !important;
         }
     }
-    
+
     /* Accessibility: Respect user motion preferences */
     @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after {
@@ -135,7 +135,7 @@ def get_main_css():
             scroll-behavior: auto !important;
         }
     }
-    
+
     /* Mobile-friendly touch targets */
     button, .stButton > button, .stSelectbox > div, .stCheckbox > label {
         min-height: var(--touch-target-min);
@@ -146,49 +146,49 @@ def get_main_css():
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
     }
-    
+
     @media (min-width: 768px) {
         button, .stButton > button {
             min-height: var(--button-height-desktop);
         }
     }
-    
+
     /* Enhanced touch targets for mobile interactions */
     .stSelectbox > div > div {
         min-height: var(--touch-target-min) !important;
         font-size: clamp(14px, 3vw, 16px) !important;
     }
-    
+
     .stTextInput > div > div > input {
         min-height: var(--touch-target-min) !important;
         font-size: clamp(14px, 3vw, 16px) !important;
         padding: var(--spacing-sm) var(--spacing-md) !important;
     }
-    
+
     .stCheckbox > label > div {
         min-height: var(--touch-target-min) !important;
         min-width: var(--touch-target-min) !important;
     }
-    
+
     /* Mobile-optimized expander touch target */
     .streamlit-expanderHeader {
         min-height: var(--touch-target-min) !important;
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
     }
-    
+
     /* Better mobile scrolling and viewport handling */
     @media (max-width: 768px) {
         body {
             -webkit-overflow-scrolling: touch;
             position: relative;
         }
-        
+
         /* Prevent horizontal scroll issues */
         .main .block-container {
             overflow-x: hidden !important;
         }
-        
+
         /* Better mobile spacing for sections */
         section[data-testid="stSidebar"] {
             min-width: 260px !important;
@@ -211,96 +211,100 @@ def get_main_css():
             --bg-tertiary: #334155;
             --border-color: #334155;
         }
-        
+
         body {
             background-color: var(--bg-primary);
             color: var(--text-primary);
         }
-        
+
         /* Dark mode card adjustments */
         .metric-card {
-            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-            border-left-color: var(--primary-color);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
         }
-        
+
         .feature-card {
             background: var(--bg-secondary);
             border-top-color: var(--primary-color);
         }
-        
+
         .quartile-top {
-            background: linear-gradient(135deg, #064E3B, #065F46) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--secondary-color) !important;
         }
-        
+
         .quartile-high {
-            background: linear-gradient(135deg, #1E3A8A, #1E40AF) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid #84CC16 !important;
         }
-        
+
         .quartile-mid {
-            background: linear-gradient(135deg, #78350F, #92400E) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--warning-color) !important;
         }
-        
+
         .quartile-low {
-            background: linear-gradient(135deg, #7F1D1D, #991B1B) !important;
+            background: var(--bg-secondary) !important;
+            border-left: 3px solid var(--danger-color) !important;
         }
-        
+
         .data-card {
             background: var(--bg-tertiary);
             border-left-color: var(--primary-color);
         }
-        
+
         .workflow-step {
             background: var(--bg-tertiary);
             border-color: var(--border-color);
         }
-        
+
         .workflow-step:hover {
             background: var(--bg-secondary);
         }
-        
+
         .result-item {
             background: var(--bg-secondary);
             border-left-color: var(--primary-color);
         }
-        
+
         .results-preview {
             background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
             border-color: var(--border-color);
         }
-        
+
         .cta-section {
             background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
             border-color: var(--border-color);
         }
-        
+
         /* Improve text contrast in dark mode */
         .hero-description,
         .hero-tagline {
             opacity: 0.95;
         }
-        
+
         .feature-description,
         .workflow-step-description,
         .result-description {
             color: var(--text-secondary);
         }
-        
+
         /* Dark mode table improvements */
         .stDataFrame {
             background-color: var(--bg-secondary);
         }
-        
+
         /* Dark mode button improvements */
         button, .stButton > button {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         button:hover, .stButton > button:hover {
             background-color: var(--primary-dark);
         }
     }
-    
+
     /* Landing Page Styles */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
@@ -313,7 +317,7 @@ def get_main_css():
         position: relative;
         overflow: hidden;
     }
-    
+
     .hero-section::before {
         content: '';
         position: absolute;
@@ -324,20 +328,20 @@ def get_main_css():
         background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
         pointer-events: none;
     }
-    
+
     @media (max-width: 768px) {
         .hero-section {
             padding: var(--spacing-xl) var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
         }
     }
-    
+
     @media (max-width: 480px) {
         .hero-section {
             padding: var(--spacing-lg) var(--spacing-md);
         }
     }
-    
+
     .hero-title {
         font-size: clamp(2rem, 5vw, 3.5rem);
         font-weight: 800;
@@ -346,7 +350,7 @@ def get_main_css():
         line-height: 1.1;
         letter-spacing: -0.025em;
     }
-    
+
     .hero-tagline {
         font-size: clamp(1rem, 3vw, 1.5rem);
         margin-bottom: var(--spacing-lg);
@@ -354,7 +358,7 @@ def get_main_css():
         font-weight: 400;
         line-height: 1.4;
     }
-    
+
     .hero-description {
         font-size: clamp(0.9rem, 2.5vw, 1.1rem);
         margin-bottom: 0;
@@ -365,35 +369,35 @@ def get_main_css():
         line-height: 1.6;
         text-align: center;
     }
-    
+
     .features-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: var(--spacing-md);
         margin: var(--spacing-lg) 0;
     }
-    
+
     @media (min-width: 576px) {
         .features-grid {
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: var(--spacing-lg);
         }
     }
-    
+
     @media (min-width: 992px) {
         .features-grid {
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             margin: var(--spacing-xl) 0;
         }
     }
-    
+
     .feature-card-link {
         text-decoration: none !important;
         color: inherit;
         display: block;
         cursor: pointer;
     }
-    
+
     .feature-card-link:hover,
     .feature-card-link:focus,
     .feature-card-link:active,
@@ -401,11 +405,11 @@ def get_main_css():
         text-decoration: none !important;
         color: inherit;
     }
-    
+
     .feature-card-link * {
         text-decoration: none !important;
     }
-    
+
     .feature-card {
         background: #FFFFFF;
         padding: var(--spacing-lg);
@@ -416,40 +420,40 @@ def get_main_css():
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         touch-action: manipulation;
     }
-    
+
     .feature-card-clickable {
         cursor: pointer;
         user-select: none;
         scroll-margin-top: 20px;
     }
-    
-    .feature-card-link:active .feature-card-clickable {
+
+    .feature-card-clickable:active {
         transform: translateY(0px) scale(0.98);
     }
-    
+
     @media (min-width: 768px) {
         .feature-card {
             padding: var(--spacing-xl);
         }
     }
-    
+
     @media (hover: hover) {
         .feature-card:hover {
             transform: translateY(-4px);
             box-shadow: var(--shadow-xl);
         }
-        
+
         .feature-card-clickable:hover {
             border-top-color: var(--primary-dark);
         }
     }
-    
+
     @media (max-width: 768px) {
         .feature-card:hover {
             transform: translateY(-2px);
         }
     }
-    
+
     .feature-cta {
         margin-top: var(--spacing-md);
         color: var(--primary-color);
@@ -458,12 +462,12 @@ def get_main_css():
         opacity: 0.9;
         transition: all 0.2s ease;
     }
-    
+
     .feature-card-clickable:hover .feature-cta {
         opacity: 1;
         transform: translateX(4px);
     }
-    
+
     .feature-icon,
     .feature-icon-professional {
         font-size: clamp(2.5rem, 5vw, 3.5rem);
@@ -481,12 +485,12 @@ def get_main_css():
         color: white;
         font-size: 1.5rem;
     }
-    
+
     .feature-card:hover .feature-icon,
     .feature-card:hover .feature-icon-professional {
         transform: scale(1.1);
     }
-    
+
     /* Professional icon styles for features */
     .rank-icon {
         background: linear-gradient(135deg, #22C55E, #16A34A);
@@ -494,35 +498,35 @@ def get_main_css():
     .rank-icon::before {
         content: "R";
     }
-    
+
     .momentum-icon {
         background: linear-gradient(135deg, #3B82F6, #1D4ED8);
     }
     .momentum-icon::before {
         content: "M";
     }
-    
+
     .priority-icon {
         background: linear-gradient(135deg, #EF4444, #DC2626);
     }
     .priority-icon::before {
         content: "P";
     }
-    
+
     .feature-title {
         font-size: clamp(1.1rem, 3vw, 1.4rem);
         font-weight: 700;
-        color: var(--text-primary);
+        color: #1E293B;
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
-    
+
     .feature-description {
-        color: var(--text-secondary);
+        color: #1E293B;
         font-size: clamp(0.9rem, 2.5vw, 1rem);
         line-height: 1.6;
     }
-    
+
     .cta-section {
         background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
         padding: var(--spacing-xl);
@@ -533,7 +537,7 @@ def get_main_css():
         position: relative;
         overflow: hidden;
     }
-    
+
     .cta-section::before {
         content: '';
         position: absolute;
@@ -543,13 +547,13 @@ def get_main_css():
         height: 3px;
         background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
     }
-    
+
     @media (max-width: 768px) {
         .cta-section {
             padding: var(--spacing-lg);
         }
     }
-    
+
     .cta-title {
         font-size: clamp(1.3rem, 3vw, 1.8rem);
         font-weight: 700;
@@ -557,8 +561,8 @@ def get_main_css():
         margin-bottom: var(--spacing-md);
         line-height: 1.3;
     }
-    
-    
+
+
     /* How It Works Section */
     .workflow-container {
         background: var(--bg-primary);
@@ -568,27 +572,27 @@ def get_main_css():
         box-shadow: var(--shadow-lg);
         border: 1px solid var(--border-color);
     }
-    
+
     @media (max-width: 768px) {
         .workflow-container {
             padding: var(--spacing-lg);
             margin: var(--spacing-lg) 0;
         }
     }
-    
+
     .workflow-steps {
         display: grid;
         grid-template-columns: 1fr;
         gap: var(--spacing-lg);
         margin: var(--spacing-lg) 0;
     }
-    
+
     @media (min-width: 576px) {
         .workflow-steps {
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         }
     }
-    
+
     @media (min-width: 992px) {
         .workflow-steps {
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -596,7 +600,7 @@ def get_main_css():
             margin: var(--spacing-xl) 0;
         }
     }
-    
+
     .workflow-step {
         text-align: center;
         padding: var(--spacing-lg);
@@ -606,13 +610,13 @@ def get_main_css():
         position: relative;
         transition: all 0.3s ease;
     }
-    
+
     .workflow-step:hover {
         background: var(--bg-primary);
         box-shadow: var(--shadow-md);
         transform: translateY(-2px);
     }
-    
+
     .workflow-step::before {
         content: attr(data-step);
         position: absolute;
@@ -632,12 +636,12 @@ def get_main_css():
         box-shadow: var(--shadow-md);
         transition: all 0.3s ease;
     }
-    
+
     .workflow-step:hover::before {
         transform: translateX(-50%) scale(1.1);
         box-shadow: var(--shadow-lg);
     }
-    
+
     .workflow-step-icon,
     .workflow-step-icon-professional {
         font-size: clamp(2rem, 4vw, 2.5rem);
@@ -655,12 +659,12 @@ def get_main_css():
         color: white;
         font-size: 1.2rem;
     }
-    
+
     .workflow-step:hover .workflow-step-icon,
     .workflow-step:hover .workflow-step-icon-professional {
         transform: scale(1.1);
     }
-    
+
     /* Professional workflow step icons */
     .building-icon {
         background: linear-gradient(135deg, #64748B, #475569);
@@ -668,21 +672,21 @@ def get_main_css():
     .building-icon::before {
         content: "1";
     }
-    
+
     .analytics-icon {
         background: linear-gradient(135deg, #F59E0B, #D97706);
     }
     .analytics-icon::before {
         content: "2";
     }
-    
+
     .dashboard-icon {
         background: linear-gradient(135deg, #8B5CF6, #7C3AED);
     }
     .dashboard-icon::before {
         content: "3";
     }
-    
+
     .workflow-step-title {
         font-size: clamp(1rem, 2.5vw, 1.2rem);
         font-weight: 700;
@@ -690,13 +694,13 @@ def get_main_css():
         margin-bottom: var(--spacing-xs);
         line-height: 1.3;
     }
-    
+
     .workflow-step-description {
         color: var(--text-secondary);
         font-size: clamp(0.85rem, 2vw, 0.95rem);
         line-height: 1.6;
     }
-    
+
     .results-preview {
         background: linear-gradient(135deg, var(--bg-secondary) 0%, #EEF2FF 100%);
         border: 2px solid var(--border-color);
@@ -706,7 +710,7 @@ def get_main_css():
         position: relative;
         overflow: hidden;
     }
-    
+
     .results-preview::before {
         content: '';
         position: absolute;
@@ -716,27 +720,27 @@ def get_main_css():
         height: 2px;
         background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--primary-color));
     }
-    
+
     .results-grid {
         display: grid;
         grid-template-columns: 1fr;
         gap: var(--spacing-sm);
         margin-top: var(--spacing-md);
     }
-    
+
     @media (min-width: 480px) {
         .results-grid {
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: var(--spacing-md);
         }
     }
-    
+
     @media (min-width: 768px) {
         .results-grid {
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         }
     }
-    
+
     .result-item {
         background: var(--bg-primary);
         padding: var(--spacing-md);
@@ -746,12 +750,12 @@ def get_main_css():
         transition: all 0.2s ease;
         box-shadow: var(--shadow-sm);
     }
-    
+
     .result-item:hover {
         transform: translateY(-1px);
         box-shadow: var(--shadow-md);
     }
-    
+
     .result-icon,
     .result-icon-professional {
         font-size: clamp(1.25rem, 3vw, 1.5rem);
@@ -767,7 +771,7 @@ def get_main_css():
         color: white;
         font-size: 0.8rem;
     }
-    
+
     /* Professional result icons */
     .rank-result {
         background: linear-gradient(135deg, #22C55E, #16A34A);
@@ -775,137 +779,143 @@ def get_main_css():
     .rank-result::before {
         content: "R";
     }
-    
+
     .momentum-result {
         background: linear-gradient(135deg, #3B82F6, #1D4ED8);
     }
     .momentum-result::before {
         content: "↗";
     }
-    
+
     .priority-result {
         background: linear-gradient(135deg, #EF4444, #DC2626);
     }
     .priority-result::before {
         content: "!";
     }
-    
+
     .result-label {
         font-size: clamp(0.8rem, 2vw, 0.9rem);
         font-weight: 600;
         color: var(--text-primary);
         margin-bottom: calc(var(--spacing-xs) / 2);
     }
-    
+
     .result-description {
         font-size: clamp(0.7rem, 1.8vw, 0.8rem);
         color: var(--text-secondary);
     }
-    
-    /* Enhanced existing styles */
+
+    /* Enhanced data section grid */
+    .data-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    @media (min-width: 576px) {
+        .data-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-xl);
+        }
+    }
+
+    /* Enhanced existing styles - Clean White Theme */
     .metric-card {
-        background: var(--bg-primary);
+        background: #FFFFFF;
         padding: var(--spacing-md);
         border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
-        border-left: 4px solid var(--primary-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E5E7EB;
         margin-bottom: var(--spacing-md);
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
         touch-action: manipulation;
     }
-    
+
     @media (min-width: 576px) {
         .metric-card {
             padding: var(--spacing-lg);
-            border-left: 6px solid var(--primary-color);
         }
     }
-    
+
     @media (min-width: 768px) {
         .metric-card {
             padding: var(--spacing-xl);
         }
     }
-    
-    .metric-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(180deg, transparent, var(--primary-color), transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
+
     .metric-card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-xl);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border-color: #D1D5DB;
     }
-    
-    .metric-card:hover::before {
-        opacity: 1;
+
+    /* Clean white theme for quartile cards - remove colored backgrounds */
+    .quartile-top,
+    .quartile-high,
+    .quartile-mid,
+    .quartile-low {
+        background: #FFFFFF !important;
     }
-    
-    
+
+
     .metric-value {
         font-size: clamp(2.5rem, 6vw, 3.5rem);
         font-weight: 800;
         margin: 0;
-        color: var(--text-primary);
+        color: #4B5563;
         line-height: 1;
         letter-spacing: -0.02em;
     }
-    
+
     .metric-label {
         font-size: clamp(1rem, 2.5vw, 1.2rem);
-        color: var(--text-secondary);
+        color: #4B5563;
         margin: 0;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
-    
-    .quartile-top {
-        border-left-color: var(--secondary-color) !important;
-        background: linear-gradient(135deg, #F0FDF4, #ECFDF5);
+
+    .quartile-top,
+    .quartile-high,
+    .quartile-mid,
+    .quartile-low {
+        background: #FFFFFF !important;
+        border-left: 3px solid var(--secondary-color) !important;
     }
-    
+
     .quartile-high {
         border-left-color: #84CC16 !important;
-        background: linear-gradient(135deg, #F7FEE7, #ECFDF5);
     }
-    
+
     .quartile-mid {
         border-left-color: var(--warning-color) !important;
-        background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
     }
-    
+
     .quartile-low {
         border-left-color: var(--danger-color) !important;
-        background: linear-gradient(135deg, #FEF2F2, #FEE2E2);
     }
-    
+
     .momentum-up {
         color: #22C55E;
     }
-    
+
     .momentum-down {
         color: #EF4444;
     }
-    
+
     .momentum-stable {
         color: #64748B;
     }
-    
+
     .priority-high {
-        background: #FEF2F2;
-        border-left-color: #EF4444 !important;
+        background: #FFFFFF;
+        border-left: 3px solid #EF4444 !important;
     }
-    
+
     .main-title {
         color: #1E293B;
         font-size: clamp(1.75rem, 4vw, 2.5rem);
@@ -913,82 +923,118 @@ def get_main_css():
         margin-bottom: 0.5rem;
         line-height: 1.2;
     }
-    
+
     .subtitle {
         color: #64748B;
         font-size: clamp(1rem, 2.5vw, 1.2rem);
         margin-bottom: var(--spacing-xl);
         line-height: 1.4;
     }
-    
+
     /* Responsive table improvements */
     .stDataFrame {
         overflow-x: auto;
         margin: var(--spacing-md) 0;
+        box-shadow: none !important;
+        border: 1px solid #E5E7EB;
     }
-    
+
+    .stDataFrame > div {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
     .stDataFrame table {
         min-width: 100%;
         font-size: clamp(0.8rem, 2vw, 0.9rem);
+        box-shadow: none !important;
+        border: none !important;
     }
-    
+
+    /* Remove any shadows from Streamlit's default dataframe styling */
+    [data-testid="stDataFrame"] {
+        box-shadow: none !important;
+        border: 1px solid #E5E7EB !important;
+    }
+
+    [data-testid="stDataFrame"] > div {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    [data-testid="stDataFrame"] > div > div {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Target the dataframe wrapper specifically */
+    div[data-testid="stDataFrame"] div[data-testid="stDataFrameResizable"] {
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+    /* Remove shadows from all nested dataframe elements */
+    .stDataFrame * {
+        box-shadow: none !important;
+    }
+
     @media (max-width: 768px) {
         .stDataFrame {
             border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-sm);
+            box-shadow: none;
         }
-        
+
         .stDataFrame table {
             font-size: 0.75rem;
         }
-        
+
         .stDataFrame th,
         .stDataFrame td {
             padding: var(--spacing-xs) var(--spacing-sm) !important;
             white-space: nowrap;
         }
     }
-    
+
     /* Mobile-optimized expander */
     .streamlit-expanderHeader {
         padding: var(--spacing-md) !important;
         font-size: clamp(0.9rem, 2.5vw, 1rem) !important;
         min-height: var(--touch-target-min) !important;
     }
-    
+
     /* Mobile charts and plots */
     .js-plotly-plot {
         width: 100% !important;
         height: auto !important;
     }
-    
+
     @media (max-width: 768px) {
         .js-plotly-plot {
             margin: var(--spacing-sm) 0 !important;
         }
-        
+
         .js-plotly-plot .plotly {
             height: 300px !important;
         }
     }
-    
+
     /* Responsive utility classes */
     .mobile-center {
         text-align: center;
     }
-    
+
     @media (min-width: 768px) {
         .mobile-center {
             text-align: left;
         }
     }
-    
+
     .mobile-stack {
         display: flex;
         flex-direction: column;
         gap: var(--spacing-sm);
     }
-    
+
     @media (min-width: 768px) {
         .mobile-stack {
             flex-direction: row;
@@ -996,7 +1042,7 @@ def get_main_css():
             gap: var(--spacing-lg);
         }
     }
-    
+
     /* Enhanced mobile scrolling */
     .horizontal-scroll {
         overflow-x: auto;
@@ -1005,20 +1051,20 @@ def get_main_css():
         scrollbar-width: thin;
         scrollbar-color: var(--border-color) transparent;
     }
-    
+
     .horizontal-scroll::-webkit-scrollbar {
         height: 4px;
     }
-    
+
     .horizontal-scroll::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     .horizontal-scroll::-webkit-scrollbar-thumb {
         background: var(--border-color);
         border-radius: 2px;
     }
-    
+
     /* Data card styling for the About section */
     .data-card {
         background: var(--bg-secondary);
@@ -1028,26 +1074,26 @@ def get_main_css():
         transition: all 0.3s ease;
         touch-action: manipulation;
     }
-    
+
     @media (min-width: 768px) {
         .data-card {
             padding: var(--spacing-xl);
         }
     }
-    
+
     .data-card:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-md);
     }
-    
+
     .data-card.secure {
         border-left-color: var(--secondary-color);
     }
-    
+
     .data-card.realtime {
         border-left-color: var(--warning-color);
     }
-    
+
     .data-card-title {
         color: var(--text-primary);
         font-size: clamp(1rem, 2.5vw, 1.2rem);
@@ -1055,26 +1101,12 @@ def get_main_css():
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
-    
+
     .data-card-text {
         color: var(--text-secondary);
         font-size: clamp(0.9rem, 2vw, 0.95rem);
         margin: 0;
         line-height: 1.6;
-    }
-    
-    /* Enhanced data section grid */
-    .data-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    @media (min-width: 576px) {
-        .data-grid {
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: var(--spacing-xl);
-        }
     }
 </style>
 """
@@ -1082,7 +1114,7 @@ def get_main_css():
 def apply_css(st):
     """
     Apply the main CSS styles to a Streamlit app
-    
+
     Args:
         st: Streamlit module
     """
