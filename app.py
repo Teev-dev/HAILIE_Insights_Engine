@@ -311,15 +311,11 @@ def main():
         dashboard.render_executive_summary(provider_code, rankings, momentum,
                                           priority)
 
-        # Detailed Analysis Tabs
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "📊 Performance Analysis",
-            "📈 Measure Correlations",
-            "🎯 Priority Matrix",
-            "📋 Raw Data"
-        ])
-
-        with tab1:
+        # Detailed Analysis Sections
+        st.markdown("---")
+        st.markdown("## Detailed Analysis")
+        
+        with st.expander("📊 Performance Analysis", expanded=True):
             st.markdown(f"### Performance Analysis - {dataset_type} Peer Group")
 
             # Show note for LCHO providers about missing metrics
@@ -359,7 +355,7 @@ def main():
             else:
                 dashboard.render_performance_analysis(detailed_analysis)
 
-        with tab2:
+        with st.expander("📈 Measure Correlations", expanded=False):
             st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
 
             # Get dataset-specific correlations
@@ -372,7 +368,7 @@ def main():
 
             dashboard.render_correlation_analysis(correlations, priority)
 
-        with tab3:
+        with st.expander("🎯 Priority Matrix", expanded=False):
             st.markdown(f"### Priority Matrix - {dataset_type} Context")
 
             # Filter priority matrix for LCHO if needed
@@ -383,7 +379,7 @@ def main():
 
             dashboard.render_priority_matrix(priority, detailed_analysis)
 
-        with tab4:
+        with st.expander("📋 Raw Data", expanded=False):
             st.markdown(f"### Raw Data - {dataset_type} Provider")
 
             # Show provider's raw scores
