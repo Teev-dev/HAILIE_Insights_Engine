@@ -102,8 +102,8 @@ def get_main_css():
     /* Streamlit container improvements */
     .main .block-container {
         padding-top: 0 !important;
-        padding-left: var(--spacing-sm) !important;
-        padding-right: var(--spacing-sm) !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         max-width: none !important;
         overflow: visible !important;
         position: relative !important;
@@ -112,8 +112,8 @@ def get_main_css():
     @media (min-width: 769px) {
         .main .block-container {
             padding-top: 0 !important;
-            padding-left: var(--spacing-lg) !important;
-            padding-right: var(--spacing-lg) !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
     }
 
@@ -252,26 +252,48 @@ def get_main_css():
 
     /* Dark mode removed - using consistent light theme only */
 
+    /* Content wrapper for sections after hero */
+    .content-section {
+        padding-left: var(--spacing-sm);
+        padding-right: var(--spacing-sm);
+    }
+
+    @media (min-width: 769px) {
+        .content-section {
+            padding-left: var(--spacing-lg);
+            padding-right: var(--spacing-lg);
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .content-section {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    }
+
     /* Landing Page Styles */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: white;
         padding: 4rem var(--spacing-xl) 4rem var(--spacing-xl);
         border-radius: 0;
-        margin: calc(-1 * var(--spacing-sm)) calc(-1 * var(--spacing-sm)) var(--spacing-xl) calc(-1 * var(--spacing-sm));
+        margin: 0;
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
         overflow: visible !important;
         min-height: auto !important;
-        width: calc(100% + 2 * var(--spacing-sm));
+        width: 100vw;
+        margin-left: 0;
+        margin-right: 0;
     }
     
     @media (min-width: 769px) {
         .hero-section {
             padding: 5rem var(--spacing-2xl) 5rem var(--spacing-2xl);
-            margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-xl) calc(-1 * var(--spacing-lg));
-            width: calc(100% + 2 * var(--spacing-lg));
+            margin: 0;
+            width: 100vw;
         }
     }
     
