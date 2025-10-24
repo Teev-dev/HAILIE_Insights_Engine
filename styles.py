@@ -939,9 +939,23 @@ def get_main_css():
         border: 1px solid #E5E7EB;
     }
 
+    .stDataFrame > div {
+        box-shadow: none !important;
+    }
+
     .stDataFrame table {
         min-width: 100%;
         font-size: clamp(0.8rem, 2vw, 0.9rem);
+        box-shadow: none !important;
+    }
+
+    /* Remove any shadows from Streamlit's default dataframe styling */
+    [data-testid="stDataFrame"] {
+        box-shadow: none !important;
+    }
+
+    [data-testid="stDataFrame"] > div {
+        box-shadow: none !important;
     }
 
     @media (max-width: 768px) {
