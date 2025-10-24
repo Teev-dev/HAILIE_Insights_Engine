@@ -390,25 +390,29 @@ def main():
                 scores_df = scores_df[scores_df['dataset_type'] == dataset_type]
             
             if not scores_df.empty:
-                # Add descriptions
-                scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
+                # Ensure scores_df is a DataFrame, not an array
+                if isinstance(scores_df, pd.DataFrame):
+                    # Add descriptions
+                    scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
 
-                # Filter out non-applicable measures based on dataset type
-                if dataset_type == 'LCHO':
-                    # Remove repairs metrics (TP02-TP04) for LCHO providers
-                    na_metrics = ['TP02', 'TP03', 'TP04']
-                    scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+                    # Filter out non-applicable measures based on dataset type
+                    if dataset_type == 'LCHO':
+                        # Remove repairs metrics (TP02-TP04) for LCHO providers
+                        na_metrics = ['TP02', 'TP03', 'TP04']
+                        scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
 
-                    st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
+                        st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
 
-                # Format for display
-                display_df = scores_df[['tp_measure', 'description', 'score']].copy()
-                display_df.columns = ['Measure', 'Description', 'Score (%)']
+                    # Format for display
+                    display_df = scores_df[['tp_measure', 'description', 'score']].copy()
+                    display_df.columns = ['Measure', 'Description', 'Score (%)']
 
-                # Format scores with 1 decimal place
-                display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
-
-                st.table(display_df)
+                    # Format scores with 1 decimal place
+                    display_df['Score (%)'] = display_df['Score (%)'].apply(lambda x: f"{x:.1f}" if pd.notna(x) else "N/A")
+                    st.table(display_df)
+                else:
+                    st.warning("Data format issue - unable to display scores")
+                    display_df = pd.DataFrame()  # Empty dataframe for the peer comparison info
 
                 # Show peer comparison info
                 st.markdown(f"""
