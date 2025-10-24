@@ -512,7 +512,7 @@ def get_main_css():
     .feature-title {
         font-size: clamp(1.1rem, 3vw, 1.4rem);
         font-weight: 700;
-        color: var(--text-primary);
+        color: var(--primary-color);
         margin-bottom: var(--spacing-sm);
         line-height: 1.3;
     }
