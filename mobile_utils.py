@@ -24,9 +24,8 @@ def detect_mobile():
     
     # Try to get user agent from headers (most reliable method)
     try:
-        # Access the user agent from the request context
-        from streamlit.web.server.websocket_headers import _get_websocket_headers
-        headers = _get_websocket_headers()
+        # Access the user agent from the request context using new API
+        headers = st.context.headers
         if headers:
             user_agent = headers.get('User-Agent', '').lower()
             
@@ -50,8 +49,11 @@ def detect_mobile():
                 return False
                 
             return is_mobile
-    except:
+    except Exception as e:
         # Fallback: assume desktop if we can't detect
+        # Store error for debugging if debug mode enabled
+        if hasattr(st.session_state, 'show_mobile_debug'):
+            st.session_state.mobile_detection_error = str(e)
         pass
     
     # Default to desktop view if detection fails

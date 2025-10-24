@@ -30,6 +30,14 @@ def render_landing_hero():
     # Debug: Show detection result (remove this after testing)
     if st.sidebar.checkbox("Show mobile detection debug", value=False):
         st.sidebar.info(f"Mobile detected: {is_mobile}")
+        
+        # Show user agent for debugging
+        try:
+            headers = st.context.headers
+            user_agent = headers.get('User-Agent', 'Not available')
+            st.sidebar.text_area("User Agent String:", user_agent, height=100)
+        except Exception as e:
+            st.sidebar.error(f"Could not retrieve headers: {str(e)}")
     
     if is_mobile:
         # Mobile version - styled gradient header
