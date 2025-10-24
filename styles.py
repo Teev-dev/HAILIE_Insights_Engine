@@ -825,7 +825,7 @@ def get_main_css():
         background: #FFFFFF;
         padding: var(--spacing-md);
         border-radius: var(--border-radius-lg);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         border: 1px solid #E5E7EB;
         margin-bottom: var(--spacing-md);
         transition: all 0.3s ease;
@@ -848,7 +848,7 @@ def get_main_css():
 
     .metric-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         border-color: #D1D5DB;
     }
 
@@ -945,7 +945,7 @@ def get_main_css():
     @media (max-width: 768px) {
         .stDataFrame {
             border-radius: var(--border-radius-md);
-            box-shadow: var(--shadow-sm);
+            box-shadow: none;
         }
 
         .stDataFrame table {
