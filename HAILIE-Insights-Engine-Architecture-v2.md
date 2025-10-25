@@ -70,6 +70,7 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 - `dashboard.py` - Executive dashboard rendering
 - `styles.py` - Custom CSS styling and themes
 - `tooltip_definitions.py` - Help text and user guidance
+- `mobile_utils.py` - Mobile responsiveness detection and adaptive layouts
 
 ### 2. Analytics Engine
 
@@ -123,7 +124,23 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 - `build_analytics_db_v2.py` - Enhanced ETL pipeline with LCRA/LCHO support
 - Processes 355 LCRA providers + 56 LCHO providers with full dataset isolation
 
-### 5. Data Storage - DuckDB Analytics Database
+### 5. Diagnostic and Maintenance Tools
+
+**Purpose:** Data quality monitoring, integrity checking, and database inspection
+
+**Technology:** Python with Pandas, DuckDB
+
+**Utilities:**
+- **Database Viewer:** Inspect database contents and schema
+- **Duplicate Diagnosis:** Identify and resolve data duplication issues
+- **Statistical Review:** Analyze p-values and correlation significance
+
+**Implementation Files:**
+- `db_view_script.py` - Interactive database content viewer
+- `diagnose_duplicates.py` - Data integrity and duplication checker
+- `review_pvalues.py` - Statistical significance analysis for correlations
+
+### 6. Data Storage - DuckDB Analytics Database
 
 **Purpose:** High-performance analytics database with pre-calculated metrics
 
