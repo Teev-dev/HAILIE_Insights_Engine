@@ -358,13 +358,23 @@ project/
 ├── app.py                      # Main Streamlit application
 ├── dashboard.py                # Dashboard rendering components
 ├── analytics_refactored.py     # Analytics calculations
-├── data_processor_enhanced.py  # Database access layer
-├── build_analytics_db.py       # ETL pipeline
+├── data_processor_enhanced.py  # Enhanced database access layer
+├── build_analytics_db.py       # ETL pipeline for LCRA dataset
+├── build_analytics_db_v2.py    # Enhanced ETL pipeline with LCRA/LCHO support
 ├── styles.py                   # CSS styling
 ├── tooltip_definitions.py      # User help text
+├── mobile_utils.py            # Mobile responsiveness utilities
+├── db_view_script.py          # Database inspection tool
+├── diagnose_duplicates.py     # Data integrity checker
+├── review_pvalues.py          # Statistical significance analyzer
 ├── attached_assets/
 │   ├── hailie_analytics_v2.duckdb # Analytics database
 │   └── *.xlsx                  # Source TSM data
+├── ADRs/
+│   └── ADR-001-pivot-to-streamlit-duckdb.md # Architecture decision
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
+├── README.md                  # Project documentation
+├── HAILIE-Insights-Engine-Architecture-v2.md # Architecture document
+├── replit.md                  # Replit-specific documentation
 └── pyproject.toml             # Python dependencies
