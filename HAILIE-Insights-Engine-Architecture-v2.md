@@ -163,7 +163,7 @@ CREATE TABLE calculated_correlations (
 - Columnar storage format optimized for analytics
 - File size: ~2MB for complete dataset
 - Query performance: <100ms for complex aggregations
-- Location: `attached_assets/hailie_analytics.duckdb`
+- Location: `attached_assets/hailie_analytics_v2.duckdb`
 
 ## Data Flow Architecture
 
@@ -341,12 +341,12 @@ project/
 ├── app.py                      # Main Streamlit application
 ├── dashboard.py                # Dashboard rendering components
 ├── analytics_refactored.py     # Analytics calculations
-├── data_processor_refactored.py # Database access layer
+├── data_processor_enhanced.py  # Database access layer
 ├── build_analytics_db.py       # ETL pipeline
 ├── styles.py                   # CSS styling
 ├── tooltip_definitions.py      # User help text
 ├── attached_assets/
-│   ├── hailie_analytics.duckdb # Analytics database
+│   ├── hailie_analytics_v2.duckdb # Analytics database
 │   └── *.xlsx                  # Source TSM data
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
