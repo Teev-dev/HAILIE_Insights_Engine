@@ -86,44 +86,11 @@ def get_main_css():
 
     /* Enhanced body and container styles */
     body {
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow-x: hidden !important;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
         overflow-y: auto !important;
         min-height: 100vh !important;
-        max-width: 100vw !important;
-    }
-    
-    /* Remove all default Streamlit padding and margins */
-    .main {
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow-x: hidden !important;
-        max-width: 100vw !important;
-    }
-    
-    section.main > div {
-        padding-top: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        overflow-x: hidden !important;
-        max-width: 100vw !important;
-    }
-    
-    [data-testid="stAppViewContainer"] {
-        padding: 0 !important;
-        overflow-x: hidden !important;
-        max-width: 100vw !important;
-    }
-    
-    [data-testid="stHeader"] {
-        background-color: transparent;
-    }
-    
-    /* Prevent any element from causing horizontal scroll */
-    * {
-        max-width: 100%;
-        box-sizing: border-box;
     }
 
     /* Prevent any parent containers from hiding content */
@@ -134,9 +101,9 @@ def get_main_css():
 
     /* Streamlit container improvements */
     .main .block-container {
-        padding-top: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
+        padding-top: var(--spacing-md) !important;
+        padding-left: var(--spacing-sm) !important;
+        padding-right: var(--spacing-sm) !important;
         max-width: none !important;
         overflow: visible !important;
         position: relative !important;
@@ -144,9 +111,9 @@ def get_main_css():
 
     @media (min-width: 769px) {
         .main .block-container {
-            padding-top: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+            padding-top: var(--spacing-xl) !important;
+            padding-left: var(--spacing-lg) !important;
+            padding-right: var(--spacing-lg) !important;
         }
     }
 
@@ -285,53 +252,18 @@ def get_main_css():
 
     /* Dark mode removed - using consistent light theme only */
 
-    /* Content wrapper for sections after hero */
-    .content-section {
-        padding: var(--spacing-lg) var(--spacing-sm);
-        max-width: 100%;
-        box-sizing: border-box;
-    }
-
-    @media (min-width: 769px) {
-        .content-section {
-            padding: var(--spacing-xl) var(--spacing-lg);
-        }
-    }
-
-    @media (min-width: 1200px) {
-        .content-section {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: var(--spacing-xl) var(--spacing-2xl);
-        }
-    }
-
     /* Landing Page Styles */
     .hero-section {
         background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 4rem 1rem;
-        border-radius: 0;
-        margin: 0;
+        padding: var(--spacing-2xl) var(--spacing-xl);
+        border-radius: var(--border-radius-xl);
+        margin-bottom: var(--spacing-xl);
         text-align: center;
         box-shadow: var(--shadow-xl);
         position: relative;
-        overflow: hidden;
-        min-height: auto;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    
-    @media (min-width: 769px) {
-        .hero-section {
-            padding: 5rem 2rem;
-        }
-    }
-    
-    @media (min-width: 1200px) {
-        .hero-section {
-            padding: 6rem 3rem;
-        }
+        overflow: visible !important;
+        min-height: auto !important;
     }
 
     .hero-section::before {
@@ -353,15 +285,22 @@ def get_main_css():
 
     @media (max-width: 768px) {
         .hero-section {
-            padding: 3rem var(--spacing-lg);
+            padding: var(--spacing-xl) var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
             overflow: visible !important;
         }
     }
 
+    @media (max-width: 767px) {
+        .hero-section {
+            padding: var(--spacing-xl) var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+    }
+
     @media (max-width: 480px) {
         .hero-section {
-            padding: 2.5rem var(--spacing-md);
+            padding: var(--spacing-lg) var(--spacing-md);
         }
     }
 

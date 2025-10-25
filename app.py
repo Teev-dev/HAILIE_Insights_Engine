@@ -27,6 +27,35 @@ def render_landing_hero():
     """Render the professional hero section"""
     is_mobile = detect_mobile()
     
+    # Debug: Show detection result
+    if st.sidebar.checkbox("Show mobile detection debug", value=False):
+        st.sidebar.markdown("### 🔍 Mobile Detection Debug")
+        st.sidebar.info(f"**Mobile detected:** {is_mobile}")
+        
+        # Show detection method
+        if hasattr(st.session_state, 'force_mobile_view'):
+            st.sidebar.success("✓ Using manual toggle")
+        elif 'mobile' in st.query_params:
+            st.sidebar.success("✓ Using URL parameter")
+        elif 'is_mobile_device' in st.session_state:
+            st.sidebar.success("✓ Using JavaScript detection")
+        else:
+            st.sidebar.warning("⚠ Using fallback detection")
+        
+        # Show user agent for debugging
+        try:
+            headers = st.context.headers
+            user_agent = headers.get('User-Agent', 'Not available')
+            st.sidebar.text_area("User Agent:", user_agent, height=100)
+        except Exception as e:
+            st.sidebar.error(f"Headers not available: {str(e)}")
+        
+        # Show screen info from JavaScript
+        st.sidebar.markdown("**Detection sources:**")
+        st.sidebar.caption("• User Agent check")
+        st.sidebar.caption("• Touch capability check")
+        st.sidebar.caption("• Screen width check")
+    
     if is_mobile:
         # Mobile version - styled gradient header
         st.markdown("""
@@ -170,9 +199,6 @@ def main():
     # Landing page hero section
     render_landing_hero()
 
-    # Wrap remaining content in content-section for proper padding
-    st.markdown('<div class="content-section">', unsafe_allow_html=True)
-    
     # Key features overview
     render_features_overview()
 
@@ -223,6 +249,22 @@ def main():
 
     # Sidebar for analysis options
     with st.sidebar:
+        # Device view toggle
+        st.header("View Settings")
+        force_mobile = st.checkbox(
+            "📱 Use Mobile View",
+            value=detect_mobile(),
+            help="Toggle mobile-optimized layout"
+        )
+        
+        # Override detection if manually toggled
+        if force_mobile:
+            st.session_state.force_mobile_view = True
+        else:
+            st.session_state.force_mobile_view = False
+        
+        st.markdown("---")
+        
         # Analysis options
         st.header("Analysis Options")
         include_confidence = st.checkbox("Include confidence intervals",
@@ -510,9 +552,6 @@ def main():
 
         The system will instantly retrieve your pre-calculated analytics.
         """)
-    
-    # Close content-section div (moved outside if/else block)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
