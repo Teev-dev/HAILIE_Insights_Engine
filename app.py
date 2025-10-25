@@ -170,6 +170,9 @@ def main():
     # Landing page hero section
     render_landing_hero()
 
+    # Wrap remaining content in content-section for proper padding
+    st.markdown('<div class="content-section">', unsafe_allow_html=True)
+    
     # Key features overview
     render_features_overview()
 
@@ -507,6 +510,9 @@ def main():
 
         The system will instantly retrieve your pre-calculated analytics.
         """)
+    
+    # Close content-section div (moved outside if/else block)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
