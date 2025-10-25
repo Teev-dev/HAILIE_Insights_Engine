@@ -5,7 +5,7 @@
 
 ## Executive Summary
 
-The HAILIE Insights Engine is a specialized analytics platform that transforms UK Government TSM (Tenant Satisfaction Measures) data into actionable executive insights for social housing providers. Built on Streamlit and DuckDB, it delivers three core insights: provider rankings, performance momentum, and improvement priorities through an executive-friendly dashboard.
+The HAILIE Insights Engine is a specialized analytics platform that transforms UK Government TSM (Tenant Satisfaction Measures) data into actionable executive insights for social housing providers. Built on Streamlit and DuckDB, it delivers three core insights: provider rankings, performance momentum, and improvement priorities through an executive-friendly dashboard. The platform supports both LCRA (Low Cost Rental Accommodation) and LCHO (Low Cost Home Ownership) datasets with automatic detection and isolated peer comparisons, ensuring accurate benchmarking within appropriate provider groups.
 
 ## System Overview
 
@@ -249,6 +249,19 @@ User Selects Provider
 - **Chart Rendering:** <1 second for complex visualizations
 
 ## Data Model
+
+### Dataset Types
+The system supports two distinct provider types from the TSM 2024 government dataset:
+
+**LCRA (Low Cost Rental Accommodation)**
+- 355 providers with full TP01-TP12 satisfaction measures
+- Traditional social housing rental model
+- Complete repairs satisfaction metrics (TP02-TP04)
+
+**LCHO (Low Cost Home Ownership)**
+- 56 providers with TP01, TP05-TP12 measures
+- Shared ownership and affordable home ownership model
+- Repairs metrics (TP02-TP04) not applicable
 
 ### TSM Measures
 The system processes 12 government-defined satisfaction measures:
