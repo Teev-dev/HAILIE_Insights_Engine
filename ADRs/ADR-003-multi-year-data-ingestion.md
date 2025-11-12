@@ -10,7 +10,14 @@ Append-Based Multi-Year Data Ingestion for Longitudinal TSM Analytics
 
 ## Context
 
-The HAILIE Insights Engine initially processed a single year of TSM (Tenant Satisfaction Measures) data (2024), using a "replace" strategy where the ETL pipeline would drop and recreate all database tables on each run. The database schema (`build_analytics_db.py`) used `CREATE OR REPLACE TABLE` statements.
+The HAILIE Insights Engine initially processed a single year of TSM (Tenant Satisfaction Measures) data (2024), using a "replace" strategy where the ETL pipeline would drop and recreate all database tables on each run. The database schema (`build_analytics_db.py`) used `CREATE OR REPLACE TABLE` statements. The UK Government releases TSM data annually, with each provider's satisfaction scores updated once per year. The HAILIE Insights Engine must ingest this annual data to support:
+
+Year-over-year momentum tracking (existing roadmap feature)
+Historical trend analysis and visualization
+Multi-year correlation analysis for stronger statistical power
+Regulatory audit trails and retrospective reporting
+
+The system must handle annual data updates while maintaining query performance and simplicity.
 
 With the release of 2025 TSM data, a critical decision was required:
 - **Option A:** Continue replacing data (overwrite 2024 with 2025)
@@ -30,9 +37,13 @@ The momentum feature—showing year-over-year performance changes—became a key
 - **2025 Data:** 412 providers (353 LCRA + 59 LCHO), 1,451 records
 - **Combined:** 6,239 total records across both years
 
-## Decision
+## Decision(s)
 
-We redesigned the ETL pipeline (`build_analytics_db_v2.py`) to use an **append-based ingestion strategy** with duplicate prevention:
+We redesigned the ETL pipeline (`build_analytics_db_v2.py`) to use an **append-based ingestion strategy** with duplicate prevention
+
+AND 
+
+We implement a temporal row append strategy where each provider's annual scores are stored as new rows with a year column:
 
 ### Core Changes
 
@@ -54,11 +65,20 @@ We redesigned the ETL pipeline (`build_analytics_db_v2.py`) to use an **append-b
    INSERT INTO raw_scores ...
    ```
 
-3. **Duplicate Prevention:** Delete existing data for a specific year before inserting new data, enabling safe re-runs
+-- Annual growth: ~4,932 new rows per year (411 providers × 12 measures)
+New data is appended via incremental ETL, not database rebuilds:
 
-4. **Dynamic Sheet Name Detection:** Support flexible Excel sheet naming (e.g., "2025 TSM", "TSM 2025", etc.)
+Historical data remains untouched
+Percentiles calculated per year
+Correlations recalculated across all years for statistical strength
 
-5. **Year-Filtered Queries:** Updated all data processor methods to default to `year = 2025`:
+
+
+4. **Duplicate Prevention:** Delete existing data for a specific year before inserting new data, enabling safe re-runs
+
+5. **Dynamic Sheet Name Detection:** Support flexible Excel sheet naming (e.g., "2025 TSM", "TSM 2025", etc.)
+
+6. **Year-Filtered Queries:** Updated all data processor methods to default to `year = 2025`:
    - `get_all_providers_with_scores(year=2025)`
    - `get_provider_percentiles(year=2025)`
    - `get_dataset_correlations(year=2025)`
@@ -92,7 +112,7 @@ def calculate_momentum(provider_code: str) -> Dict:
 - **Performance Trends:** Housing providers need to track improvement over time
 - **Accountability:** Year-over-year changes demonstrate impact of interventions
 
-### 2. Steve Jobs Philosophy
+### 2. Simplicity First Philosophy
 - **Simple UI:** Users see only current year (2025), maintaining elegance
 - **Hidden Complexity:** Multi-year storage happens behind the scenes
 - **Progressive Enhancement:** Foundation for future features without UI clutter
@@ -111,6 +131,27 @@ def calculate_momentum(provider_code: str) -> Dict:
 - **Minimal Code Changes:** Year parameter defaults throughout codebase
 - **DuckDB Native:** Leverages columnar storage efficiency for time-series data
 - **No Migration Needed:** Existing 2024 data remained intact
+
+### 6. Analytics-Native Design & Simplicity-First
+
+1. **Analytics-Native Design**
+   - DuckDB's columnar storage excels at handling temporal data patterns, making it ideal for our use case.
+   - Time-series queries, such as trends and momentum, become straightforward due to the efficient storage format.
+   - Pre-calculated percentiles have the ability to reference historical context, providing depth to our analytics.
+
+2. **Simplicity-First**
+   - By having a single source of truth with one table instead of year-fragmented tables, we adhere to a natural schema that resonates with how users think about annual reporting.
+   - Query logic is simplified with the use of simple `WHERE year = 2025` filters, streamlining the development and comprehension.
+
+3. **Scale Reality**
+   - With 10 years of data, we can anticipate around ~50,000 rows, which equates to approximately ~500KB when compressed.
+   - For 50 years of data, the expected size is about ~250,000 rows, or ~2.5MB compressed, indicating that storage is not a constraint.
+   - Despite increasing data volumes, query performance will continue to remain under 100ms, ensuring efficiency.
+
+4. **Feature Enablement**
+   - Momentum tracking necessitates year-over-year comparisons to provide meaningful insights.
+   - Trend visualizations are enabled by maintaining historical data points, allowing for richer analytics features.
+   - Regulatory compliance is bolstered by maintaining a complete audit trail, an essential component of effective governance.
 
 ## Alternatives Considered
 
