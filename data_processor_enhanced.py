@@ -267,9 +267,10 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching provider scores: {str(e)}")
             return pd.DataFrame()
 
-    def get_peer_comparison_data(self, provider_code: str, tp_measure: str) -> pd.DataFrame:
+    def get_peer_comparison_data(self, provider_code: str, tp_measure: str, year: int = 2025) -> pd.DataFrame:
         """
         Get comparison data for a specific measure within the same dataset
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -291,21 +292,24 @@ class EnhancedTSMDataProcessor:
         JOIN calculated_percentiles cp
             ON rs.provider_code = cp.provider_code 
             AND rs.tp_measure = cp.tp_measure
+            AND rs.year = cp.year
         WHERE rs.tp_measure = ?
             AND rs.dataset_type = ?
+            AND rs.year = ?
         ORDER BY rs.score DESC
         """
 
         try:
-            result = self._connection.execute(query, [tp_measure, dataset_type]).df()
+            result = self._connection.execute(query, [tp_measure, dataset_type, year]).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching peer comparison data: {str(e)}")
             return pd.DataFrame()
 
-    def get_dataset_summary_stats(self, dataset_type: str) -> Dict:
+    def get_dataset_summary_stats(self, dataset_type: str, year: int = 2025) -> Dict:
         """
         Get summary statistics for a specific dataset
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -317,11 +321,11 @@ class EnhancedTSMDataProcessor:
             COUNT(DISTINCT tp_measure) as measure_count,
             AVG(score) as avg_score
         FROM raw_scores
-        WHERE dataset_type = ?
+        WHERE dataset_type = ? AND year = ?
         """
 
         try:
-            result = self._connection.execute(query, [dataset_type]).fetchone()
+            result = self._connection.execute(query, [dataset_type, year]).fetchone()
             if result:
                 return {
                     'provider_count': result[0],
@@ -333,9 +337,10 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching summary stats: {str(e)}")
             return {}
 
-    def get_measure_distribution(self, tp_measure: str, dataset_type: str) -> pd.DataFrame:
+    def get_measure_distribution(self, tp_measure: str, dataset_type: str, year: int = 2025) -> pd.DataFrame:
         """
         Get the distribution of scores for a specific measure within a dataset
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -348,13 +353,14 @@ class EnhancedTSMDataProcessor:
         FROM raw_scores
         WHERE tp_measure = ?
             AND dataset_type = ?
+            AND year = ?
             AND score IS NOT NULL
         GROUP BY score
         ORDER BY score
         """
 
         try:
-            result = self._connection.execute(query, [tp_measure, dataset_type]).df()
+            result = self._connection.execute(query, [tp_measure, dataset_type, year]).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching measure distribution: {str(e)}")
@@ -447,11 +453,11 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Provider {provider_code} not found in database")
             return None
 
-        # Get provider summary data for the specific dataset
+        # Get provider summary data for the specific dataset (default to 2025)
         query = """
         SELECT *
         FROM provider_summary
-        WHERE provider_code = ? AND dataset_type = ?
+        WHERE provider_code = ? AND dataset_type = ? AND year = 2025
         """
 
         try:
@@ -485,10 +491,11 @@ class EnhancedTSMDataProcessor:
                 self._connection = None
 
 
-    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None) -> Optional[Dict]:
+    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None, year: int = 2025) -> Optional[Dict]:
         """
         Get statistical summary for a specific measure
         Optionally filtered by dataset type
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -504,9 +511,9 @@ class EnhancedTSMDataProcessor:
                 MAX(score) as max_score,
                 COUNT(*) as sample_size
             FROM raw_scores
-            WHERE tp_measure = ? AND dataset_type = ? AND score IS NOT NULL
+            WHERE tp_measure = ? AND dataset_type = ? AND year = ? AND score IS NOT NULL
             """
-            params = [tp_measure, dataset_type]
+            params = [tp_measure, dataset_type, year]
         else:
             query = """
             SELECT 
@@ -517,9 +524,9 @@ class EnhancedTSMDataProcessor:
                 MAX(score) as max_score,
                 COUNT(*) as sample_size
             FROM raw_scores
-            WHERE tp_measure = ? AND score IS NOT NULL
+            WHERE tp_measure = ? AND year = ? AND score IS NOT NULL
             """
-            params = [tp_measure]
+            params = [tp_measure, year]
 
         try:
             result = self._connection.execute(query, params).fetchone()
