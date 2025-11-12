@@ -118,21 +118,110 @@ class TSMAnalytics:
         except Exception as e:
             return {"error": f"Error calculating rankings: {str(e)}"}
     
-    def calculate_momentum(self, df: pd.DataFrame, provider_code: str) -> Dict:
+    def calculate_momentum(self, df: pd.DataFrame, provider_code: str, dataset_type: Optional[str] = None) -> Dict:
         """
-        Momentum feature disabled - requires multi-year data
+        Calculate year-over-year momentum: compare 2025 vs 2024 performance
+        Identifies which measures improved/declined and overall trajectory
         """
-        return {
-            'direction': "disabled",
-            'momentum_text': "Coming in 2026",
-            'momentum_icon': "⏳",
-            'momentum_color': "#64748B",
-            'relative_performance': 0,
-            'provider_avg': 0,
-            'peer_avg': 0,
-            'score_volatility': 0,
-            'disabled': True
-        }
+        try:
+            # Get provider data for both years
+            provider_2024 = self.data_processor.get_provider_scores(provider_code, year=2024)
+            provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025)
+            
+            # Check if we have data for both years
+            if provider_2024.empty or provider_2025.empty:
+                return {
+                    'direction': "insufficient_data",
+                    'momentum_text': "Insufficient multi-year data",
+                    'momentum_icon': "📊",
+                    'momentum_color': "#64748B",
+                    'year_over_year_change': 0,
+                    'improved_measures': [],
+                    'declined_measures': [],
+                    'disabled': True
+                }
+            
+            # Convert to dictionaries for easier comparison
+            scores_2024 = dict(zip(provider_2024['tp_measure'], provider_2024['score']))
+            scores_2025 = dict(zip(provider_2025['tp_measure'], provider_2025['score']))
+            
+            # Calculate changes for each measure
+            measure_changes = {}
+            for tp_measure in self.tp_codes:
+                if tp_measure in scores_2024 and tp_measure in scores_2025:
+                    change = scores_2025[tp_measure] - scores_2024[tp_measure]
+                    measure_changes[tp_measure] = {
+                        'change': change,
+                        'score_2024': scores_2024[tp_measure],
+                        'score_2025': scores_2025[tp_measure],
+                        'description': self.tp_descriptions.get(tp_measure, tp_measure)
+                    }
+            
+            if not measure_changes:
+                return {
+                    'direction': "no_comparison",
+                    'momentum_text': "No comparable measures",
+                    'momentum_icon': "📊",
+                    'momentum_color': "#64748B",
+                    'year_over_year_change': 0,
+                    'improved_measures': [],
+                    'declined_measures': [],
+                    'disabled': True
+                }
+            
+            # Calculate average change
+            avg_change = np.mean([m['change'] for m in measure_changes.values()])
+            
+            # Identify improved and declined measures (threshold: 1 point)
+            improved = [(tp, data) for tp, data in measure_changes.items() if data['change'] > 1.0]
+            declined = [(tp, data) for tp, data in measure_changes.items() if data['change'] < -1.0]
+            
+            # Sort by magnitude of change
+            improved.sort(key=lambda x: x[1]['change'], reverse=True)
+            declined.sort(key=lambda x: x[1]['change'])
+            
+            # Determine direction and messaging
+            if avg_change > 0.5:
+                direction = "up"
+                momentum_icon = "↗️"
+                momentum_color = "#22C55E"
+                momentum_text = f"Improving (+{avg_change:.1f} points avg)"
+            elif avg_change < -0.5:
+                direction = "down"
+                momentum_icon = "↘️"
+                momentum_color = "#EF4444"
+                momentum_text = f"Declining ({avg_change:.1f} points avg)"
+            else:
+                direction = "stable"
+                momentum_icon = "→"
+                momentum_color = "#F59E0B"
+                momentum_text = "Stable performance"
+            
+            return {
+                'direction': direction,
+                'momentum_text': momentum_text,
+                'momentum_icon': momentum_icon,
+                'momentum_color': momentum_color,
+                'year_over_year_change': avg_change,
+                'improved_measures': [{'code': tp, 'description': data['description'], 'change': data['change']} 
+                                     for tp, data in improved[:3]],
+                'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']} 
+                                     for tp, data in declined[:3]],
+                'total_measures_compared': len(measure_changes),
+                'disabled': False
+            }
+            
+        except Exception as e:
+            return {
+                'direction': "error",
+                'momentum_text': f"Error: {str(e)}",
+                'momentum_icon': "⚠️",
+                'momentum_color': "#64748B",
+                'year_over_year_change': 0,
+                'improved_measures': [],
+                'declined_measures': [],
+                'disabled': True
+            }
     
     def identify_priority(self, df: pd.DataFrame, provider_code: str) -> Dict:
         """
