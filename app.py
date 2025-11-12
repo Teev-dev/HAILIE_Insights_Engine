@@ -300,7 +300,7 @@ def main():
         • Peer group isolation
         • Automatic metric adaptation
 
-        Data source: 2024 TSM Dataset
+        Data source: 2025 TSM Dataset
         """)
 
     st.markdown('<div id="provider-search-section"></div>', unsafe_allow_html=True)
@@ -535,7 +535,7 @@ def main():
         # Footer
         st.markdown("---")
         st.caption(
-            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2024 TSM"
+            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
         )
 
         # Close database connection when done
