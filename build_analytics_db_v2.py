@@ -29,37 +29,74 @@ class EnhancedAnalyticsETL:
             self.excel_path = excel_path
             self.year = year if year is not None else 2024
         
-        # Define column mappings for each dataset type
-        self.lcra_column_mapping = {
-            0: 'provider_name',  # Landlord name
-            1: 'provider_code',  # Landlord code
-            22: 'TP01',  # Overall satisfaction
-            23: 'TP02',  # Satisfaction with repairs
-            24: 'TP03',  # Time taken to complete repair
-            25: 'TP04',  # Satisfaction with time taken
-            26: 'TP05',  # Home well-maintained
-            27: 'TP06',  # Home is safe
-            28: 'TP07',  # Listens to views
-            29: 'TP08',  # Keeps informed
-            30: 'TP09',  # Treats fairly
-            31: 'TP10',  # Complaints handling
-            32: 'TP11',  # Communal areas clean
-            33: 'TP12',  # Anti-social behaviour
-        }
-        
-        self.lcho_column_mapping = {
-            0: 'provider_name',  # Landlord name
-            1: 'provider_code',  # Landlord code
-            21: 'TP01',  # Overall satisfaction
-            22: 'TP05',  # Home is safe (TP02-TP04 not applicable)
-            23: 'TP06',  # Listens to views
-            24: 'TP07',  # Keeps informed
-            25: 'TP08',  # Treats fairly
-            26: 'TP09',  # Complaints handling
-            27: 'TP10',  # Communal areas clean
-            28: 'TP11',  # Positive contribution to neighbourhood
-            29: 'TP12',  # Anti-social behaviour
-        }
+        # Configure skiprows and column mappings based on year
+        if self.year == 2025:
+            self.lcra_skiprows = 10
+            self.lcho_skiprows = 9
+            # 2025 column mappings
+            self.lcra_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                26: 'TP01',
+                33: 'TP02',
+                34: 'TP03',
+                35: 'TP04',
+                36: 'TP05',
+                37: 'TP06',
+                38: 'TP07',
+                39: 'TP08',
+                40: 'TP09',
+                41: 'TP10',
+                42: 'TP11',
+                43: 'TP12',
+            }
+            self.lcho_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                25: 'TP01',
+                32: 'TP05',
+                33: 'TP06',
+                34: 'TP07',
+                35: 'TP08',
+                36: 'TP09',
+                37: 'TP10',
+                38: 'TP11',
+                39: 'TP12',
+            }
+        else:
+            # 2024 and earlier - default configuration
+            self.lcra_skiprows = 3
+            self.lcho_skiprows = 3
+            # 2024 column mappings
+            self.lcra_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                22: 'TP01',
+                23: 'TP02',
+                24: 'TP03',
+                25: 'TP04',
+                26: 'TP05',
+                27: 'TP06',
+                28: 'TP07',
+                29: 'TP08',
+                30: 'TP09',
+                31: 'TP10',
+                32: 'TP11',
+                33: 'TP12',
+            }
+            self.lcho_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                21: 'TP01',
+                22: 'TP05',
+                23: 'TP06',
+                24: 'TP07',
+                25: 'TP08',
+                26: 'TP09',
+                27: 'TP10',
+                28: 'TP11',
+                29: 'TP12',
+            }
         
     def log(self, message):
         """Log messages with timestamp"""
@@ -115,8 +152,8 @@ class EnhancedAnalyticsETL:
             # Read without headers first
             df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
             
-            # Data starts from row 3
-            df = df.iloc[3:].reset_index(drop=True)
+            # Data starts from different rows depending on year
+            df = df.iloc[self.lcra_skiprows:].reset_index(drop=True)
             
             # Select and rename columns
             selected_columns = list(self.lcra_column_mapping.keys())
@@ -157,8 +194,8 @@ class EnhancedAnalyticsETL:
             # Read without headers first
             df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
             
-            # Data starts from row 3
-            df = df.iloc[3:].reset_index(drop=True)
+            # Data starts from different rows depending on year
+            df = df.iloc[self.lcho_skiprows:].reset_index(drop=True)
             
             # Select and rename columns
             selected_columns = list(self.lcho_column_mapping.keys())
@@ -206,8 +243,8 @@ class EnhancedAnalyticsETL:
             # Try to load combined sheet
             df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
             
-            # Data starts from row 3
-            df = df.iloc[3:].reset_index(drop=True)
+            # Data starts from different rows depending on year (same as LCRA)
+            df = df.iloc[self.lcra_skiprows:].reset_index(drop=True)
             
             # Use LCRA mapping as base (assumes combined has all columns)
             selected_columns = list(self.lcra_column_mapping.keys())
