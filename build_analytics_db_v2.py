@@ -18,11 +18,16 @@ from datetime import datetime
 class EnhancedAnalyticsETL:
     """ETL pipeline for processing both LCRA and LCHO TSM data"""
     
-    def __init__(self):
+    def __init__(self, excel_path=None, year=None):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
         self.db_path = "attached_assets/hailie_analytics_v2.duckdb"
-        self.excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
-        self.year = 2024
+        
+        if excel_path is None:
+            self.excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
+            self.year = 2024
+        else:
+            self.excel_path = excel_path
+            self.year = year if year is not None else 2024
         
         # Define column mappings for each dataset type
         self.lcra_column_mapping = {
@@ -104,8 +109,11 @@ class EnhancedAnalyticsETL:
         self.log("📂 Loading LCRA perception data...")
         
         try:
+            # Construct sheet name based on year
+            sheet_name = f'TSM{str(self.year)[2:]}_LCRA_Perception'
+            
             # Read without headers first
-            df = pd.read_excel(self.excel_path, sheet_name='TSM24_LCRA_Perception', header=None)
+            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
             
             # Data starts from row 3
             df = df.iloc[3:].reset_index(drop=True)
@@ -143,8 +151,11 @@ class EnhancedAnalyticsETL:
         self.log("📂 Loading LCHO perception data...")
         
         try:
+            # Construct sheet name based on year
+            sheet_name = f'TSM{str(self.year)[2:]}_LCHO_Perception'
+            
             # Read without headers first
-            df = pd.read_excel(self.excel_path, sheet_name='TSM24_LCHO_Perception', header=None)
+            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
             
             # Data starts from row 3
             df = df.iloc[3:].reset_index(drop=True)
@@ -189,8 +200,11 @@ class EnhancedAnalyticsETL:
         self.log("📂 Loading Combined perception data...")
         
         try:
+            # Construct sheet name based on year
+            sheet_name = f'TSM{str(self.year)[2:]}_Combined_Perception'
+            
             # Try to load combined sheet
-            df = pd.read_excel(self.excel_path, sheet_name='TSM24_Combined_Perception', header=None)
+            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
             
             # Data starts from row 3
             df = df.iloc[3:].reset_index(drop=True)
@@ -381,26 +395,69 @@ class EnhancedAnalyticsETL:
         # Ensure directory exists
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         
+        # Check if database exists
+        db_exists = os.path.exists(self.db_path)
+        
         # Connect to DuckDB
         con = duckdb.connect(self.db_path)
         
         try:
-            # Create enhanced tables
-            con.execute("CREATE OR REPLACE TABLE raw_scores AS SELECT * FROM raw_scores_df")
-            self.log(f"  ✓ Created raw_scores table with {len(raw_scores_df)} records")
-            
-            con.execute("CREATE OR REPLACE TABLE calculated_percentiles AS SELECT * FROM percentiles_df")
-            self.log(f"  ✓ Created calculated_percentiles table with {len(percentiles_df)} records")
-            
-            con.execute("CREATE OR REPLACE TABLE calculated_correlations AS SELECT * FROM correlations_df")
-            self.log(f"  ✓ Created calculated_correlations table with {len(correlations_df)} records")
-            
-            con.execute("CREATE OR REPLACE TABLE provider_dataset_mapping AS SELECT * FROM mapping_df")
-            self.log(f"  ✓ Created provider_dataset_mapping table with {len(mapping_df)} records")
-            
-            # Create a wide format summary table for quick lookups
-            con.execute("CREATE OR REPLACE TABLE provider_summary AS SELECT * FROM all_data")
-            self.log(f"  ✓ Created provider_summary table with {len(all_data)} records")
+            if not db_exists:
+                self.log("📊 Creating new database with initial schema...")
+                # Create enhanced tables for first time
+                con.execute("CREATE TABLE raw_scores AS SELECT * FROM raw_scores_df")
+                self.log(f"  ✓ Created raw_scores table with {len(raw_scores_df)} records")
+                
+                con.execute("CREATE TABLE calculated_percentiles AS SELECT * FROM percentiles_df")
+                self.log(f"  ✓ Created calculated_percentiles table with {len(percentiles_df)} records")
+                
+                con.execute("CREATE TABLE calculated_correlations AS SELECT * FROM correlations_df")
+                self.log(f"  ✓ Created calculated_correlations table with {len(correlations_df)} records")
+                
+                con.execute("CREATE TABLE provider_dataset_mapping AS SELECT * FROM mapping_df")
+                self.log(f"  ✓ Created provider_dataset_mapping table with {len(mapping_df)} records")
+                
+                con.execute("CREATE TABLE provider_summary AS SELECT * FROM all_data")
+                self.log(f"  ✓ Created provider_summary table with {len(all_data)} records")
+            else:
+                self.log("📊 Appending to existing database...")
+                
+                # Check if year column exists in provider_summary, add if needed
+                summary_cols = con.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'provider_summary'").fetchdf()
+                if 'year' not in summary_cols['column_name'].values:
+                    self.log("  ⚙️ Migrating provider_summary to include year column...")
+                    con.execute("ALTER TABLE provider_summary ADD COLUMN year INTEGER")
+                    con.execute("UPDATE provider_summary SET year = 2024 WHERE year IS NULL")
+                    self.log("  ✓ Migration complete")
+                
+                # Delete existing data for this year first (prevents duplicates if re-running)
+                con.execute(f"DELETE FROM raw_scores WHERE year = {self.year}")
+                con.execute(f"DELETE FROM calculated_percentiles WHERE year = {self.year}")
+                con.execute(f"DELETE FROM calculated_correlations WHERE year = {self.year}")
+                con.execute(f"DELETE FROM provider_summary WHERE year = {self.year}")
+                self.log(f"  ✓ Removed any existing {self.year} data")
+                
+                # Insert new data
+                con.execute("INSERT INTO raw_scores SELECT * FROM raw_scores_df")
+                self.log(f"  ✓ Inserted {len(raw_scores_df)} records into raw_scores")
+                
+                con.execute("INSERT INTO calculated_percentiles SELECT * FROM percentiles_df")
+                self.log(f"  ✓ Inserted {len(percentiles_df)} records into calculated_percentiles")
+                
+                # Only insert correlations if we have any
+                if len(correlations_df) > 0:
+                    con.execute("INSERT INTO calculated_correlations SELECT * FROM correlations_df")
+                    self.log(f"  ✓ Inserted {len(correlations_df)} records into calculated_correlations")
+                else:
+                    self.log(f"  ⚠️ No correlations to insert (need sufficient sample size)")
+                
+                con.execute("INSERT INTO provider_summary SELECT * FROM all_data")
+                self.log(f"  ✓ Inserted {len(all_data)} records into provider_summary")
+                
+                # Update provider mapping (upsert logic)
+                con.execute("DELETE FROM provider_dataset_mapping WHERE provider_code IN (SELECT provider_code FROM mapping_df)")
+                con.execute("INSERT INTO provider_dataset_mapping SELECT * FROM mapping_df")
+                self.log(f"  ✓ Updated provider_dataset_mapping with {len(mapping_df)} providers")
             
             # Create indexes for performance
             con.execute("CREATE INDEX IF NOT EXISTS idx_raw_scores_provider ON raw_scores(provider_code, dataset_type)")
@@ -457,6 +514,9 @@ class EnhancedAnalyticsETL:
             # Combine all data
             all_data = pd.concat([lcra_df, lcho_df, combined_df], ignore_index=True)
             
+            # Add year column to wide-format data
+            all_data['year'] = self.year
+            
             # Phase 3: Transform to long format
             lcra_long = self.transform_to_long_format(lcra_df, 'LCRA')
             lcho_long = self.transform_to_long_format(lcho_df, 'LCHO')
@@ -504,7 +564,15 @@ class EnhancedAnalyticsETL:
 
 def main():
     """Main entry point for the enhanced ETL script"""
-    etl = EnhancedAnalyticsETL()
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Load TSM data into HAILIE analytics database')
+    parser.add_argument('--excel-path', type=str, help='Path to Excel file')
+    parser.add_argument('--year', type=int, help='Year of the data (e.g., 2024, 2025)')
+    
+    args = parser.parse_args()
+    
+    etl = EnhancedAnalyticsETL(excel_path=args.excel_path, year=args.year)
     success = etl.run()
     
     # Exit with appropriate code
