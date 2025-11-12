@@ -525,7 +525,7 @@ class EnhancedAnalyticsETL:
             
             # Verify the data
             for table in ['raw_scores', 'calculated_percentiles', 'provider_dataset_mapping']:
-                result = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+                result = con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()
                 if result:
                     self.log(f"  ✓ Verified: {result[0]} rows in {table}")
             
