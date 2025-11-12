@@ -129,12 +129,12 @@ class ExecutiveDashboard:
                         value=momentum['momentum_text'],
                         delta=None
                     )
-                    st.caption("Requires multi-year TSM data for true momentum analysis")
+                    st.caption("Insufficient multi-year data")
                 else:
                     st.metric(
                         label="Trend",
                         value=momentum['momentum_text'],
-                        delta=f"{momentum['relative_performance']:+.1f} vs peers"
+                        delta=f"{momentum['year_over_year_change']:+.1f} pts avg"
                     )
             else:
                 # Desktop: Use custom HTML
@@ -149,7 +149,7 @@ class ExecutiveDashboard:
                             {momentum['momentum_text']}
                         </p>
                         <p style="font-size: 0.9rem; color: #64748B;">
-                            Requires multi-year TSM data for true momentum analysis
+                            Insufficient multi-year data
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -164,7 +164,7 @@ class ExecutiveDashboard:
                             {momentum['momentum_text']}
                         </p>
                         <p style="font-size: 0.9rem; color: #64748B;">
-                            Relative to peer average: {momentum['relative_performance']:+.1f} points
+                            2025 vs 2024: {momentum['year_over_year_change']:+.1f} points average
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -174,20 +174,33 @@ class ExecutiveDashboard:
                 st.markdown(metric_tooltips['momentum']['content'])
                 if momentum.get('disabled', False):
                     st.markdown("""
-                    **Current status**: Momentum analysis is temporarily disabled as it requires multiple years of TSM data.
+                    **Current status**: Insufficient multi-year data for this provider.
 
-                    **What's coming in 2026**: When 2025 TSM data becomes available, you'll see:
-                    - Month-over-month trend analysis
-                    - Comparison with peer momentum
-                    - Early warning indicators for declining performance
+                    **What momentum shows when available**:
+                    - Year-over-year performance changes
+                    - Which measures improved or declined
+                    - Overall trajectory (improving, stable, or declining)
                     """)
                 else:
                     st.markdown(f"""
-                    **Your momentum details:**
-                    - **Direction**: {momentum['momentum_text']}
-                    - **Relative performance**: {momentum['relative_performance']:+.1f} points vs peer average
-                    - **Trend strength**: {momentum.get('score_volatility', 'N/A')}
+                    **Your 2025 vs 2024 performance:**
+                    - **Overall change**: {momentum['year_over_year_change']:+.1f} points average
+                    - **Measures compared**: {momentum.get('total_measures_compared', 0)} satisfaction measures
                     """)
+                    
+                    # Show improved measures
+                    improved = momentum.get('improved_measures', [])
+                    if improved:
+                        st.markdown("**Top improvements:**")
+                        for measure in improved:
+                            st.markdown(f"- {measure['description']}: **+{measure['change']:.1f}** points")
+                    
+                    # Show declined measures
+                    declined = momentum.get('declined_measures', [])
+                    if declined:
+                        st.markdown("**Areas needing attention:**")
+                        for measure in declined:
+                            st.markdown(f"- {measure['description']}: **{measure['change']:.1f}** points")
 
         # YOUR PRIORITY
         with cols[2]:
@@ -769,11 +782,15 @@ class ExecutiveDashboard:
 
         # Momentum insights
         if momentum.get('disabled', False):
-            insights.append("**Momentum analysis** - Will be available in 2026 with multi-year TSM data.")
+            insights.append("**Momentum analysis** - Insufficient data for year-over-year comparison.")
         elif momentum['direction'] == 'up':
-            insights.append(f"**Positive momentum** - {momentum['momentum_text']} trajectory detected.")
+            improved_count = len(momentum.get('improved_measures', []))
+            insights.append(f"**Positive momentum** - {momentum['momentum_text']} with {improved_count} measures showing significant improvement.")
         elif momentum['direction'] == 'down':
-            insights.append(f"**Declining trend** - {momentum['momentum_text']} requires immediate attention.")
+            declined_count = len(momentum.get('declined_measures', []))
+            insights.append(f"**Declining trend** - {momentum['momentum_text']} with {declined_count} measures needing immediate attention.")
+        elif momentum['direction'] == 'stable':
+            insights.append(f"**Stable performance** - {momentum['momentum_text']} year-over-year.")
 
         # Priority insights with correlation context
         if priority['priority_level'] in ['Critical', 'High']:
@@ -799,9 +816,16 @@ class ExecutiveDashboard:
 
         # Add momentum recommendation only if not disabled
         if not momentum.get('disabled', False):
-            recommendations.append(f"3. **Monitor momentum** - Track monthly progress to maintain {momentum['momentum_text'].lower()} trend")
+            if momentum['direction'] == 'up':
+                recommendations.append(f"3. **Sustain improvements** - Continue focus areas that drove {len(momentum.get('improved_measures', []))} measure improvements")
+            elif momentum['direction'] == 'down':
+                declined = momentum.get('declined_measures', [])
+                if declined:
+                    recommendations.append(f"3. **Address decline** - Prioritize {declined[0]['description']} which declined {declined[0]['change']:.1f} points")
+            else:
+                recommendations.append("3. **Build on stability** - Identify breakthrough opportunities to move from stable to improving")
         else:
-            recommendations.append("3. **Prepare for momentum tracking** - Set up data collection processes for 2025 TSM analysis")
+            recommendations.append("3. **Establish baseline** - Ensure 2025 data collection for future year-over-year tracking")
 
         # Add top 3 priorities if available
         if 'top_3_priorities' in priority and len(priority['top_3_priorities']) > 1:
