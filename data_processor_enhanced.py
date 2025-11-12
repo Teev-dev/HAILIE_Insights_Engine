@@ -239,9 +239,10 @@ class EnhancedTSMDataProcessor:
 
         return options
 
-    def get_provider_scores(self, provider_code: str) -> pd.DataFrame:
+    def get_provider_scores(self, provider_code: str, year: int = 2025) -> pd.DataFrame:
         """
-        Get raw scores for a specific provider
+        Get raw scores for a specific provider for a given year
+        Defaults to 2025 (latest year)
         """
         self._ensure_connection()
         if not self._connection:
@@ -251,13 +252,14 @@ class EnhancedTSMDataProcessor:
         SELECT 
             tp_measure,
             score,
-            dataset_type
+            dataset_type,
+            year
         FROM raw_scores
-        WHERE provider_code = ?
+        WHERE provider_code = ? AND year = ?
         """
 
         try:
-            result = self._connection.execute(query, [provider_code]).df()
+            result = self._connection.execute(query, [provider_code, year]).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching provider scores: {str(e)}")
