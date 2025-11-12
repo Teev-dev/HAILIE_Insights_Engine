@@ -119,10 +119,11 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching dataset type: {str(e)}")
             return None
 
-    def get_provider_percentiles(self, provider_code: str) -> pd.DataFrame:
+    def get_provider_percentiles(self, provider_code: str, year: int = 2025) -> pd.DataFrame:
         """
         Get pre-calculated percentile ranks for a specific provider
         Within their appropriate peer group (LCRA or LCHO)
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -141,19 +142,20 @@ class EnhancedTSMDataProcessor:
             peer_group_size,
             dataset_type
         FROM calculated_percentiles 
-        WHERE provider_code = ?
+        WHERE provider_code = ? AND year = ?
         """
 
         try:
-            result = self._connection.execute(query, [provider_code]).df()
+            result = self._connection.execute(query, [provider_code, year]).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching percentiles: {str(e)}")
             return pd.DataFrame()
 
-    def get_dataset_correlations(self, dataset_type: str) -> pd.DataFrame:
+    def get_dataset_correlations(self, dataset_type: str, year: int = 2025) -> pd.DataFrame:
         """
         Get correlations for a specific dataset type
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -166,12 +168,12 @@ class EnhancedTSMDataProcessor:
             p_value,
             sample_size
         FROM calculated_correlations
-        WHERE dataset_type = ?
+        WHERE dataset_type = ? AND year = ?
         ORDER BY ABS(correlation_with_tp01) DESC
         """
 
         try:
-            result = self._connection.execute(query, [dataset_type]).df()
+            result = self._connection.execute(query, [dataset_type, year]).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching correlations: {str(e)}")
@@ -358,11 +360,12 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching measure distribution: {str(e)}")
             return pd.DataFrame()
 
-    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None) -> pd.DataFrame:
+    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None, year: int = 2025) -> pd.DataFrame:
         """
         Get all providers with their scores in wide format
         Needed for TSMAnalytics rankings calculation
         Now supports filtering by dataset type for isolated peer comparisons
+        Defaults to year 2025 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -385,13 +388,13 @@ class EnhancedTSMDataProcessor:
                         provider_name,
                         {', '.join(pivot_cols)}
                     FROM raw_scores
-                    WHERE dataset_type = ?
+                    WHERE dataset_type = ? AND year = ?
 
 
                     GROUP BY provider_code, provider_name
                 """
 
-                df = self._connection.execute(query, [dataset_type]).df()
+                df = self._connection.execute(query, [dataset_type, year]).df()
             else:
                 # Legacy behavior - get all providers
                 query = """
@@ -399,8 +402,9 @@ class EnhancedTSMDataProcessor:
                     ON tp_measure 
                     USING first(score) 
                     GROUP BY provider_code, provider_name
+                    WHERE year = ?
                 """
-                df = self._connection.execute(query).df()
+                df = self._connection.execute(query, [year]).df()
 
             # Ensure it's a DataFrame
             if not isinstance(df, pd.DataFrame):
