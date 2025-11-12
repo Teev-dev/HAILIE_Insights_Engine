@@ -18,43 +18,85 @@ from datetime import datetime
 class EnhancedAnalyticsETL:
     """ETL pipeline for processing both LCRA and LCHO TSM data"""
     
-    def __init__(self):
+    def __init__(self, excel_path=None, year=None):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
         self.db_path = "attached_assets/hailie_analytics_v2.duckdb"
-        self.excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
-        self.year = 2024
         
-        # Define column mappings for each dataset type
-        self.lcra_column_mapping = {
-            0: 'provider_name',  # Landlord name
-            1: 'provider_code',  # Landlord code
-            22: 'TP01',  # Overall satisfaction
-            23: 'TP02',  # Satisfaction with repairs
-            24: 'TP03',  # Time taken to complete repair
-            25: 'TP04',  # Satisfaction with time taken
-            26: 'TP05',  # Home well-maintained
-            27: 'TP06',  # Home is safe
-            28: 'TP07',  # Listens to views
-            29: 'TP08',  # Keeps informed
-            30: 'TP09',  # Treats fairly
-            31: 'TP10',  # Complaints handling
-            32: 'TP11',  # Communal areas clean
-            33: 'TP12',  # Anti-social behaviour
-        }
+        if excel_path is None:
+            self.excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
+            self.year = 2024
+        else:
+            self.excel_path = excel_path
+            self.year = year if year is not None else 2024
         
-        self.lcho_column_mapping = {
-            0: 'provider_name',  # Landlord name
-            1: 'provider_code',  # Landlord code
-            21: 'TP01',  # Overall satisfaction
-            22: 'TP05',  # Home is safe (TP02-TP04 not applicable)
-            23: 'TP06',  # Listens to views
-            24: 'TP07',  # Keeps informed
-            25: 'TP08',  # Treats fairly
-            26: 'TP09',  # Complaints handling
-            27: 'TP10',  # Communal areas clean
-            28: 'TP11',  # Positive contribution to neighbourhood
-            29: 'TP12',  # Anti-social behaviour
-        }
+        # Configure skiprows and column mappings based on year
+        if self.year == 2025:
+            self.lcra_skiprows = 10
+            self.lcho_skiprows = 9
+            # 2025 column mappings
+            self.lcra_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                26: 'TP01',
+                33: 'TP02',
+                34: 'TP03',
+                35: 'TP04',
+                36: 'TP05',
+                37: 'TP06',
+                38: 'TP07',
+                39: 'TP08',
+                40: 'TP09',
+                41: 'TP10',
+                42: 'TP11',
+                43: 'TP12',
+            }
+            self.lcho_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                25: 'TP01',
+                32: 'TP05',
+                33: 'TP06',
+                34: 'TP07',
+                35: 'TP08',
+                36: 'TP09',
+                37: 'TP10',
+                38: 'TP11',
+                39: 'TP12',
+            }
+        else:
+            # 2024 and earlier - default configuration
+            self.lcra_skiprows = 3
+            self.lcho_skiprows = 3
+            # 2024 column mappings
+            self.lcra_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                22: 'TP01',
+                23: 'TP02',
+                24: 'TP03',
+                25: 'TP04',
+                26: 'TP05',
+                27: 'TP06',
+                28: 'TP07',
+                29: 'TP08',
+                30: 'TP09',
+                31: 'TP10',
+                32: 'TP11',
+                33: 'TP12',
+            }
+            self.lcho_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                21: 'TP01',
+                22: 'TP05',
+                23: 'TP06',
+                24: 'TP07',
+                25: 'TP08',
+                26: 'TP09',
+                27: 'TP10',
+                28: 'TP11',
+                29: 'TP12',
+            }
         
     def log(self, message):
         """Log messages with timestamp"""
@@ -104,11 +146,14 @@ class EnhancedAnalyticsETL:
         self.log("📂 Loading LCRA perception data...")
         
         try:
-            # Read without headers first
-            df = pd.read_excel(self.excel_path, sheet_name='TSM24_LCRA_Perception', header=None)
+            # Construct sheet name based on year
+            sheet_name = f'TSM{str(self.year)[2:]}_LCRA_Perception'
             
-            # Data starts from row 3
-            df = df.iloc[3:].reset_index(drop=True)
+            # Read without headers first
+            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+            
+            # Data starts from different rows depending on year
+            df = df.iloc[self.lcra_skiprows:].reset_index(drop=True)
             
             # Select and rename columns
             selected_columns = list(self.lcra_column_mapping.keys())
@@ -143,11 +188,14 @@ class EnhancedAnalyticsETL:
         self.log("📂 Loading LCHO perception data...")
         
         try:
-            # Read without headers first
-            df = pd.read_excel(self.excel_path, sheet_name='TSM24_LCHO_Perception', header=None)
+            # Construct sheet name based on year
+            sheet_name = f'TSM{str(self.year)[2:]}_LCHO_Perception'
             
-            # Data starts from row 3
-            df = df.iloc[3:].reset_index(drop=True)
+            # Read without headers first
+            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+            
+            # Data starts from different rows depending on year
+            df = df.iloc[self.lcho_skiprows:].reset_index(drop=True)
             
             # Select and rename columns
             selected_columns = list(self.lcho_column_mapping.keys())
@@ -189,11 +237,14 @@ class EnhancedAnalyticsETL:
         self.log("📂 Loading Combined perception data...")
         
         try:
-            # Try to load combined sheet
-            df = pd.read_excel(self.excel_path, sheet_name='TSM24_Combined_Perception', header=None)
+            # Construct sheet name based on year
+            sheet_name = f'TSM{str(self.year)[2:]}_Combined_Perception'
             
-            # Data starts from row 3
-            df = df.iloc[3:].reset_index(drop=True)
+            # Try to load combined sheet
+            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+            
+            # Data starts from different rows depending on year (same as LCRA)
+            df = df.iloc[self.lcra_skiprows:].reset_index(drop=True)
             
             # Use LCRA mapping as base (assumes combined has all columns)
             selected_columns = list(self.lcra_column_mapping.keys())
@@ -381,26 +432,69 @@ class EnhancedAnalyticsETL:
         # Ensure directory exists
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         
+        # Check if database exists
+        db_exists = os.path.exists(self.db_path)
+        
         # Connect to DuckDB
         con = duckdb.connect(self.db_path)
         
         try:
-            # Create enhanced tables
-            con.execute("CREATE OR REPLACE TABLE raw_scores AS SELECT * FROM raw_scores_df")
-            self.log(f"  ✓ Created raw_scores table with {len(raw_scores_df)} records")
-            
-            con.execute("CREATE OR REPLACE TABLE calculated_percentiles AS SELECT * FROM percentiles_df")
-            self.log(f"  ✓ Created calculated_percentiles table with {len(percentiles_df)} records")
-            
-            con.execute("CREATE OR REPLACE TABLE calculated_correlations AS SELECT * FROM correlations_df")
-            self.log(f"  ✓ Created calculated_correlations table with {len(correlations_df)} records")
-            
-            con.execute("CREATE OR REPLACE TABLE provider_dataset_mapping AS SELECT * FROM mapping_df")
-            self.log(f"  ✓ Created provider_dataset_mapping table with {len(mapping_df)} records")
-            
-            # Create a wide format summary table for quick lookups
-            con.execute("CREATE OR REPLACE TABLE provider_summary AS SELECT * FROM all_data")
-            self.log(f"  ✓ Created provider_summary table with {len(all_data)} records")
+            if not db_exists:
+                self.log("📊 Creating new database with initial schema...")
+                # Create enhanced tables for first time
+                con.execute("CREATE TABLE raw_scores AS SELECT * FROM raw_scores_df")
+                self.log(f"  ✓ Created raw_scores table with {len(raw_scores_df)} records")
+                
+                con.execute("CREATE TABLE calculated_percentiles AS SELECT * FROM percentiles_df")
+                self.log(f"  ✓ Created calculated_percentiles table with {len(percentiles_df)} records")
+                
+                con.execute("CREATE TABLE calculated_correlations AS SELECT * FROM correlations_df")
+                self.log(f"  ✓ Created calculated_correlations table with {len(correlations_df)} records")
+                
+                con.execute("CREATE TABLE provider_dataset_mapping AS SELECT * FROM mapping_df")
+                self.log(f"  ✓ Created provider_dataset_mapping table with {len(mapping_df)} records")
+                
+                con.execute("CREATE TABLE provider_summary AS SELECT * FROM all_data")
+                self.log(f"  ✓ Created provider_summary table with {len(all_data)} records")
+            else:
+                self.log("📊 Appending to existing database...")
+                
+                # Check if year column exists in provider_summary, add if needed
+                summary_cols = con.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'provider_summary'").fetchdf()
+                if 'year' not in summary_cols['column_name'].values:
+                    self.log("  ⚙️ Migrating provider_summary to include year column...")
+                    con.execute("ALTER TABLE provider_summary ADD COLUMN year INTEGER")
+                    con.execute("UPDATE provider_summary SET year = 2024 WHERE year IS NULL")
+                    self.log("  ✓ Migration complete")
+                
+                # Delete existing data for this year first (prevents duplicates if re-running)
+                con.execute(f"DELETE FROM raw_scores WHERE year = {self.year}")
+                con.execute(f"DELETE FROM calculated_percentiles WHERE year = {self.year}")
+                con.execute(f"DELETE FROM calculated_correlations WHERE year = {self.year}")
+                con.execute(f"DELETE FROM provider_summary WHERE year = {self.year}")
+                self.log(f"  ✓ Removed any existing {self.year} data")
+                
+                # Insert new data
+                con.execute("INSERT INTO raw_scores SELECT * FROM raw_scores_df")
+                self.log(f"  ✓ Inserted {len(raw_scores_df)} records into raw_scores")
+                
+                con.execute("INSERT INTO calculated_percentiles SELECT * FROM percentiles_df")
+                self.log(f"  ✓ Inserted {len(percentiles_df)} records into calculated_percentiles")
+                
+                # Only insert correlations if we have any
+                if len(correlations_df) > 0:
+                    con.execute("INSERT INTO calculated_correlations SELECT * FROM correlations_df")
+                    self.log(f"  ✓ Inserted {len(correlations_df)} records into calculated_correlations")
+                else:
+                    self.log(f"  ⚠️ No correlations to insert (need sufficient sample size)")
+                
+                con.execute("INSERT INTO provider_summary SELECT * FROM all_data")
+                self.log(f"  ✓ Inserted {len(all_data)} records into provider_summary")
+                
+                # Update provider mapping (upsert logic)
+                con.execute("DELETE FROM provider_dataset_mapping WHERE provider_code IN (SELECT provider_code FROM mapping_df)")
+                con.execute("INSERT INTO provider_dataset_mapping SELECT * FROM mapping_df")
+                self.log(f"  ✓ Updated provider_dataset_mapping with {len(mapping_df)} providers")
             
             # Create indexes for performance
             con.execute("CREATE INDEX IF NOT EXISTS idx_raw_scores_provider ON raw_scores(provider_code, dataset_type)")
@@ -457,6 +551,9 @@ class EnhancedAnalyticsETL:
             # Combine all data
             all_data = pd.concat([lcra_df, lcho_df, combined_df], ignore_index=True)
             
+            # Add year column to wide-format data
+            all_data['year'] = self.year
+            
             # Phase 3: Transform to long format
             lcra_long = self.transform_to_long_format(lcra_df, 'LCRA')
             lcho_long = self.transform_to_long_format(lcho_df, 'LCHO')
@@ -504,7 +601,15 @@ class EnhancedAnalyticsETL:
 
 def main():
     """Main entry point for the enhanced ETL script"""
-    etl = EnhancedAnalyticsETL()
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Load TSM data into HAILIE analytics database')
+    parser.add_argument('--excel-path', type=str, help='Path to Excel file')
+    parser.add_argument('--year', type=int, help='Year of the data (e.g., 2024, 2025)')
+    
+    args = parser.parse_args()
+    
+    etl = EnhancedAnalyticsETL(excel_path=args.excel_path, year=args.year)
     success = etl.run()
     
     # Exit with appropriate code
