@@ -154,23 +154,12 @@ class ExecutiveDashboard:
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Build the performance comparison HTML
-                    improved_html = ""
-                    declined_html = ""
-                    
+                    # Build the performance comparison sections
                     improved = momentum.get('improved_measures', [])
-                    if improved:
-                        improved_html = '<p style="font-size: 0.85rem; font-weight: 600; color: #22C55E; margin-bottom: 0.25rem;">Top Improvements:</p>'
-                        for measure in improved[:3]:  # Show top 3 improvements
-                            improved_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: +{measure["change"]:.1f} pts</p>'
-                    
                     declined = momentum.get('declined_measures', [])
-                    if declined:
-                        declined_html = '<p style="font-size: 0.85rem; font-weight: 600; color: #EF4444; margin-bottom: 0.25rem; margin-top: 0.5rem;">Areas Needing Attention:</p>'
-                        for measure in declined[:3]:  # Show top 3 declines
-                            declined_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: {measure["change"]:.1f} pts</p>'
                     
-                    st.markdown(f"""
+                    # Start building the HTML
+                    card_html = f"""
                     <div class="metric-card">
                         <p class="metric-label">YOUR MOMENTUM</p>
                         <p class="metric-value" style="color: {momentum['momentum_color']};">
@@ -188,10 +177,24 @@ class ExecutiveDashboard:
                         <p style="font-size: 0.9rem; font-weight: 600; color: #1E293B; margin-top: 0.5rem; margin-bottom: 0.5rem;">
                             Your 2025 vs 2024 performance:
                         </p>
-                        {improved_html}
-                        {declined_html}
-                    </div>
-                    """, unsafe_allow_html=True)
+                    """
+                    
+                    # Add improvements section if available
+                    if improved:
+                        card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #22C55E; margin-bottom: 0.25rem;">Top Improvements:</p>'
+                        for measure in improved[:3]:
+                            card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: +{measure["change"]:.1f} pts</p>'
+                    
+                    # Add declined section if available
+                    if declined:
+                        card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #EF4444; margin-bottom: 0.25rem; margin-top: 0.5rem;">Areas Needing Attention:</p>'
+                        for measure in declined[:3]:
+                            card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: {measure["change"]:.1f} pts</p>'
+                    
+                    # Close the card
+                    card_html += "</div>"
+                    
+                    st.markdown(card_html, unsafe_allow_html=True)
 
             # Add expandable help section for momentum
             with st.expander("How Momentum Works", expanded=False):
