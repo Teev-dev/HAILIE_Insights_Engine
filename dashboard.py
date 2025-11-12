@@ -154,6 +154,24 @@ class ExecutiveDashboard:
                     </div>
                     """, unsafe_allow_html=True)
                 else:
+                    # Build the performance comparison HTML
+                    improved_html = ""
+                    declined_html = ""
+                    
+                    improved = momentum.get('improved_measures', [])
+                    if improved:
+                        improved_html = '<div style="margin-top: 0.5rem;"><p style="font-size: 0.85rem; font-weight: 600; color: #22C55E; margin-bottom: 0.25rem;">Top Improvements:</p>'
+                        for measure in improved[:3]:  # Show top 3 improvements
+                            improved_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: +{measure["change"]:.1f} pts</p>'
+                        improved_html += '</div>'
+                    
+                    declined = momentum.get('declined_measures', [])
+                    if declined:
+                        declined_html = '<div style="margin-top: 0.5rem;"><p style="font-size: 0.85rem; font-weight: 600; color: #EF4444; margin-bottom: 0.25rem;">Areas Needing Attention:</p>'
+                        for measure in declined[:3]:  # Show top 3 declines
+                            declined_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: {measure["change"]:.1f} pts</p>'
+                        declined_html += '</div>'
+                    
                     st.markdown(f"""
                     <div class="metric-card">
                         <p class="metric-label">YOUR MOMENTUM</p>
@@ -163,9 +181,14 @@ class ExecutiveDashboard:
                         <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
                             {momentum['momentum_text']}
                         </p>
-                        <p style="font-size: 0.9rem; color: #64748B;">
-                            2025 vs 2024: {momentum['year_over_year_change']:+.1f} points average
+                        <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 0.25rem;">
+                            <strong>2025 vs 2024:</strong> {momentum['year_over_year_change']:+.1f} points average
                         </p>
+                        <p style="font-size: 0.8rem; color: #64748B;">
+                            {momentum.get('total_measures_compared', 0)} measures compared
+                        </p>
+                        {improved_html}
+                        {declined_html}
                     </div>
                     """, unsafe_allow_html=True)
 
