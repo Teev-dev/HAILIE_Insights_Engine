@@ -537,6 +537,12 @@ def main():
         st.caption(
             f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
         )
+        st.markdown(
+            '<p style="text-align: center; font-size: 0.85em; color: #666;">'
+            '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
+            '</p>',
+            unsafe_allow_html=True
+        )
 
         # Close database connection when done
         data_processor.close()
@@ -552,6 +558,16 @@ def main():
 
         The system will instantly retrieve your pre-calculated analytics.
         """)
+        
+        # Footer with privacy link
+        st.markdown("---")
+        st.caption("HAILIE TSM Insights Engine v3.0 | Data: 2025 TSM")
+        st.markdown(
+            '<p style="text-align: center; font-size: 0.85em; color: #666;">'
+            '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
+            '</p>',
+            unsafe_allow_html=True
+        )
 
 
 if __name__ == "__main__":
