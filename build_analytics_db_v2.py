@@ -468,10 +468,10 @@ class EnhancedAnalyticsETL:
                     self.log("  ✓ Migration complete")
                 
                 # Delete existing data for this year first (prevents duplicates if re-running)
-                con.execute(f"DELETE FROM raw_scores WHERE year = {self.year}")
-                con.execute(f"DELETE FROM calculated_percentiles WHERE year = {self.year}")
-                con.execute(f"DELETE FROM calculated_correlations WHERE year = {self.year}")
-                con.execute(f"DELETE FROM provider_summary WHERE year = {self.year}")
+                con.execute("DELETE FROM raw_scores WHERE year = ?", [self.year])
+                con.execute("DELETE FROM calculated_percentiles WHERE year = ?", [self.year])
+                con.execute("DELETE FROM calculated_correlations WHERE year = ?", [self.year])
+                con.execute("DELETE FROM provider_summary WHERE year = ?", [self.year])
                 self.log(f"  ✓ Removed any existing {self.year} data")
                 
                 # Insert new data
@@ -525,7 +525,7 @@ class EnhancedAnalyticsETL:
             
             # Verify the data
             for table in ['raw_scores', 'calculated_percentiles', 'provider_dataset_mapping']:
-                result = con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()
+                result = con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()
                 if result:
                     self.log(f"  ✓ Verified: {result[0]} rows in {table}")
             

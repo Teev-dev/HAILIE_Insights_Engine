@@ -17,7 +17,7 @@ magicEnabled = false
 fastReruns = true
 
 [client]
-showSidebarNavigation = false
+showSidebarNavigation = true
 toolbarMode = "minimal"
 
 [theme]
