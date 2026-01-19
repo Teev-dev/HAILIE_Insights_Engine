@@ -27,35 +27,6 @@ def render_landing_hero():
     """Render the professional hero section"""
     is_mobile = detect_mobile()
     
-    # Debug: Show detection result
-    if st.sidebar.checkbox("Show mobile detection debug", value=False):
-        st.sidebar.markdown("### 🔍 Mobile Detection Debug")
-        st.sidebar.info(f"**Mobile detected:** {is_mobile}")
-        
-        # Show detection method
-        if hasattr(st.session_state, 'force_mobile_view'):
-            st.sidebar.success("✓ Using manual toggle")
-        elif 'mobile' in st.query_params:
-            st.sidebar.success("✓ Using URL parameter")
-        elif 'is_mobile_device' in st.session_state:
-            st.sidebar.success("✓ Using JavaScript detection")
-        else:
-            st.sidebar.warning("⚠ Using fallback detection")
-        
-        # Show user agent for debugging
-        try:
-            headers = st.context.headers
-            user_agent = headers.get('User-Agent', 'Not available')
-            st.sidebar.text_area("User Agent:", user_agent, height=100)
-        except Exception as e:
-            st.sidebar.error(f"Headers not available: {str(e)}")
-        
-        # Show screen info from JavaScript
-        st.sidebar.markdown("**Detection sources:**")
-        st.sidebar.caption("• User Agent check")
-        st.sidebar.caption("• Touch capability check")
-        st.sidebar.caption("• Screen width check")
-    
     if is_mobile:
         # Mobile version - styled gradient header
         st.markdown("""
