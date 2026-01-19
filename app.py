@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="HAILIE TSM Insights Engine",
     page_icon="✓",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Apply custom CSS styles from styles module
