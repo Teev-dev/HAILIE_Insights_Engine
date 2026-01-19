@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="HAILIE TSM Insights Engine",
     page_icon="✓",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Apply custom CSS styles from styles module
@@ -26,6 +26,35 @@ apply_css(st)
 def render_landing_hero():
     """Render the professional hero section"""
     is_mobile = detect_mobile()
+    
+    # Debug: Show detection result
+    if st.sidebar.checkbox("Show mobile detection debug", value=False):
+        st.sidebar.markdown("### 🔍 Mobile Detection Debug")
+        st.sidebar.info(f"**Mobile detected:** {is_mobile}")
+        
+        # Show detection method
+        if hasattr(st.session_state, 'force_mobile_view'):
+            st.sidebar.success("✓ Using manual toggle")
+        elif 'mobile' in st.query_params:
+            st.sidebar.success("✓ Using URL parameter")
+        elif 'is_mobile_device' in st.session_state:
+            st.sidebar.success("✓ Using JavaScript detection")
+        else:
+            st.sidebar.warning("⚠ Using fallback detection")
+        
+        # Show user agent for debugging
+        try:
+            headers = st.context.headers
+            user_agent = headers.get('User-Agent', 'Not available')
+            st.sidebar.text_area("User Agent:", user_agent, height=100)
+        except Exception as e:
+            st.sidebar.error(f"Headers not available: {str(e)}")
+        
+        # Show screen info from JavaScript
+        st.sidebar.markdown("**Detection sources:**")
+        st.sidebar.caption("• User Agent check")
+        st.sidebar.caption("• Touch capability check")
+        st.sidebar.caption("• Screen width check")
     
     if is_mobile:
         # Mobile version - styled gradient header
@@ -271,7 +300,7 @@ def main():
         • Peer group isolation
         • Automatic metric adaptation
 
-        Data source: 2025 TSM Dataset
+        Data source: 2024 TSM Dataset
         """)
 
     st.markdown('<div id="provider-search-section"></div>', unsafe_allow_html=True)
@@ -506,13 +535,7 @@ def main():
         # Footer
         st.markdown("---")
         st.caption(
-            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
-        )
-        st.markdown(
-            '<p style="text-align: center; font-size: 0.85em; color: #666;">'
-            '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
-            '</p>',
-            unsafe_allow_html=True
+            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2024 TSM"
         )
 
         # Close database connection when done
@@ -529,16 +552,6 @@ def main():
 
         The system will instantly retrieve your pre-calculated analytics.
         """)
-        
-        # Footer with privacy link
-        st.markdown("---")
-        st.caption("HAILIE TSM Insights Engine v3.0 | Data: 2025 TSM")
-        st.markdown(
-            '<p style="text-align: center; font-size: 0.85em; color: #666;">'
-            '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
-            '</p>',
-            unsafe_allow_html=True
-        )
 
 
 if __name__ == "__main__":

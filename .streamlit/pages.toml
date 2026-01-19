@@ -1,9 +1,0 @@
-[[pages]]
-path = "app.py"
-name = "Home"
-icon = ":material/home:"
-
-[[pages]]
-path = "pages/privacy_policy.py"
-name = "Privacy Policy"
-icon = ":material/lock:"
