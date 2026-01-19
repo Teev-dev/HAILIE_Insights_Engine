@@ -16,6 +16,10 @@ serverPort = 5000
 magicEnabled = false
 fastReruns = true
 
+[client]
+showSidebarNavigation = true
+toolbarMode = "minimal"
+
 [theme]
 primaryColor = "#2E5BBA"
 backgroundColor = "#F8FAFC"
