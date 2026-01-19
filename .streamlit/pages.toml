@@ -1,0 +1,7 @@
+[[pages]]
+path = "app.py"
+name = "Home"
+
+[[pages]]
+path = "pages/privacy_policy.py"
+name = "Privacy Policy"

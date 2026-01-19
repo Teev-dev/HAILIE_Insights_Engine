@@ -15,7 +15,7 @@ st.markdown("""
 
 ## Introduction
 
-Welcome to HAILIE TSM Insights Engine. We are committed to protecting your privacy and ensuring the security of any information you provide while using our service. This Privacy Policy explains how we collect, use, and safeguard your information.
+Welcome to HAILIE TSM Insights Engine. We are committed to protecting your privacy and ensuring the security of any information you provide while using our service. This Privacy Policy explains how we collect, use, and safeguard your information. HAILIE is an independent, vendor-neutral initiative. There are no sales pitches or hidden agendas.
 
 ---
 
