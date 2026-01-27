@@ -89,6 +89,27 @@ Our application may use session cookies to:
 
 ---
 
+## Data Insights Disclaimer
+
+**Important Notice Regarding Analytics and Insights:**
+
+The data, analytics, rankings, and insights provided by HAILIE TSM Insights Engine are intended for informational purposes only and should not be construed as professional advice, recommendations, or endorsements.
+
+**Limitation of Liability:**
+- The insights and analytics presented are derived from publicly available TSM (Tenant Satisfaction Measures) data and are subject to the accuracy and completeness of the source data.
+- HAILIE TSM Insights Engine, its operators, and affiliates make no warranties, express or implied, regarding the accuracy, reliability, completeness, or suitability of the insights for any particular purpose.
+- We are not responsible for any decisions made or actions taken based on the information provided through this platform.
+- Rankings, trends, and comparative analyses are statistical interpretations and should be considered alongside other relevant factors and professional judgment.
+- Past performance indicators and historical trends do not guarantee future results or outcomes.
+
+**Use at Your Own Risk:**
+Users acknowledge that reliance on any insights, data, or analytics provided by this platform is at their own risk. We disclaim all liability for any direct, indirect, incidental, consequential, or special damages arising from the use of or inability to use the insights provided.
+
+**Not Professional Advice:**
+The information provided does not constitute legal, financial, regulatory, or professional advice. Users should consult with appropriate qualified professionals before making decisions based on the data presented.
+
+---
+
 ## Changes to This Policy
 
 We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.
