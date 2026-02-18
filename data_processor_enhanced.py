@@ -21,20 +21,20 @@ class EnhancedTSMDataProcessor:
         self._connection = None
         self._connect_to_db()
 
-        # TP measure descriptions
+        # TP measure descriptions (official RSH definitions)
         self.tp_descriptions = {
             'TP01': 'Overall satisfaction',
             'TP02': 'Satisfaction with repairs',
-            'TP03': 'Time taken to complete repair',
-            'TP04': 'Satisfaction with time taken',
-            'TP05': 'Home well-maintained',
-            'TP06': 'Home is safe',
-            'TP07': 'Listens to views',
-            'TP08': 'Keeps informed',
-            'TP09': 'Treats fairly',
-            'TP10': 'Complaints handling',
-            'TP11': 'Communal areas clean',
-            'TP12': 'Anti-social behaviour'
+            'TP03': 'Time taken to complete most recent repair',
+            'TP04': 'Satisfaction with time taken to complete most recent repair',
+            'TP05': 'Satisfaction that home is well-maintained',
+            'TP06': 'Satisfaction that home is safe',
+            'TP07': 'Satisfaction with neighbourhood',
+            'TP08': "Satisfaction with landlord's contribution to neighbourhood",
+            'TP09': 'Satisfaction with approach to handling of complaints',
+            'TP10': 'Agreement that landlord treats residents fairly',
+            'TP11': "Agreement that landlord listens to residents' views",
+            'TP12': "Satisfaction with landlord's approach to handling of anti-social behaviour"
         }
 
     def _connect_to_db(self):
@@ -490,6 +490,38 @@ class EnhancedTSMDataProcessor:
             finally:
                 self._connection = None
 
+
+    def get_percentile_for_score(self, tp_measure: str, score: float,
+                                   dataset_type: Optional[str] = None,
+                                   year: int = 2025) -> float:
+        """
+        Calculate percentile for a given score by comparing against all scores
+        for that measure in the database. Fallback method when pre-calculated
+        percentile is not available.
+        """
+        self._ensure_connection()
+        if not self._connection:
+            return 50.0
+
+        query = """
+        SELECT score FROM raw_scores
+        WHERE tp_measure = ? AND year = ? AND score IS NOT NULL
+        """
+        params: list = [tp_measure, year]
+
+        if dataset_type:
+            query += " AND dataset_type = ?"
+            params.append(dataset_type)
+
+        try:
+            result = self._connection.execute(query, params).df()
+            if result.empty:
+                return 50.0
+            from scipy.stats import percentileofscore
+            return percentileofscore(result['score'].values, score)
+        except Exception as e:
+            self._log_error(f"Error calculating percentile for score: {e}")
+            return 50.0
 
     def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None, year: int = 2025) -> Optional[Dict]:
         """

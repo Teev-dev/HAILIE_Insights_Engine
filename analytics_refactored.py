@@ -138,6 +138,8 @@ class TSMAnalytics:
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
+                    'latest_year': 2025,
+                    'prior_year': 2024,
                     'disabled': True
                 }
             
@@ -166,6 +168,8 @@ class TSMAnalytics:
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
+                    'latest_year': 2025,
+                    'prior_year': 2024,
                     'disabled': True
                 }
             
@@ -203,11 +207,13 @@ class TSMAnalytics:
                 'momentum_icon': momentum_icon,
                 'momentum_color': momentum_color,
                 'year_over_year_change': avg_change,
-                'improved_measures': [{'code': tp, 'description': data['description'], 'change': data['change']} 
+                'improved_measures': [{'code': tp, 'description': data['description'], 'change': data['change']}
                                      for tp, data in improved[:3]],
-                'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']} 
+                'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']}
                                      for tp, data in declined[:3]],
                 'total_measures_compared': len(measure_changes),
+                'latest_year': 2025,
+                'prior_year': 2024,
                 'disabled': False
             }
             
@@ -220,6 +226,8 @@ class TSMAnalytics:
                 'year_over_year_change': 0,
                 'improved_measures': [],
                 'declined_measures': [],
+                'latest_year': 2025,
+                'prior_year': 2024,
                 'disabled': True
             }
     
@@ -273,7 +281,8 @@ class TSMAnalytics:
                 else:
                     # Fallback: calculate percentile on the fly
                     score = provider_scores[tp_measure]
-                    percentile = self.data_processor.get_percentile_for_score(tp_measure, score)
+                    percentile = self.data_processor.get_percentile_for_score(
+                        tp_measure, score, dataset_type)
                 
                 # Improvement potential (lower percentile = more room for improvement)
                 improvement_potential = 100 - percentile

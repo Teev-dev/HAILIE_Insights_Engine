@@ -1,0 +1,26 @@
+.git
+.replit
+.claude
+__pycache__
+*.pyc
+*.pyo
+
+# Legacy v1 database (not needed — v2 is production)
+attached_assets/hailie_analytics.duckdb
+
+# Diagnostic/dev-only scripts
+diagnose_duplicates.py
+db_view_script.py
+review_pvalues.py
+pvalue_analysis.csv
+
+# Documentation PDFs bundled in attached_assets
+attached_assets/*.pdf
+attached_assets/*.png
+attached_assets/*.txt
+
+# Lock file not needed in container (deps installed from pyproject.toml)
+uv.lock
+
+# Replit-specific
+replit.md

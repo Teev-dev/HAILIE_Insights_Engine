@@ -46,7 +46,7 @@ class TooltipDefinitions:
                 • **→ Stable**: Performance remains consistent with minimal change
                 • **↘️ Declining**: Scores show a downward trend requiring attention
                 
-                **Note**: Full momentum analysis will be available in 2026 when multi-year TSM data becomes available
+                **Note**: Momentum compares your latest year against the prior year. Providers with data in both years will see full trajectory analysis.
                 """
             },
             'priority': {
@@ -60,10 +60,10 @@ class TooltipDefinitions:
                 • Identifies where effort will have maximum impact
                 
                 **Priority levels:**
-                • **Critical**: >60 weighted score - immediate action needed
-                • **High**: 40-60 score - high impact improvement area
-                • **Medium**: 20-40 score - moderate impact area
-                • **Low**: <20 score - lower impact area
+                • **Critical**: >70 weighted score - immediate action needed
+                • **High**: 50-70 score - high impact improvement area
+                • **Medium**: 30-50 score - moderate impact area
+                • **Low**: <30 score - lower impact area
                 
                 **Improvement potential**: How much you could improve based on peer performance (100% - your percentile)
                 **TP01 correlation**: How strongly this measure relates to overall satisfaction
@@ -131,7 +131,7 @@ class TooltipDefinitions:
                 • Identifies areas where improvement will have maximum impact
                 • Higher scores = higher priority for action
                 
-                **Formula**: Improvement Potential × (0.5 + 0.5 × Correlation Strength)
+                **Formula**: (Improvement Potential × 0.6) + (Correlation Strength × 100 × 0.4)
                 
                 **Why this matters**: Helps you focus limited resources on areas that will improve overall tenant satisfaction most effectively.
                 """
