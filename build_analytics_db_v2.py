@@ -98,37 +98,232 @@ class EnhancedAnalyticsETL:
                 29: 'TP12',
             }
         
+    # Known TP header patterns for dynamic detection
+    TP_HEADER_PATTERNS = {
+        'TP01': ['TP01', '(TP01)', 'Overall satisfaction'],
+        'TP02': ['TP02', '(TP02)', 'Satisfaction with repairs'],
+        'TP03': ['TP03', '(TP03)', 'Time taken to complete'],
+        'TP04': ['TP04', '(TP04)', 'Satisfaction with time taken'],
+        'TP05': ['TP05', '(TP05)', 'Home is well-maintained', 'well maintained'],
+        'TP06': ['TP06', '(TP06)', 'Home is safe'],
+        'TP07': ['TP07', '(TP07)', 'Satisfaction with neighbourhood', 'neighbourhood'],
+        'TP08': ['TP08', '(TP08)', 'contribution to neighbourhood'],
+        'TP09': ['TP09', '(TP09)', 'handling of complaints', 'complaints'],
+        'TP10': ['TP10', '(TP10)', 'treats residents fairly', 'fairly'],
+        'TP11': ['TP11', '(TP11)', "listens to residents", 'listens'],
+        'TP12': ['TP12', '(TP12)', 'anti-social behaviour'],
+    }
+
+    PROVIDER_NAME_PATTERNS = ['landlord name', 'provider name', 'organisation name', 'landlord_name']
+    PROVIDER_CODE_PATTERNS = ['landlord code', 'provider code', 'rsh code', 'landlord_code', 'reg. no']
+
     def log(self, message):
         """Log messages with timestamp"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {message}")
+
+    def _detect_header_row(self, df_raw, max_scan_rows=15):
+        """
+        Scan the first N rows of a raw (headerless) DataFrame to find the
+        header row by looking for known TP column patterns.
+        Returns the 0-based row index of the header, or None if not found.
+        """
+        for row_idx in range(min(max_scan_rows, len(df_raw))):
+            row_values = [str(v).strip() for v in df_raw.iloc[row_idx].values]
+            row_text = ' '.join(row_values).lower()
+            # A header row should contain at least TP01 and one other TP code
+            has_tp01 = any(p.lower() in row_text for p in self.TP_HEADER_PATTERNS['TP01'])
+            has_other = any(
+                any(p.lower() in row_text for p in patterns)
+                for tp, patterns in self.TP_HEADER_PATTERNS.items()
+                if tp != 'TP01'
+            )
+            if has_tp01 and has_other:
+                return row_idx
+        return None
+
+    def _detect_column_mapping(self, df_raw, dataset_type, expected_tp_codes=None):
+        """
+        Dynamically detect column mapping by finding the header row and matching
+        column headers to known patterns. Falls back to hard-coded mapping if
+        detection fails.
+
+        Returns (header_row_index, column_mapping_dict) where column_mapping_dict
+        maps integer column indices to names like 'provider_name', 'provider_code',
+        'TP01', 'TP02', etc.
+        """
+        if expected_tp_codes is None:
+            if dataset_type == 'LCHO':
+                expected_tp_codes = [tp for tp in self.tp_codes if tp not in ['TP02', 'TP03', 'TP04']]
+            else:
+                expected_tp_codes = self.tp_codes
+
+        header_row = self._detect_header_row(df_raw)
+        if header_row is None:
+            self.log(f"  ⚠️ Could not detect header row for {dataset_type}; using hard-coded mapping")
+            if dataset_type == 'LCHO':
+                return self.lcho_skiprows, self.lcho_column_mapping
+            else:
+                return self.lcra_skiprows, self.lcra_column_mapping
+
+        headers = [str(v).strip() for v in df_raw.iloc[header_row].values]
+        headers_lower = [h.lower() for h in headers]
+
+        mapping = {}
+
+        # Detect provider name column
+        for col_idx, h in enumerate(headers_lower):
+            if any(p in h for p in self.PROVIDER_NAME_PATTERNS):
+                mapping[col_idx] = 'provider_name'
+                break
+        # Fallback: assume column 0 is provider name
+        if 'provider_name' not in mapping.values():
+            mapping[0] = 'provider_name'
+
+        # Detect provider code column
+        for col_idx, h in enumerate(headers_lower):
+            if col_idx in mapping:
+                continue
+            if any(p in h for p in self.PROVIDER_CODE_PATTERNS):
+                mapping[col_idx] = 'provider_code'
+                break
+        if 'provider_code' not in mapping.values():
+            mapping[1] = 'provider_code'
+
+        # Detect TP columns
+        for tp_code in expected_tp_codes:
+            patterns = self.TP_HEADER_PATTERNS.get(tp_code, [tp_code])
+            best_col = None
+            for col_idx, h in enumerate(headers_lower):
+                if col_idx in mapping:
+                    continue
+                # Prefer exact TP code match (e.g. "tp01" or "(tp01)")
+                for pattern in patterns:
+                    if pattern.lower() in h:
+                        # Avoid matching response count columns
+                        if 'response' in h or 'count' in h or 'number' in h:
+                            continue
+                        best_col = col_idx
+                        break
+                if best_col is not None:
+                    break
+            if best_col is not None:
+                mapping[best_col] = tp_code
+
+        detected_tps = [v for v in mapping.values() if v.startswith('TP')]
+        self.log(f"  Dynamic detection for {dataset_type}: found header at row {header_row}, "
+                 f"detected {len(detected_tps)}/{len(expected_tp_codes)} TP columns")
+
+        # Validate: if we found fewer than half the expected TP columns, fall back
+        if len(detected_tps) < len(expected_tp_codes) // 2:
+            self.log(f"  ⚠️ Too few TP columns detected ({len(detected_tps)}); falling back to hard-coded mapping")
+            if dataset_type == 'LCHO':
+                return self.lcho_skiprows, self.lcho_column_mapping
+            else:
+                return self.lcra_skiprows, self.lcra_column_mapping
+
+        # Compare with hard-coded mapping for safety logging
+        hardcoded = self.lcho_column_mapping if dataset_type == 'LCHO' else self.lcra_column_mapping
+        for col_idx, name in hardcoded.items():
+            if name.startswith('TP') and name in mapping.values():
+                detected_idx = [k for k, v in mapping.items() if v == name][0]
+                if detected_idx != col_idx:
+                    self.log(f"  ⚠️ Column shift detected: {name} expected at col {col_idx}, found at col {detected_idx}")
+
+        # Data starts on the row after the header
+        data_start_row = header_row + 1
+        return data_start_row, mapping
+
+    def _validate_tp_columns(self, df, dataset_type):
+        """Validate that TP columns contain plausible percentage scores (0-100)."""
+        tp_cols = [col for col in df.columns if col.startswith('TP')]
+        for tp_col in tp_cols:
+            numeric_vals = pd.to_numeric(df[tp_col], errors='coerce').dropna()
+            if len(numeric_vals) == 0:
+                self.log(f"  ⚠️ {dataset_type} column {tp_col}: no numeric values found")
+                continue
+            in_range = ((numeric_vals >= 0) & (numeric_vals <= 100)).sum()
+            pct_valid = in_range / len(numeric_vals) * 100
+            if pct_valid < 50:
+                self.log(f"  ⚠️ {dataset_type} column {tp_col}: only {pct_valid:.0f}% of values in 0-100 range — possible column mismatch")
         
     def load_table_coverage(self):
         """Load the Table_Coverage sheet to identify provider types"""
         self.log("📋 Loading Table_Coverage to identify provider types...")
-        
+
         try:
-            # Read with proper skip rows
-            coverage_df = pd.read_excel(self.excel_path, sheet_name='Table_Coverage', skiprows=3)
-            
-            # Set column names
-            coverage_df.columns = ['landlord_name', 'landlord_code', 'landlord_type', 
-                                 'tsm24_lcra_perception', 'tsm24_lcho_perception', 
-                                 'tsm24_combined_perception', 'tsm24_management_info',
-                                 'tsm24_perception_not_inc', 'tsm24_man_info_not_inc']
-            
+            # Determine year prefix for column matching
+            year_suffix = str(self.year)[2:]  # e.g. "24" or "25"
+            tsm_prefix = f'tsm{year_suffix}'
+
+            # Read raw to detect header row dynamically
+            df_raw = pd.read_excel(self.excel_path, sheet_name='Table_Coverage', header=None)
+
+            # Find the header row by looking for "Landlord" or "Provider" in first column
+            header_row = None
+            for row_idx in range(min(15, len(df_raw))):
+                cell = str(df_raw.iloc[row_idx, 0]).lower()
+                if 'landlord' in cell or 'provider' in cell or 'organisation' in cell:
+                    header_row = row_idx
+                    break
+
+            if header_row is None:
+                # Fallback to hardcoded skiprows
+                self.log("  ⚠️ Could not detect Table_Coverage header; using skiprows=3")
+                header_row = 3
+
+            # Re-read with detected header
+            coverage_df = pd.read_excel(self.excel_path, sheet_name='Table_Coverage',
+                                        skiprows=header_row)
+
+            # Normalize column names for matching
+            coverage_df.columns = [str(c).strip().lower().replace(' ', '_') for c in coverage_df.columns]
+
+            # Map to standardized names
+            col_renames = {}
+            for col in coverage_df.columns:
+                if 'landlord_name' in col or 'provider_name' in col or 'organisation' in col:
+                    col_renames[col] = 'landlord_name'
+                elif 'landlord_code' in col or 'provider_code' in col or 'reg' in col:
+                    col_renames[col] = 'landlord_code'
+                elif 'landlord_type' in col or 'provider_type' in col or 'type' in col:
+                    if 'landlord_type' not in col_renames.values():
+                        col_renames[col] = 'landlord_type'
+                elif 'lcra_perception' in col or f'{tsm_prefix}_lcra' in col:
+                    col_renames[col] = 'lcra_perception'
+                elif 'lcho_perception' in col or f'{tsm_prefix}_lcho' in col:
+                    col_renames[col] = 'lcho_perception'
+                elif 'combined_perception' in col or f'{tsm_prefix}_combined' in col:
+                    col_renames[col] = 'combined_perception'
+
+            coverage_df = coverage_df.rename(columns=col_renames)
+
+            # Ensure required columns exist
+            for required in ['landlord_code']:
+                if required not in coverage_df.columns:
+                    self.log(f"  ⚠️ Required column '{required}' not found in Table_Coverage")
+                    raise ValueError(f"Missing required column: {required}")
+
             # Clean the data
             coverage_df['landlord_code'] = coverage_df['landlord_code'].astype(str).str.strip()
             coverage_df = coverage_df.dropna(subset=['landlord_code'])
             coverage_df = coverage_df[coverage_df['landlord_code'] != '']
-            
+
             # Create dataset type mapping
-            coverage_df['dataset_type'] = coverage_df.apply(
-                lambda row: 'COMBINED' if row['tsm24_combined_perception'] == 'Yes'
-                else 'LCRA' if row['tsm24_lcra_perception'] == 'Yes'
-                else 'LCHO' if row['tsm24_lcho_perception'] == 'Yes'
-                else None, axis=1
-            )
+            lcra_col = 'lcra_perception' if 'lcra_perception' in coverage_df.columns else None
+            lcho_col = 'lcho_perception' if 'lcho_perception' in coverage_df.columns else None
+            combined_col = 'combined_perception' if 'combined_perception' in coverage_df.columns else None
+
+            def determine_dataset_type(row):
+                if combined_col and str(row.get(combined_col, '')).strip().lower() == 'yes':
+                    return 'COMBINED'
+                if lcra_col and str(row.get(lcra_col, '')).strip().lower() == 'yes':
+                    return 'LCRA'
+                if lcho_col and str(row.get(lcho_col, '')).strip().lower() == 'yes':
+                    return 'LCHO'
+                return None
+
+            coverage_df['dataset_type'] = coverage_df.apply(determine_dataset_type, axis=1)
             
             self.log(f"✅ Loaded coverage data for {len(coverage_df)} providers")
             self.log(f"  - LCRA providers: {(coverage_df['dataset_type'] == 'LCRA').sum()}")
@@ -144,21 +339,22 @@ class EnhancedAnalyticsETL:
     def extract_lcra_data(self):
         """Extract LCRA perception data"""
         self.log("📂 Loading LCRA perception data...")
-        
+
         try:
             # Construct sheet name based on year
             sheet_name = f'TSM{str(self.year)[2:]}_LCRA_Perception'
-            
+
             # Read without headers first
-            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
-            
-            # Data starts from different rows depending on year
-            df = df.iloc[self.lcra_skiprows:].reset_index(drop=True)
-            
-            # Select and rename columns
-            selected_columns = list(self.lcra_column_mapping.keys())
+            df_raw = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+
+            # Detect columns dynamically, with hard-coded fallback
+            data_start_row, column_mapping = self._detect_column_mapping(df_raw, 'LCRA')
+
+            # Slice data rows and select mapped columns
+            df = df_raw.iloc[data_start_row:].reset_index(drop=True)
+            selected_columns = list(column_mapping.keys())
             df = df.iloc[:, selected_columns]
-            df.columns = [self.lcra_column_mapping[col] for col in selected_columns]
+            df.columns = [column_mapping[col] for col in selected_columns]
             
             # Clean data
             df = df[df['provider_code'].notna()]
@@ -168,39 +364,45 @@ class EnhancedAnalyticsETL:
             tp_cols = [col for col in df.columns if col.startswith('TP')]
             for tp_col in tp_cols:
                 df[tp_col] = pd.to_numeric(df[tp_col], errors='coerce')
-            
+
+            # Validate extracted columns contain plausible scores
+            self._validate_tp_columns(df, 'LCRA')
+
             # Remove providers with no data
             df = df.dropna(subset=tp_cols, how='all')
-            
+
             # Add dataset type and suffix to provider names
             df['dataset_type'] = 'LCRA'
             df['provider_name'] = df['provider_name'] + ' - LCRA'
-            
+
             self.log(f"✅ Loaded {len(df)} LCRA providers with {len(tp_cols)} TP measures")
             return df
-            
+
         except Exception as e:
             self.log(f"❌ Error loading LCRA data: {str(e)}")
             raise
-            
+
     def extract_lcho_data(self):
         """Extract LCHO perception data"""
         self.log("📂 Loading LCHO perception data...")
-        
+
         try:
             # Construct sheet name based on year
             sheet_name = f'TSM{str(self.year)[2:]}_LCHO_Perception'
-            
+
             # Read without headers first
-            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
-            
-            # Data starts from different rows depending on year
-            df = df.iloc[self.lcho_skiprows:].reset_index(drop=True)
-            
-            # Select and rename columns
-            selected_columns = list(self.lcho_column_mapping.keys())
+            df_raw = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+
+            # Detect columns dynamically, with hard-coded fallback
+            lcho_tp_codes = [tp for tp in self.tp_codes if tp not in ['TP02', 'TP03', 'TP04']]
+            data_start_row, column_mapping = self._detect_column_mapping(
+                df_raw, 'LCHO', expected_tp_codes=lcho_tp_codes)
+
+            # Slice data rows and select mapped columns
+            df = df_raw.iloc[data_start_row:].reset_index(drop=True)
+            selected_columns = list(column_mapping.keys())
             df = df.iloc[:, selected_columns]
-            df.columns = [self.lcho_column_mapping[col] for col in selected_columns]
+            df.columns = [column_mapping[col] for col in selected_columns]
             
             # Clean data
             df = df[df['provider_code'].notna()]
@@ -211,6 +413,9 @@ class EnhancedAnalyticsETL:
             for tp_col in tp_cols:
                 df[tp_col] = pd.to_numeric(df[tp_col], errors='coerce')
             
+            # Validate extracted columns contain plausible scores
+            self._validate_tp_columns(df, 'LCHO')
+
             # Add NA columns for TP02-TP04 (not applicable to LCHO)
             df['TP02'] = np.nan  # Repairs satisfaction - N/A for LCHO
             df['TP03'] = np.nan  # Time to complete repair - N/A for LCHO
@@ -235,21 +440,22 @@ class EnhancedAnalyticsETL:
     def extract_combined_data(self):
         """Extract data for providers that appear in Combined sheet"""
         self.log("📂 Loading Combined perception data...")
-        
+
         try:
             # Construct sheet name based on year
             sheet_name = f'TSM{str(self.year)[2:]}_Combined_Perception'
-            
+
             # Try to load combined sheet
-            df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
-            
-            # Data starts from different rows depending on year (same as LCRA)
-            df = df.iloc[self.lcra_skiprows:].reset_index(drop=True)
-            
-            # Use LCRA mapping as base (assumes combined has all columns)
-            selected_columns = list(self.lcra_column_mapping.keys())
+            df_raw = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+
+            # Detect columns dynamically (Combined uses same layout as LCRA)
+            data_start_row, column_mapping = self._detect_column_mapping(df_raw, 'COMBINED')
+
+            # Slice data rows and select mapped columns
+            df = df_raw.iloc[data_start_row:].reset_index(drop=True)
+            selected_columns = list(column_mapping.keys())
             df = df.iloc[:, selected_columns]
-            df.columns = [self.lcra_column_mapping[col] for col in selected_columns]
+            df.columns = [column_mapping[col] for col in selected_columns]
             
             # Clean data
             df = df[df['provider_code'].notna()]
@@ -548,19 +754,40 @@ class EnhancedAnalyticsETL:
             lcho_df = self.extract_lcho_data()
             combined_df = self.extract_combined_data()
             
-            # Combine all data
+            # Remove COMBINED entries where provider already exists in LCRA or LCHO.
+            # Providers legitimately appear in BOTH LCRA and LCHO with different
+            # scores (different housing schemes) — both must be kept.
+            if not combined_df.empty:
+                lcra_codes = set(lcra_df['provider_code'])
+                lcho_codes = set(lcho_df['provider_code'])
+                before_filter = len(combined_df)
+                combined_df = combined_df[
+                    ~combined_df['provider_code'].isin(lcra_codes | lcho_codes)
+                ]
+                removed = before_filter - len(combined_df)
+                if removed > 0:
+                    self.log(f"  Removed {removed} COMBINED entries (already in LCRA/LCHO)")
+                self.log(f"  Kept {len(combined_df)} COMBINED-only providers")
+
+            # Combine all data — LCRA and LCHO entries for the same provider are
+            # intentionally kept as separate rows (different schemes, different scores)
             all_data = pd.concat([lcra_df, lcho_df, combined_df], ignore_index=True)
-            
+            self.log(f"  Total rows after merge: {len(all_data)} "
+                     f"(LCRA: {(all_data['dataset_type']=='LCRA').sum()}, "
+                     f"LCHO: {(all_data['dataset_type']=='LCHO').sum()}, "
+                     f"COMBINED: {(all_data['dataset_type']=='COMBINED').sum()})")
+
             # Add year column to wide-format data
             all_data['year'] = self.year
             
-            # Phase 3: Transform to long format
-            lcra_long = self.transform_to_long_format(lcra_df, 'LCRA')
-            lcho_long = self.transform_to_long_format(lcho_df, 'LCHO')
-            combined_long = self.transform_to_long_format(combined_df, 'COMBINED') if not combined_df.empty else pd.DataFrame()
-            
-            # Combine all long format data
-            all_raw_scores = pd.concat([lcra_long, lcho_long, combined_long], ignore_index=True)
+            # Phase 3: Transform to long format (from deduplicated wide data)
+            all_raw_scores_parts = []
+            for ds_type in all_data['dataset_type'].unique():
+                ds_subset = all_data[all_data['dataset_type'] == ds_type]
+                long_part = self.transform_to_long_format(ds_subset, ds_type)
+                if not long_part.empty:
+                    all_raw_scores_parts.append(long_part)
+            all_raw_scores = pd.concat(all_raw_scores_parts, ignore_index=True)
             
             # Phase 4: Calculate analytics by dataset
             calculated_percentiles = self.calculate_percentiles_by_dataset(all_raw_scores)

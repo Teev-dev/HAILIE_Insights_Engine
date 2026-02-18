@@ -10,6 +10,19 @@ import traceback
 from contextlib import contextmanager
 import os
 
+# Data year constant — update when new annual TSM data is loaded
+CURRENT_DATA_YEAR = 2025
+
+# Initialize Sentry for error tracking (no-op if SENTRY_DSN not set)
+_sentry_dsn = os.environ.get("SENTRY_DSN", "")
+if _sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        traces_sample_rate=0.1,
+        environment=os.environ.get("ENVIRONMENT", "production"),
+    )
+
 # Page configuration - MUST be first Streamlit command
 # Using 'wide' layout for all devices, content adapts responsively
 st.set_page_config(
@@ -236,11 +249,6 @@ def main():
         
         st.markdown("---")
         
-        # Analysis options
-        st.header("Analysis Options")
-        include_confidence = st.checkbox("Include confidence intervals",
-                                         value=True)
-
         # Note about dataset separation
         st.info("""
         🔄 **Automatic Dataset Detection**
@@ -271,7 +279,7 @@ def main():
         • Peer group isolation
         • Automatic metric adaptation
 
-        Data source: 2025 TSM Dataset
+        Data source: {CURRENT_DATA_YEAR} TSM Dataset
         """)
 
     st.markdown('<div id="provider-search-section"></div>', unsafe_allow_html=True)
@@ -355,6 +363,23 @@ def main():
             return
 
         st.success(f"✅ Loaded {dataset_type} analytics for provider: {provider_code}")
+
+        # Show changelog toast for returning users (dismissible, once per session)
+        if 'dismissed_changelog' not in st.session_state:
+            st.session_state.dismissed_changelog = False
+
+        if not st.session_state.dismissed_changelog:
+            with st.container():
+                st.info("""
+                🆕 **Recent Updates** — Based on community feedback:
+                - Corrected measure descriptions for TP07–TP11
+                - "Raw Data" section renamed to "Score Breakdown" for clarity
+                - Improved priority matrix labels and correlation display
+                - Updated help text to match calculation methodology
+                """)
+                if st.button("Dismiss", key="dismiss_changelog"):
+                    st.session_state.dismissed_changelog = True
+                    st.rerun()
 
         # Get applicable measures for this dataset type
         applicable_measures = data_processor.get_applicable_measures(dataset_type)
@@ -457,8 +482,8 @@ def main():
 
                 dashboard.render_priority_matrix(priority, detailed_analysis)
 
-            with st.expander("📋 Raw Data", expanded=False):
-                st.markdown(f"### Raw Data - {dataset_type} Provider")
+            with st.expander("📋 Score Breakdown", expanded=False):
+                st.markdown(f"### Your TSM Scores — {dataset_type}")
 
                 # Show provider's raw scores - FILTERED BY DATASET TYPE
                 scores_df = data_processor.get_provider_scores(provider_code)
@@ -506,7 +531,7 @@ def main():
         # Footer
         st.markdown("---")
         st.caption(
-            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
+            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: {CURRENT_DATA_YEAR} TSM"
         )
         st.markdown(
             '<p style="text-align: center; font-size: 0.85em; color: #666;">'
@@ -532,7 +557,7 @@ def main():
         
         # Footer with privacy link
         st.markdown("---")
-        st.caption("HAILIE TSM Insights Engine v3.0 | Data: 2025 TSM")
+        st.caption(f"HAILIE TSM Insights Engine v3.0 | Data: {CURRENT_DATA_YEAR} TSM")
         st.markdown(
             '<p style="text-align: center; font-size: 0.85em; color: #666;">'
             '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'

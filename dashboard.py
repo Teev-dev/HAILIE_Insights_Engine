@@ -7,6 +7,32 @@ from typing import Dict, Any
 from tooltip_definitions import TooltipDefinitions
 from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
 
+
+def _corr_label(strength: float) -> str:
+    """Qualitative label for correlation strength (absolute value)."""
+    s = abs(strength)
+    if s >= 0.70:
+        return "Strong"
+    if s >= 0.40:
+        return "Moderate"
+    if s >= 0.20:
+        return "Weak"
+    return "Negligible"
+
+
+# Consistent Plotly layout defaults for editorial aesthetic
+PLOTLY_LAYOUT = dict(
+    font=dict(
+        family='-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif',
+        size=12,
+        color='#1E293B'
+    ),
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(250,250,250,1)',
+    margin=dict(l=60, r=20, t=50, b=60),
+)
+
+
 class ExecutiveDashboard:
     """
     Renders the executive dashboard with key metrics
@@ -169,13 +195,13 @@ class ExecutiveDashboard:
                             {momentum['momentum_text']}
                         </p>
                         <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 0.25rem;">
-                            <strong>2025 vs 2024:</strong> {momentum['year_over_year_change']:+.1f} points average
+                            <strong>{momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)}:</strong> {momentum['year_over_year_change']:+.1f} points average
                         </p>
                         <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 0.5rem;">
                             {momentum.get('total_measures_compared', 0)} measures compared
                         </p>
                         <p style="font-size: 0.9rem; font-weight: 600; color: #1E293B; margin-top: 0.5rem; margin-bottom: 0.5rem;">
-                            Your 2025 vs 2024 performance:
+                            Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:
                         </p>
                     """
                     
@@ -210,7 +236,7 @@ class ExecutiveDashboard:
                     """)
                 else:
                     st.markdown(f"""
-                    **Your 2025 vs 2024 performance:**
+                    **Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:**
                     - **Overall change**: {momentum['year_over_year_change']:+.1f} points average
                     - **Measures compared**: {momentum.get('total_measures_compared', 0)} satisfaction measures
                     """)
@@ -231,11 +257,9 @@ class ExecutiveDashboard:
 
         # YOUR PRIORITY
         with cols[2]:
-            # Format data for display
-            corr_strength = priority.get('correlation_strength', 0)
-            if corr_strength == 0 and 'correlation_with_tp01' in priority:
-                corr_strength = abs(priority['correlation_with_tp01']) * 100
-            corr_text = "Strong" if corr_strength > 70 else "Moderate" if corr_strength > 40 else "Weak"
+            # Format data for display — use raw coefficient (0-1) with qualitative label
+            raw_corr = abs(priority.get('correlation_with_tp01', 0))
+            corr_text = _corr_label(raw_corr)
 
             measure_code = priority.get('priority_measure', priority.get('measure', 'N/A'))
             measure_desc = priority.get('priority_description', priority.get('measure_name', 'No priority identified'))
@@ -274,7 +298,7 @@ class ExecutiveDashboard:
                         Improvement potential: {improvement:.1f}%
                     </p>
                     <p style="font-size: 0.85rem; color: #475569; margin-top: 0.3rem;">
-                        TP01 correlation: {corr_text} ({corr_strength:.1f}%)
+                        TP01 correlation: {corr_text} ({raw_corr:.2f})
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -287,7 +311,7 @@ class ExecutiveDashboard:
                 - **Focus area**: {measure_desc} ({measure_code})
                 - **Current performance**: {current_percentile:.1f}th percentile
                 - **Improvement potential**: {improvement:.1f}% (room to improve)
-                - **TP01 correlation**: {corr_strength:.1f}% ({corr_text.lower()} relationship with overall satisfaction)
+                - **TP01 correlation**: {corr_text} ({raw_corr:.2f})
                 - **Weighted priority score**: {priority.get('priority_score', priority.get('weighted_priority_score', 0)):.1f}
                 - **Current score**: {priority.get('current_score', 'N/A')}
 
@@ -569,10 +593,10 @@ class ExecutiveDashboard:
                     - **Bubble size**: Combined priority score
 
                     **Quadrants**:
-                    - **Top-Right (High Priority)**: High impact + High potential 
-                    - **Top-Left (Quick Wins)**: High impact + Lower potential
-                    - **Bottom-Right (Monitor)**: Lower impact + High potential
-                    - **Bottom-Left (Low Priority)**: Lower impact + Lower potential
+                    - **Top-Right (High Priority)**: High impact + High potential — focus here first
+                    - **Top-Left (Maintain & Protect)**: High impact + Already strong — protect these strengths
+                    - **Bottom-Right (Lower Impact)**: High potential + Lower impact on overall satisfaction
+                    - **Bottom-Left (Low Priority)**: Lower impact + Already performing well
 
                     **Focus on measures in the top-right quadrant for maximum impact.**
                     """)
@@ -613,11 +637,12 @@ class ExecutiveDashboard:
                         else:
                             priority_level = "Low"
 
+                        corr_raw = row['Correlation'] / 100  # Convert back to coefficient for display
                         hover_text = (
                             f"{row['Description']}<br>"
                             f"Priority Level: {priority_level}<br>"
                             f"Improvement Potential: {row['Improvement Potential']:.1f}%<br>"
-                            f"TP01 Correlation: {row['Correlation']:.1f}%<br>"
+                            f"TP01 Correlation: {_corr_label(corr_raw)} ({corr_raw:.2f})<br>"
                             f"Weighted Priority Score: {priority_score:.1f}<br>"
                             f"Focus Area Ranking: {'Top 3' if priority_score >= sorted(scatter_df['Weighted Priority'], reverse=True)[2] else 'Lower Priority'}"
                         )
@@ -648,14 +673,14 @@ class ExecutiveDashboard:
 
                     # Add quadrant labels
                     fig_matrix.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=12, color="red"))
-                    fig_matrix.add_annotation(x=25, y=75, text="Quick Wins", showarrow=False, font=dict(size=12, color="green"))
-                    fig_matrix.add_annotation(x=75, y=25, text="Monitor", showarrow=False, font=dict(size=12, color="orange"))
+                    fig_matrix.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=12, color="green"))
+                    fig_matrix.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=12, color="orange"))
                     fig_matrix.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=12, color="gray"))
 
                     fig_matrix.update_layout(
                         title="Priority Matrix: Improvement Potential vs TP01 Correlation - Hover for Details",
                         xaxis_title="Improvement Potential (%) →",
-                        yaxis_title="Correlation with Overall Satisfaction (%) ↑",
+                        yaxis_title="Relationship with Overall Satisfaction ↑",
                         height=600,
                         xaxis=dict(
                             range=[0, 100],
@@ -820,10 +845,11 @@ class ExecutiveDashboard:
             insights.append(f"**Stable performance** - {momentum['momentum_text']} year-over-year.")
 
         # Priority insights with correlation context
-        if priority['priority_level'] in ['Critical', 'High']:
-            corr_strength = priority.get('correlation_strength', 0)
-            corr_text = "strong" if corr_strength > 70 else "moderate" if corr_strength > 40 else "weak"
-            insights.append(f"**Priority action required** - Focus on {priority['measure_name']} for maximum impact (has {corr_text} correlation with overall satisfaction).")
+        if priority.get('priority_level', '') in ['Critical', 'High']:
+            raw_corr_insight = abs(priority.get('correlation_with_tp01', 0))
+            corr_text_insight = _corr_label(raw_corr_insight).lower()
+            measure_name = priority.get('priority_description', priority.get('measure_name', 'this area'))
+            insights.append(f"**Priority action required** - Focus on {measure_name} for maximum impact ({corr_text_insight} correlation with overall satisfaction).")
 
         # Display insights
         for insight in insights:
@@ -833,8 +859,8 @@ class ExecutiveDashboard:
         st.markdown("#### Recommended Actions")
 
         # Enhanced recommendations with correlation insights
-        corr_strength = priority.get('correlation_strength', 0)
-        impact_text = "high impact on overall satisfaction" if corr_strength > 70 else "moderate impact on overall satisfaction" if corr_strength > 40 else "some impact on overall satisfaction"
+        raw_corr_rec = abs(priority.get('correlation_with_tp01', 0))
+        impact_text = "high impact on overall satisfaction" if raw_corr_rec >= 0.70 else "moderate impact on overall satisfaction" if raw_corr_rec >= 0.40 else "some impact on overall satisfaction"
 
         recommendations = [
             f"1. **Focus on {priority['measure_name']}** - This has the highest improvement potential ({priority['improvement_potential']:.1f}%) with {impact_text}",
@@ -913,7 +939,8 @@ class ExecutiveDashboard:
                 xaxis_title="TSM Measures",
                 yaxis_title="Score",
                 barmode='group',
-                height=400
+                height=400,
+                **PLOTLY_LAYOUT
             )
 
             st.plotly_chart(fig, width='stretch')
@@ -965,7 +992,8 @@ class ExecutiveDashboard:
             title="Correlation with Overall Satisfaction (TP01)",
             xaxis_title="Correlation Coefficient",
             yaxis_title="TSM Measure",
-            height=400
+            height=400,
+            **PLOTLY_LAYOUT
         )
 
         st.plotly_chart(fig, width='stretch')
@@ -1033,13 +1061,13 @@ class ExecutiveDashboard:
                     color=colors,
                     line=dict(width=2, color='white')
                 ),
-                hovertemplate="<b>%{text}</b><br>Improvement: %{x:.1f}%<br>Correlation: %{y:.1f}%<extra></extra>"
+                hovertemplate="<b>%{text}</b><br>Improvement: %{x:.1f}%<br>Correlation Strength: %{y:.0f}/100<extra></extra>"
             ))
 
             fig.update_layout(
                 title="Priority Matrix: Improvement Potential vs Impact",
                 xaxis_title="Improvement Potential (%)",
-                yaxis_title="Correlation Strength with TP01 (%)",
+                yaxis_title="Relationship with Overall Satisfaction",
                 height=500,
                 showlegend=False
             )
@@ -1047,6 +1075,12 @@ class ExecutiveDashboard:
             # Add quadrant lines
             fig.add_hline(y=50, line_dash="dash", line_color="gray", opacity=0.3)
             fig.add_vline(x=50, line_dash="dash", line_color="gray", opacity=0.3)
+
+            # Add quadrant labels
+            fig.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=11, color="red"))
+            fig.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=11, color="green"))
+            fig.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=11, color="orange"))
+            fig.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=11, color="gray"))
 
             st.plotly_chart(fig, width='stretch')
 
@@ -1058,12 +1092,13 @@ class ExecutiveDashboard:
 
             table_data = []
             for i, (measure, data) in enumerate(priority_list, 1):
+                cs = data['correlation_strength']
                 table_data.append({
                     'Rank': i,
                     'Measure': measure,
                     'Priority Score': f"{data['priority_score']:.1f}",
                     'Improvement Potential': f"{data['improvement_potential']:.1f}%",
-                    'Correlation': f"{data['correlation_strength']:.1f}%"
+                    'Correlation': f"{_corr_label(cs)} ({cs:.2f})"
                 })
 
             table_df = pd.DataFrame(table_data)

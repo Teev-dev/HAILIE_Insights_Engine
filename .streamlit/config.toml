@@ -9,8 +9,6 @@ enableWebsocketCompression = true
 
 [browser]
 gatherUsageStats = false
-serverAddress = "0.0.0.0"
-serverPort = 5000
 
 [runner]
 magicEnabled = false

@@ -80,7 +80,7 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 
 **Core Capabilities:**
 - **Ranking Analysis:** Quartile-based peer comparison using percentiles
-- **Momentum Tracking:** Year-over-year performance trend analysis (ready for 2026)
+- **Momentum Tracking:** Year-over-year performance trend analysis (live with 2024-2025 data)
 - **Priority Identification:** Correlation-based improvement area detection
 - **Statistical Methods:** Spearman correlation, percentile rankings, weighted scoring
 
@@ -144,7 +144,7 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 
 **Purpose:** High-performance analytics database with pre-calculated metrics
 
-**Technology:** DuckDB 0.10.x embedded database
+**Technology:** DuckDB 1.4.x embedded database
 
 **Schema Design:**
 
@@ -163,7 +163,9 @@ CREATE TABLE calculated_percentiles (
     provider_code VARCHAR,
     tp_measure VARCHAR,
     percentile_rank FLOAT,  -- 0-100 percentile
-    calculation_date DATE
+    dataset_type VARCHAR,
+    peer_group_size INTEGER,
+    year INTEGER
 );
 
 -- Pre-calculated correlations with TP01
@@ -172,13 +174,14 @@ CREATE TABLE calculated_correlations (
     correlation_with_tp01 FLOAT,  -- Spearman correlation
     p_value FLOAT,
     sample_size INTEGER,
-    calculation_date DATE
+    dataset_type VARCHAR,
+    year INTEGER
 );
 ```
 
 **Storage Characteristics:**
 - Columnar storage format optimized for analytics
-- File size: ~2MB for complete dataset
+- File size: ~8.4MB for complete multi-year dataset (2024 + 2025)
 - Query performance: <100ms for complex aggregations
 - Location: `attached_assets/hailie_analytics_v2.duckdb`
 
@@ -384,7 +387,9 @@ project/
 │   ├── hailie_analytics_v2.duckdb # Analytics database
 │   └── *.xlsx                  # Source TSM data
 ├── ADRs/
-│   └── ADR-001-pivot-to-streamlit-duckdb.md # Architecture decision
+│   ├── ADR-001-pivot-to-streamlit-duckdb.md # Architecture decision: Streamlit/DuckDB pivot
+│   ├── ADR-002-lcho-dataset-integration.md  # LCHO dataset integration with peer isolation
+│   └── ADR-003-multi-year-data-ingestion.md # Multi-year append-based data ingestion
 ├── .streamlit/
 │   └── config.toml            # Streamlit configuration
 ├── README.md                  # Project documentation

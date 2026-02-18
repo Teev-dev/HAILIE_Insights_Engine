@@ -1,7 +1,7 @@
 [project]
-name = "repl-nix-workspace"
-version = "0.1.0"
-description = "Add your description here"
+name = "hailie-tsm-insights"
+version = "3.0.0"
+description = "HAILIE TSM Insights Engine - UK Housing Provider Analytics"
 requires-python = ">=3.11"
 dependencies = [
     "duckdb>=1.4.1",
@@ -10,5 +10,6 @@ dependencies = [
     "pandas>=2.3.2",
     "plotly>=6.3.0",
     "scipy>=1.16.1",
+    "sentry-sdk[streamlit]>=2.0.0",
     "streamlit>=1.49.1",
 ]
