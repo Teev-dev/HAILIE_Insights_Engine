@@ -169,17 +169,17 @@ class TooltipDefinitions:
                 
                 **The 12 measures:**
                 • **TP01**: Overall satisfaction (primary measure)
-                • **TP02**: Satisfaction with repairs
-                • **TP03**: Time taken for recent repair
-                • **TP04**: Satisfaction with repair time
-                • **TP05**: Home is well-maintained
-                • **TP06**: Home is safe
-                • **TP07**: Satisfaction with neighbourhood
-                • **TP08**: Landlord's neighbourhood contribution
-                • **TP09**: Complaint handling approach
-                • **TP10**: Landlord treats residents fairly
-                • **TP11**: Landlord listens to residents
-                • **TP12**: Anti-social behaviour handling
+                • **TP02**: Satisfaction with the overall repairs service
+                • **TP03**: Satisfaction with the time taken to complete most recent repair
+                • **TP04**: Satisfaction that the home is well maintained
+                • **TP05**: Satisfaction that the home is safe
+                • **TP06**: Landlord listens to tenant views and acts upon them
+                • **TP07**: Landlord keeps tenants informed
+                • **TP08**: Landlord treats tenants fairly and with respect
+                • **TP09**: Landlord's approach to complaints handling
+                • **TP10**: Communal areas kept clean and well maintained
+                • **TP11**: Landlord makes a positive contribution to the neighbourhood
+                • **TP12**: Landlord's approach to handling anti-social behaviour
                 """
             },
             'peer_comparison': {

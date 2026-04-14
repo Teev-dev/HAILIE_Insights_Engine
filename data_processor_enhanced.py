@@ -12,34 +12,19 @@ import duckdb
 import numpy as np
 from typing import Optional, Dict, List, Tuple
 from config import DB_PATH
+from tsm_measures import TP_CODES, TP_DESCRIPTIONS, LCHO_EXCLUDED
 
 
 class EnhancedTSMDataProcessor:
     """Enhanced processor for TSM data with dataset isolation"""
 
     def __init__(self, silent_mode=False):
-        self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]  # TP01 to TP12
-        # Updated to use the new enhanced database
+        self.tp_codes = list(TP_CODES)
+        self.tp_descriptions = dict(TP_DESCRIPTIONS)
         self.db_path = DB_PATH
         self.silent_mode = silent_mode
         self._connection = None
         self._connect_to_db()
-
-        # TP measure descriptions
-        self.tp_descriptions = {
-            'TP01': 'Overall satisfaction',
-            'TP02': 'Satisfaction with repairs',
-            'TP03': 'Time taken to complete repair',
-            'TP04': 'Satisfaction with time taken',
-            'TP05': 'Home well-maintained',
-            'TP06': 'Home is safe',
-            'TP07': 'Listens to views',
-            'TP08': 'Keeps informed',
-            'TP09': 'Treats fairly',
-            'TP10': 'Complaints handling',
-            'TP11': 'Communal areas clean',
-            'TP12': 'Anti-social behaviour'
-        }
 
     def _connect_to_db(self):
         """Connect to the enhanced DuckDB database"""
@@ -123,34 +108,34 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching dataset type: {str(e)}")
             return None
 
-    def get_provider_percentiles(self, provider_code: str, year: int = 2025) -> pd.DataFrame:
+    def get_provider_percentiles(self, provider_code: str, year: int = 2025, dataset_type: Optional[str] = None) -> pd.DataFrame:
         """
         Get pre-calculated percentile ranks for a specific provider
-        Within their appropriate peer group (LCRA or LCHO)
-        Defaults to year 2025 (latest data)
+        within their appropriate peer group (LCRA or LCHO).
+
+        When the provider is listed under both datasets, pass dataset_type to
+        filter the correct peer group.
         """
         self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
-        # First get the provider's dataset type
-        dataset_type = self.get_provider_dataset_type(provider_code)
-        if not dataset_type:
-            self._log_error(f"Could not determine dataset type for provider {provider_code}")
-            return pd.DataFrame()
-
         query = """
-        SELECT 
-            tp_measure, 
+        SELECT
+            tp_measure,
             percentile_rank,
             peer_group_size,
             dataset_type
-        FROM calculated_percentiles 
+        FROM calculated_percentiles
         WHERE provider_code = ? AND year = ?
         """
+        params: List = [provider_code, year]
+        if dataset_type:
+            query += " AND dataset_type = ?"
+            params.append(dataset_type)
 
         try:
-            result = self._connection.execute(query, [provider_code, year]).df()
+            result = self._connection.execute(query, params).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching percentiles: {str(e)}")
@@ -245,17 +230,19 @@ class EnhancedTSMDataProcessor:
 
         return options
 
-    def get_provider_scores(self, provider_code: str, year: int = 2025) -> pd.DataFrame:
+    def get_provider_scores(self, provider_code: str, year: int = 2025, dataset_type: Optional[str] = None) -> pd.DataFrame:
         """
-        Get raw scores for a specific provider for a given year
-        Defaults to 2025 (latest year)
+        Get raw scores for a specific provider for a given year.
+
+        When the provider exists in both LCRA and LCHO datasets under the same
+        provider_code, pass dataset_type to isolate the correct peer group.
         """
         self._ensure_connection()
         if not self._connection:
             return pd.DataFrame()
 
         query = """
-        SELECT 
+        SELECT
             tp_measure,
             score,
             dataset_type,
@@ -263,9 +250,13 @@ class EnhancedTSMDataProcessor:
         FROM raw_scores
         WHERE provider_code = ? AND year = ?
         """
+        params: List = [provider_code, year]
+        if dataset_type:
+            query += " AND dataset_type = ?"
+            params.append(dataset_type)
 
         try:
-            result = self._connection.execute(query, [provider_code, year]).df()
+            result = self._connection.execute(query, params).df()
             return result
         except Exception as e:
             self._log_error(f"Error fetching provider scores: {str(e)}")
@@ -438,7 +429,7 @@ class EnhancedTSMDataProcessor:
         LCHO doesn't have TP02-TP04 (repairs metrics)
         """
         if dataset_type == 'LCHO':
-            return [tp for tp in self.tp_codes if tp not in ['TP02', 'TP03', 'TP04']]
+            return [tp for tp in self.tp_codes if tp not in LCHO_EXCLUDED]
         else:
             return self.tp_codes
 
