@@ -1,52 +1,35 @@
-# Git
-.git/
-.gitignore
+# Allowlist .dockerignore: everything is excluded unless explicitly re-included.
+# Adding a new file to the repo does NOT automatically ship it to production.
+# When adding a new runtime file, add an explicit `!path` line here.
 
-# Source data (not needed at runtime)
-data/source/
-data/docs/
-data/hailie_analytics.duckdb
+# Exclude everything by default
+**
 
-# Documentation (keep README.md for pyproject.toml)
+# --- Runtime Python modules (top level) ---
+!app.py
+!dashboard.py
+!analytics_refactored.py
+!data_processor_enhanced.py
+!styles.py
+!tooltip_definitions.py
+!mobile_utils.py
+!config.py
+!tsm_measures.py
+
+# --- Package metadata (required by `pip install .`) ---
+!pyproject.toml
 !README.md
-CLAUDE.md
-MASTERPLAN.md
-FEATURES_ROADMAP.md
-DEPLOYMENT.md
-MAINTENANCE.md
-HANDOFF.md
-HAILIE-Insights-Engine-Architecture-v2.md
-LICENSE-CODE
-LICENSE-DOCS
-ADRs/
-guides/
 
-# Development & build tools
-build_analytics_db.py
-build_analytics_db_v2.py
-db_view_script.py
-diagnose_duplicates.py
-review_pvalues.py
+# --- Streamlit assets ---
+!pages/
+!pages/**/*.py
+!.streamlit/
+!.streamlit/**/*.toml
 
-# Python artifacts
-__pycache__/
-*.py[cod]
-*.egg-info/
+# --- Baked-in default analytics database ---
+# Source xlsx files, docs, and the legacy duckdb stay excluded by default
+!data/
+!data/hailie_analytics_v2.duckdb
 
-# Environment
-.env
-.env.*
-.venv/
-
-# OS & IDE
-.DS_Store
-.idea/
-.vscode/
-
-# Replit (legacy)
-.replit
-replit.md
-
-# Docker
-Dockerfile
-.dockerignore
+# --- Container entrypoint ---
+!entrypoint.sh
