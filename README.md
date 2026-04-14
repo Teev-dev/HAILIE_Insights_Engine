@@ -2,6 +2,8 @@
 
 A Streamlit web application that transforms UK government TSM (Tenant Satisfaction Measures) data into actionable executive insights for social housing providers.
 
+**Live:** https://insights.housingai.org
+
 ## Overview
 
 HAILIE Insights Engine delivers instant analytics from pre-processed TSM 2024-2025 government data, supporting both LCRA (Low Cost Rental Accommodation) and LCHO (Low Cost Home Ownership) providers with dataset-specific peer comparisons.

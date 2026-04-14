@@ -34,7 +34,7 @@
 - [x] Railway project: extraordinary-trust
 - [x] Branch: migration/railway (temporary, for testing before merge to main)
 - [x] Volume mounted at /data with DATA_PATH=/data
-- [x] Public URL: https://hailieinsightsengine-production.up.railway.app
+- [x] Public URL: https://insights.housingai.org
 - [x] Auto-seed working (config.py copies baked-in DB to volume on first deploy)
 - [x] App loads and functions correctly
 
@@ -72,7 +72,7 @@ Check the public URL — the "double_arrow_right" text at top should be gone.
 | Owner | Tom Stephenson (Teev-dev) |
 | License | Dual: MIT (code), CC-BY 4.0 (docs/data) |
 | Railway project | extraordinary-trust |
-| Public URL | hailieinsightsengine-production.up.railway.app |
+| Public URL | insights.housingai.org |
 | Volume mount | /data (DATA_PATH=/data) |
 | Current branch on Railway | migration/railway |
 | Production branch | main (switch back after merge) |
