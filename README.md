@@ -26,9 +26,28 @@ HAILIE Insights Engine delivers instant analytics from pre-processed TSM 2024-20
 ```bash
 git clone https://github.com/Teev-dev/HAILIE_Insights_Engine.git
 cd HAILIE_Insights_Engine
+python -m venv .venv && source .venv/bin/activate
 pip install .
 streamlit run app.py
 ```
+
+### Pre-commit hooks (one-time setup per clone)
+
+This repo uses [pre-commit](https://pre-commit.com/) with [gitleaks](https://github.com/gitleaks/gitleaks) to block accidental commits of API keys, tokens, and private keys. Install once after cloning:
+
+```bash
+source .venv/bin/activate           # if not already active
+pip install pre-commit
+pre-commit install                  # wires the hook into .git/hooks/pre-commit
+pre-commit run --all-files          # optional: scan the whole repo now
+```
+
+From this point on, `git commit` runs gitleaks automatically on staged content.
+
+**Notes:**
+- If you install `pre-commit` inside the project venv (recommended), the `pre-commit` command is only on PATH when the venv is activated. For a global install, use `brew install pre-commit` on macOS.
+- If a genuine false positive fires, add an allowlist rule to `.gitleaks.toml` — never bypass the hook with `git commit --no-verify`.
+- If you delete and recreate the venv, re-run `pre-commit install`.
 
 ### Docker
 
