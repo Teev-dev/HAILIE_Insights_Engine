@@ -18,7 +18,7 @@ The HAILIE Insights Engine is a specialized analytics platform that transforms U
 ┌─────────────────────────────────────────────────────────┐
 │                    User Interface                        │
 │                  (Streamlit Web App)                     │
-│                      Port 5000                           │
+│                   Port $PORT (default 8501)               │
 └─────────────────────────────────────────────────────────┘
                             │
                             ▼
@@ -180,7 +180,7 @@ CREATE TABLE calculated_correlations (
 - Columnar storage format optimized for analytics
 - File size: ~2MB for complete dataset
 - Query performance: <100ms for complex aggregations
-- Location: `attached_assets/hailie_analytics_v2.duckdb`
+- Location: `data/hailie_analytics_v2.duckdb` (resolved via `config.py`; production uses `DATA_PATH` env var)
 
 ## Data Flow Architecture
 
@@ -230,10 +230,16 @@ User Selects Provider
 - **OpenPyXL** - Excel file processing
 
 ### Deployment Environment
-- **Platform:** Replit
-- **Server:** Streamlit server on port 5000
-- **Configuration:** `.streamlit/config.toml`
-- **Workflow:** `streamlit run app.py --server.port 5000`
+- **Platform:** Railway (Docker)
+- **Container:** `python:3.11-slim` base, non-root `hailie` user
+- **Server:** Streamlit on `$PORT` (Railway-injected, default 8501)
+- **Configuration:** `railway.toml`, `.streamlit/config.toml`, `config.py`
+- **Health Check:** `/_stcore/health` (30s interval, 3 retries)
+- **Data Strategy:** DuckDB baked into image (default) or `DATA_PATH` env var for persistent volume
+- **Build:** `docker build -t hailie-insights .`
+- **Run:** `docker run -p 8501:8501 -e PORT=8501 hailie-insights`
+
+See `ADR-004` for the full migration decision record and `DEPLOYMENT.md` for step-by-step instructions.
 
 ## Performance Characteristics
 
@@ -363,6 +369,7 @@ The system processes 12 government-defined satisfaction measures:
 |---------|------|-------------|
 | 1.0 | Aug 2025 | Initial AWS cloud-native design |
 | 2.0 | Oct 2025 | Pivot to Streamlit/DuckDB architecture |
+| 2.1 | Apr 2026 | Migration from Replit to Railway (Docker) — see ADR-004 |
 
 ## Appendix: File Structure
 
@@ -372,22 +379,32 @@ project/
 ├── dashboard.py                # Dashboard rendering components
 ├── analytics_refactored.py     # Analytics calculations
 ├── data_processor_enhanced.py  # Enhanced database access layer
-├── build_analytics_db.py       # ETL pipeline for LCRA dataset
-├── build_analytics_db_v2.py    # Enhanced ETL pipeline with LCRA/LCHO support
+├── config.py                   # Data path resolution (DATA_PATH env var)
 ├── styles.py                   # CSS styling
 ├── tooltip_definitions.py      # User help text
-├── mobile_utils.py            # Mobile responsiveness utilities
-├── db_view_script.py          # Database inspection tool
-├── diagnose_duplicates.py     # Data integrity checker
-├── review_pvalues.py          # Statistical significance analyzer
-├── attached_assets/
-│   ├── hailie_analytics_v2.duckdb # Analytics database
-│   └── *.xlsx                  # Source TSM data
+├── mobile_utils.py             # Mobile responsiveness utilities
+├── build_analytics_db.py       # ETL pipeline for LCRA dataset (offline)
+├── build_analytics_db_v2.py    # Enhanced ETL with LCRA/LCHO (offline)
+├── db_view_script.py           # Database inspection tool
+├── diagnose_duplicates.py      # Data integrity checker
+├── review_pvalues.py           # Statistical significance analyzer
+├── data/
+│   ├── hailie_analytics_v2.duckdb  # Pre-built analytics database
+│   ├── source/                 # Source TSM .xlsx files
+│   └── docs/                   # Reference PDFs
+├── Dockerfile                  # Docker container build
+├── railway.toml                # Railway deployment config
+├── .dockerignore               # Docker build exclusions
 ├── ADRs/
-│   └── ADR-001-pivot-to-streamlit-duckdb.md # Architecture decision
+│   ├── ADR-001-pivot-to-streamlit-duckdb.md
+│   ├── ADR-002-lcho-dataset-integration.md
+│   ├── ADR-003-multi-year-data-ingestion.md
+│   └── ADR-004-migration-replit-to-railway.md
 ├── .streamlit/
-│   └── config.toml            # Streamlit configuration
-├── README.md                  # Project documentation
-├── HAILIE-Insights-Engine-Architecture-v2.md # Architecture document
-├── replit.md                  # Replit-specific documentation
-└── pyproject.toml             # Python dependencies
+│   └── config.toml             # Streamlit configuration
+├── CLAUDE.md                   # AI agent constitution
+├── MASTERPLAN.md               # Project vision and principles
+├── DEPLOYMENT.md               # Railway deployment guide
+├── MAINTENANCE.md              # Annual maintenance procedures
+├── README.md                   # Project overview and quick start
+└── pyproject.toml              # Python project metadata and dependencies

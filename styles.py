@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
 """
 CSS Styles Module for HAILIE TSM Insights Engine
 Contains all custom CSS styling for the Streamlit application

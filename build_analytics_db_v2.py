@@ -13,6 +13,7 @@ from scipy.stats import spearmanr, percentileofscore
 import os
 import sys
 from datetime import datetime
+from config import DATA_DIR, DB_PATH, SOURCE_DIR
 
 
 class EnhancedAnalyticsETL:
@@ -20,10 +21,10 @@ class EnhancedAnalyticsETL:
     
     def __init__(self, excel_path=None, year=None):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
-        self.db_path = "attached_assets/hailie_analytics_v2.duckdb"
-        
+        self.db_path = DB_PATH
+
         if excel_path is None:
-            self.excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
+            self.excel_path = os.path.join(SOURCE_DIR, "2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx")
             self.year = 2024
         else:
             self.excel_path = excel_path

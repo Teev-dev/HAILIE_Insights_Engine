@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
 
 """
 Mobile detection utilities for the HAILIE TSM Insights Engine

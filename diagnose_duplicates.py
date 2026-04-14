@@ -7,11 +7,12 @@ Focus on providers appearing in both LCRA and LCHO datasets
 
 import duckdb
 import pandas as pd
+from config import DB_PATH
 
 def diagnose_duplicates():
     """Check for duplicate providers in the database"""
-    
-    db_path = "attached_assets/hailie_analytics_v2.duckdb"
+
+    db_path = DB_PATH
     
     print("🔍 Diagnosing duplicate provider entries...")
     print("=" * 70)
