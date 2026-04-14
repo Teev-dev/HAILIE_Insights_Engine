@@ -19,8 +19,8 @@ COPY .streamlit/ .streamlit/
 # Production deployments can override with DATA_PATH env var pointing to a persistent volume
 COPY data/hailie_analytics_v2.duckdb data/
 
-# Own the app directory
-RUN chown -R hailie:hailie /app
+# Own the app directory and ensure volume mount point is writable
+RUN chown -R hailie:hailie /app && mkdir -p /data && chown hailie:hailie /data
 
 USER hailie
 
