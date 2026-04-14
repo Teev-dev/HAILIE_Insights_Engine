@@ -101,10 +101,12 @@ When adding a new runtime module, add an explicit `!path` entry to `.dockerignor
 
 ### Secret scanning — CRITICAL
 
-`pre-commit` with the `gitleaks` hook runs on every commit. Install once per clone:
+`pre-commit` with the `gitleaks` hook runs on every commit. Install once per clone — see [README.md](README.md#pre-commit-hooks-one-time-setup-per-clone) for the full setup (including the venv PATH caveat). The short version:
 
 ```bash
-pip install pre-commit && pre-commit install
+source .venv/bin/activate
+pip install pre-commit
+pre-commit install
 ```
 
 Never bypass the hook with `--no-verify` to ship a suspected secret. If gitleaks fires on a legitimate false positive, add an allowlist rule to `.gitleaks.toml` — do not suppress the hook.
