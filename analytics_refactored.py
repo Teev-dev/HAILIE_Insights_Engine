@@ -11,29 +11,18 @@ import numpy as np
 import streamlit as st
 from typing import Dict, List, Optional
 
+from tsm_measures import TP_CODES, TP_DESCRIPTIONS
+
 
 class TSMAnalytics:
     """
     Handles analytics retrieval from pre-calculated DuckDB analytics
     """
-    
+
     def __init__(self, data_processor):
         self.data_processor = data_processor  # Instance of refactored TSMDataProcessor
-        self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
-        self.tp_descriptions = {
-            'TP01': 'Overall satisfaction',
-            'TP02': 'Satisfaction with repairs',
-            'TP03': 'Time taken to complete most recent repair',
-            'TP04': 'Satisfaction with time taken to complete most recent repair',
-            'TP05': 'Satisfaction that home is well-maintained',
-            'TP06': 'Satisfaction that home is safe',
-            'TP07': 'Satisfaction with neighbourhood',
-            'TP08': 'Satisfaction with landlord\'s contribution to neighbourhood',
-            'TP09': 'Satisfaction with approach to handling of complaints',
-            'TP10': 'Agreement that landlord treats residents fairly',
-            'TP11': 'Agreement that landlord listens to residents\' views',
-            'TP12': 'Satisfaction with landlord\'s approach to handling of anti-social behaviour'
-        }
+        self.tp_codes = list(TP_CODES)
+        self.tp_descriptions = dict(TP_DESCRIPTIONS)
     
     def calculate_rankings(self, df: pd.DataFrame, peer_group_filter: str = "All Providers", dataset_type: Optional[str] = None) -> Dict:
         """
@@ -127,9 +116,10 @@ class TSMAnalytics:
         Identifies which measures improved/declined and overall trajectory
         """
         try:
-            # Get provider data for both years
-            provider_2024 = self.data_processor.get_provider_scores(provider_code, year=2024)
-            provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025)
+            if not dataset_type:
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+            provider_2024 = self.data_processor.get_provider_scores(provider_code, year=2024, dataset_type=dataset_type)
+            provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025, dataset_type=dataset_type)
             
             # Check if we have data for both years
             if provider_2024.empty or provider_2025.empty:
@@ -226,35 +216,31 @@ class TSMAnalytics:
                 'disabled': True
             }
     
-    def identify_priority(self, df: pd.DataFrame, provider_code: str) -> Dict:
+    def identify_priority(self, df: pd.DataFrame, provider_code: str, dataset_type: Optional[str] = None) -> Dict:
         """
         Identify highest-priority improvement area using pre-calculated correlations and percentiles
         """
         try:
-            # Check if provider exists
             if not self.data_processor.get_provider_exists(provider_code):
                 return {"error": f"Provider {provider_code} not found"}
-            
-            # Get provider's scores and percentiles
-            provider_scores_df = self.data_processor.get_provider_scores(provider_code)
-            provider_percentiles = self.data_processor.get_provider_percentiles(provider_code)
-            
-            if provider_scores_df.empty:
-                return {"error": "No scores found for priority analysis"}
-            
-            # Convert scores DataFrame to dict for easier access
-            provider_scores = dict(zip(provider_scores_df['tp_measure'], provider_scores_df['score']))
-            
-            # Convert percentiles DataFrame to dict for easier access
-            percentile_dict = {}
-            if not provider_percentiles.empty:
-                percentile_dict = dict(zip(provider_percentiles['tp_measure'], 
-                                          provider_percentiles['percentile_rank']))
-            
-            # Get dataset type for the provider
-            dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+
+            if not dataset_type:
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
             if not dataset_type:
                 dataset_type = 'LCRA'  # Default fallback
+
+            provider_scores_df = self.data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
+            provider_percentiles = self.data_processor.get_provider_percentiles(provider_code, dataset_type=dataset_type)
+
+            if provider_scores_df.empty:
+                return {"error": "No scores found for priority analysis"}
+
+            provider_scores = dict(zip(provider_scores_df['tp_measure'], provider_scores_df['score']))
+
+            percentile_dict = {}
+            if not provider_percentiles.empty:
+                percentile_dict = dict(zip(provider_percentiles['tp_measure'],
+                                          provider_percentiles['percentile_rank']))
             
             # Get pre-calculated correlations with TP01 for the specific dataset
             correlations_df = self.data_processor.get_dataset_correlations(dataset_type)
@@ -344,35 +330,36 @@ class TSMAnalytics:
         # This would require additional metadata about providers
         return df
     
-    def get_detailed_performance_analysis(self, df: pd.DataFrame, provider_code: str) -> Dict:
+    def get_detailed_performance_analysis(self, df: pd.DataFrame, provider_code: str, dataset_type: Optional[str] = None) -> Dict:
         """
-        Get detailed performance analysis using pre-calculated percentiles
+        Get detailed performance analysis using pre-calculated percentiles.
+
+        dataset_type must be passed when the provider appears in both LCRA and
+        LCHO datasets under the same provider_code (e.g. LH3827 / West Kent),
+        otherwise the scores/percentiles dicts silently collapse duplicate TP
+        codes and the UI renders the wrong dataset.
         """
         try:
-            # Check if provider exists
             if not self.data_processor.get_provider_exists(provider_code):
                 return {"error": f"Provider {provider_code} not found"}
-            
-            # Get provider's dataset type for proper peer comparison
-            dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+
+            if not dataset_type:
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
             if not dataset_type:
                 return {"error": "Could not determine dataset type"}
-            
-            # Get provider's scores and percentiles
-            provider_scores_df = self.data_processor.get_provider_scores(provider_code)
-            
+
+            provider_scores_df = self.data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
+
             if provider_scores_df is None or provider_scores_df.empty:
                 return {"error": "No scores found for this provider"}
-            
-            # Convert scores DataFrame to dict
+
             provider_scores = dict(zip(provider_scores_df['tp_measure'], provider_scores_df['score']))
-            
-            provider_percentiles = self.data_processor.get_provider_percentiles(provider_code)
-            
-            # Convert percentiles DataFrame to dict
+
+            provider_percentiles = self.data_processor.get_provider_percentiles(provider_code, dataset_type=dataset_type)
+
             percentile_dict = {}
             if provider_percentiles is not None and not provider_percentiles.empty:
-                percentile_dict = dict(zip(provider_percentiles['tp_measure'], 
+                percentile_dict = dict(zip(provider_percentiles['tp_measure'],
                                           provider_percentiles['percentile_rank']))
             
             detailed_analysis = {}

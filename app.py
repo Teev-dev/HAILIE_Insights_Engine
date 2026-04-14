@@ -12,6 +12,7 @@ from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_i
 import traceback
 from contextlib import contextmanager
 from config import DB_PATH
+from tsm_measures import LCHO_EXCLUDED
 import os
 
 # Page configuration - MUST be first Streamlit command
@@ -368,14 +369,14 @@ def main():
 
         # Calculate key metrics using pre-calculated data within the correct peer group
         rankings = analytics.calculate_rankings(df, "All Providers", dataset_type)
-        momentum = analytics.calculate_momentum(df, provider_code)
+        momentum = analytics.calculate_momentum(df, provider_code, dataset_type=dataset_type)
 
         # Get dataset-specific correlations for priority calculation
         if dataset_type == 'LCHO':
             correlations_df = data_processor.get_dataset_correlations('LCHO')
         else:
             correlations_df = data_processor.get_dataset_correlations('LCRA')
-        priority = analytics.identify_priority(df, provider_code)
+        priority = analytics.identify_priority(df, provider_code, dataset_type=dataset_type)
 
         # Initialize and render dashboard
         dashboard = ExecutiveDashboard()
@@ -410,7 +411,7 @@ def main():
                     """)
 
                 detailed_analysis = analytics.get_detailed_performance_analysis(
-                    df, provider_code)
+                    df, provider_code, dataset_type=dataset_type)
 
                 # Debug logging
                 if show_advanced_logging:
@@ -423,8 +424,8 @@ def main():
                 if dataset_type == 'LCHO' and detailed_analysis and "error" not in detailed_analysis:
                     original_count = len(detailed_analysis)
                     detailed_analysis = {
-                        k: v for k, v in detailed_analysis.items() 
-                        if k not in ['TP02', 'TP03', 'TP04']
+                        k: v for k, v in detailed_analysis.items()
+                        if k not in LCHO_EXCLUDED
                     }
                     if show_advanced_logging:
                         st.write(f"Debug - Filtered {original_count} measures down to {len(detailed_analysis)} for LCHO")
@@ -456,7 +457,7 @@ def main():
                 # Filter priority matrix for LCHO if needed
                 if dataset_type == 'LCHO' and priority:
                     # Ensure repairs metrics aren't in the priority recommendations
-                    if 'measure' in priority and priority['measure'] in ['TP02', 'TP03', 'TP04']:
+                    if 'measure' in priority and priority['measure'] in LCHO_EXCLUDED:
                         st.warning("Priority calculation adjusted for LCHO dataset")
 
                 dashboard.render_priority_matrix(priority, detailed_analysis)
@@ -464,12 +465,7 @@ def main():
             with st.expander("📋 Raw Data", expanded=False):
                 st.markdown(f"### Raw Data - {dataset_type} Provider")
 
-                # Show provider's raw scores - FILTERED BY DATASET TYPE
-                scores_df = data_processor.get_provider_scores(provider_code)
-                
-                # Filter to only show the selected dataset type to avoid confusion
-                if not scores_df.empty and 'dataset_type' in scores_df.columns:
-                    scores_df = scores_df[scores_df['dataset_type'] == dataset_type]
+                scores_df = data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
                 
                 if not scores_df.empty:
                     # Ensure scores_df is a DataFrame, not an array
@@ -477,13 +473,10 @@ def main():
                         # Add descriptions
                         scores_df['description'] = scores_df['tp_measure'].apply(lambda x: data_processor.tp_descriptions.get(x, 'Unknown measure'))
 
-                        # Filter out non-applicable measures based on dataset type
                         if dataset_type == 'LCHO':
-                            # Remove repairs metrics (TP02-TP04) for LCHO providers
-                            na_metrics = ['TP02', 'TP03', 'TP04']
-                            scores_df = scores_df[~scores_df['tp_measure'].isin(na_metrics)]
+                            scores_df = scores_df[~scores_df['tp_measure'].isin(LCHO_EXCLUDED)]
 
-                            st.info("ℹ️ **Note**: Repairs metrics (TP02-TP04) are not applicable to LCHO providers and are excluded from this view.")
+                            st.info("ℹ️ **Note**: Measures TP02-TP04 (repairs and home-maintenance) are not applicable to LCHO providers and are excluded from this view.")
 
                         # Format for display
                         display_df = scores_df[['tp_measure', 'description', 'score']].copy()

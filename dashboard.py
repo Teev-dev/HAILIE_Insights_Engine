@@ -943,7 +943,7 @@ class ExecutiveDashboard:
             for tp_code, data in detailed_analysis.items():
                 table_data.append({
                     'Measure': tp_code,
-                    'Description': data['description'][:40] + '...' if len(data['description']) > 40 else data['description'],
+                    'Description': data['description'],
                     'Your Score': f"{data['score']:.1f}",
                     'Percentile': f"{data['percentile']:.1f}%",
                     'Peer Avg': f"{data['peer_avg']:.1f}"
