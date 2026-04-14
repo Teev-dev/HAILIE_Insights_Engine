@@ -21,14 +21,14 @@
 !README.md
 
 # --- Streamlit assets ---
-!pages/
+# Re-include the specific files only — do NOT un-ignore the whole directory
+# (that would re-include any future siblings by default).
 !pages/**/*.py
-!.streamlit/
 !.streamlit/**/*.toml
 
 # --- Baked-in default analytics database ---
-# Source xlsx files, docs, and the legacy duckdb stay excluded by default
-!data/
+# Source xlsx files, docs, and the legacy duckdb stay excluded by default.
+# Re-include ONLY the specific DB file; do NOT un-ignore data/ as a whole.
 !data/hailie_analytics_v2.duckdb
 
 # --- Container entrypoint ---
