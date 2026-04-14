@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir . && rm -rf /root/.cache
 
 # Copy application code
 COPY app.py dashboard.py analytics_refactored.py data_processor_enhanced.py \
-     styles.py tooltip_definitions.py mobile_utils.py config.py ./
+     styles.py tooltip_definitions.py mobile_utils.py config.py tsm_measures.py ./
 COPY pages/ pages/
 COPY .streamlit/ .streamlit/
 
