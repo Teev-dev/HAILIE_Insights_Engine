@@ -1,0 +1,13 @@
+# Pre-commit hooks. Install once per clone:
+#   pip install pre-commit && pre-commit install
+#
+# Runs gitleaks on staged content before each commit to catch API keys,
+# tokens, private keys and other high-risk secrets. If a false positive
+# fires, add an allowlist rule to .gitleaks.toml rather than bypassing
+# the hook with --no-verify.
+
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks

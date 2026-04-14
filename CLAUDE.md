@@ -83,17 +83,31 @@ st.markdown(f"<span>{html.escape(measure_desc)}</span>", unsafe_allow_html=True)
 
 ### LCRA vs LCHO isolation — CRITICAL
 
-Never mix provider types in peer comparisons. All ranking and percentile methods take `dataset_type` — always pass it.
+Never mix provider types in peer comparisons. All ranking and percentile methods take `dataset_type` — always pass it explicitly from the call site. Providers can exist in both datasets under the same `provider_code` (e.g. West Kent / LH3827); if `dataset_type` is omitted, `get_provider_scores` / `get_provider_percentiles` return rows for both, and any downstream `dict(zip(tp_measure, score))` silently collapses duplicates to the last-returned dataset — a correctness bug with no warning.
 
 ```python
-# WRONG — compares rental providers against home ownership providers
-percentiles = processor.get_provider_percentiles(code, year=2025)
+# WRONG — may return rows for both datasets; dict collapse picks the wrong one
+scores = processor.get_provider_scores(provider_code)
 
-# RIGHT — isolated within provider's own peer group
-dataset_type = processor.get_provider_dataset_type(code)
-percentiles = processor.get_provider_percentiles(code, year=2025)
-# dataset_type is determined automatically and used for peer isolation
+# RIGHT — SQL filters to the caller's known dataset
+scores = processor.get_provider_scores(provider_code, dataset_type=dataset_type)
 ```
+
+### Docker image contents — CRITICAL
+
+`.dockerignore` is **allowlist-shaped**: everything in the repo is excluded from the build context unless explicitly re-included with a `!path` line. Adding a new file does **not** ship it to production by default — you must opt it in. This prevents accidental leaks of docs, credentials, scratch files, or dev scripts.
+
+When adding a new runtime module, add an explicit `!path` entry to `.dockerignore`. Verify with `docker build -t hailie-insights . && docker run --rm hailie-insights find /app -type f` before merging.
+
+### Secret scanning — CRITICAL
+
+`pre-commit` with the `gitleaks` hook runs on every commit. Install once per clone:
+
+```bash
+pip install pre-commit && pre-commit install
+```
+
+Never bypass the hook with `--no-verify` to ship a suspected secret. If gitleaks fires on a legitimate false positive, add an allowlist rule to `.gitleaks.toml` — do not suppress the hook.
 
 ### No PII logging — CRITICAL
 

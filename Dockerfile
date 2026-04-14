@@ -10,18 +10,11 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir . && rm -rf /root/.cache
 
-# Copy application code
-COPY app.py dashboard.py analytics_refactored.py data_processor_enhanced.py \
-     styles.py tooltip_definitions.py mobile_utils.py config.py tsm_measures.py ./
-COPY pages/ pages/
-COPY .streamlit/ .streamlit/
+# Copy application code. The build context is filtered by .dockerignore
+# (allowlist-shaped: everything excluded unless explicitly re-included), so
+# this COPY ships only the files enumerated there.
+COPY . .
 
-# Copy pre-built analytics database (open-source default)
-# Production deployments can override with DATA_PATH env var pointing to a persistent volume
-COPY data/hailie_analytics_v2.duckdb data/
-
-# Copy entrypoint and set ownership
-COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && chown -R hailie:hailie /app
 
 # Health check
