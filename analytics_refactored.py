@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
 """
 Refactored Analytics Module for Pre-calculated DuckDB Data
 Uses pre-calculated analytics from DuckDB instead of on-the-fly calculations

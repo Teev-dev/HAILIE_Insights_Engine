@@ -138,3 +138,7 @@ The pivot was validated through:
 - Original Architecture Document: HAILIE Insights Engine - Architecture (August 2025)
 - Current Implementation: Version 2.0 (October 2025)
 - TSM Data Source: UK Government TSM 2024 Dataset
+
+---
+
+> **Note (April 2026):** Deployment has since moved from Replit to Railway with Docker containerisation. The Replit-specific consequences listed above are now superseded. See ADR-004 for details.

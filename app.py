@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -8,6 +11,7 @@ from styles import apply_css
 from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_info, should_show_component
 import traceback
 from contextlib import contextmanager
+from config import DB_PATH
 import os
 
 # Page configuration - MUST be first Streamlit command
@@ -118,7 +122,7 @@ def render_features_overview():
 
 def check_database_exists():
     """Check if the enhanced analytics database exists and is accessible"""
-    db_path = "attached_assets/hailie_analytics_v2.duckdb"
+    db_path = DB_PATH
 
     # Check if file exists
     if not os.path.exists(db_path):
@@ -203,7 +207,7 @@ def main():
         Unable to connect to the analytics database: {str(e)}
 
         Please ensure the database file exists at:
-        `attached_assets/hailie_analytics_v2.duckdb`
+        `{DB_PATH}`
 
         If the database is missing, run:
         ```bash
@@ -509,7 +513,12 @@ def main():
             f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
         )
         st.markdown(
-            '<p style="text-align: center; font-size: 0.85em; color: #666;">'
+            '<p style="text-align: center; font-size: 0.8em; color: #94A3B8; margin: 0.25rem 0;">'
+            '&copy; 2026 Tom Stephenson (Teev-dev). Built for HAILIE. '
+            'Licensed under <a href="https://opensource.org/licenses/MIT" style="color: #94A3B8;">MIT</a>'
+            '/<a href="https://creativecommons.org/licenses/by/4.0/" style="color: #94A3B8;">CC-BY 4.0</a>.'
+            '</p>'
+            '<p style="text-align: center; font-size: 0.85em; color: #666; margin-top: 0.25rem;">'
             '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
             '</p>',
             unsafe_allow_html=True
@@ -534,7 +543,12 @@ def main():
         st.markdown("---")
         st.caption("HAILIE TSM Insights Engine v3.0 | Data: 2025 TSM")
         st.markdown(
-            '<p style="text-align: center; font-size: 0.85em; color: #666;">'
+            '<p style="text-align: center; font-size: 0.8em; color: #94A3B8; margin: 0.25rem 0;">'
+            '&copy; 2026 Tom Stephenson (Teev-dev). Built for HAILIE. '
+            'Licensed under <a href="https://opensource.org/licenses/MIT" style="color: #94A3B8;">MIT</a>'
+            '/<a href="https://creativecommons.org/licenses/by/4.0/" style="color: #94A3B8;">CC-BY 4.0</a>.'
+            '</p>'
+            '<p style="text-align: center; font-size: 0.85em; color: #666; margin-top: 0.25rem;">'
             '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
             '</p>',
             unsafe_allow_html=True

@@ -8,6 +8,7 @@ import duckdb
 import pandas as pd
 import sys
 import os
+from config import DATA_DIR
 
 
 def format_pvalue(p):
@@ -34,7 +35,7 @@ def interpret_correlation(r):
 
 
 def main():
-    db_path = "attached_assets/hailie_analytics.duckdb"
+    db_path = os.path.join(DATA_DIR, "hailie_analytics.duckdb")
 
     # Check if database exists
     if not os.path.exists(db_path):

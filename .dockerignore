@@ -1,0 +1,52 @@
+# Git
+.git/
+.gitignore
+
+# Source data (not needed at runtime)
+data/source/
+data/docs/
+data/hailie_analytics.duckdb
+
+# Documentation (keep README.md for pyproject.toml)
+!README.md
+CLAUDE.md
+MASTERPLAN.md
+FEATURES_ROADMAP.md
+DEPLOYMENT.md
+MAINTENANCE.md
+HANDOFF.md
+HAILIE-Insights-Engine-Architecture-v2.md
+LICENSE-CODE
+LICENSE-DOCS
+ADRs/
+guides/
+
+# Development & build tools
+build_analytics_db.py
+build_analytics_db_v2.py
+db_view_script.py
+diagnose_duplicates.py
+review_pvalues.py
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Environment
+.env
+.env.*
+.venv/
+
+# OS & IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Replit (legacy)
+.replit
+replit.md
+
+# Docker
+Dockerfile
+.dockerignore

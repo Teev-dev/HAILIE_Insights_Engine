@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
 """
 Tooltip definitions for complex data metrics in the HAILIE TSM Dashboard
 """

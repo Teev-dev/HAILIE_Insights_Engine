@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
 """
 Enhanced Data Processor for HAILIE Analytics with LCRA/LCHO Dataset Separation
 Handles automatic dataset detection and isolated peer comparisons
@@ -8,6 +11,7 @@ import pandas as pd
 import duckdb
 import numpy as np
 from typing import Optional, Dict, List, Tuple
+from config import DB_PATH
 
 
 class EnhancedTSMDataProcessor:
@@ -16,7 +20,7 @@ class EnhancedTSMDataProcessor:
     def __init__(self, silent_mode=False):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]  # TP01 to TP12
         # Updated to use the new enhanced database
-        self.db_path = "attached_assets/hailie_analytics_v2.duckdb"
+        self.db_path = DB_PATH
         self.silent_mode = silent_mode
         self._connection = None
         self._connect_to_db()

@@ -13,6 +13,7 @@ from scipy.stats import spearmanr, percentileofscore
 import os
 import sys
 from datetime import datetime
+from config import DATA_DIR
 
 
 class AnalyticsETL:
@@ -20,7 +21,7 @@ class AnalyticsETL:
     
     def __init__(self):
         self.tp_codes = [f"TP{i:02d}" for i in range(1, 13)]
-        self.db_path = "attached_assets/hailie_analytics.duckdb"
+        self.db_path = os.path.join(DATA_DIR, "hailie_analytics.duckdb")
         self.year = 2024  # Default year for the dataset
         
     def log(self, message):
@@ -33,7 +34,7 @@ class AnalyticsETL:
         self.log("📂 Loading raw TSM data from Excel...")
         
         # Load Excel file directly
-        excel_path = "attached_assets/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx"
+        excel_path = os.path.join(DATA_DIR, "source", "2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx")
         
         try:
             # Load the specific sheet with TSM data

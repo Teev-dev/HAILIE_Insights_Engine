@@ -1,8 +1,20 @@
 [project]
-name = "repl-nix-workspace"
-version = "0.1.0"
-description = "Add your description here"
+name = "hailie-insights-engine"
+version = "1.0.0"
+description = "Transform UK government TSM (Tenant Satisfaction Measures) data into actionable executive insights for social housing providers"
 requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "Tom Stephenson (Teev-dev)" },
+]
+readme = "README.md"
+keywords = ["tsm", "social-housing", "analytics", "streamlit", "tenant-satisfaction"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Other Audience",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Programming Language :: Python :: 3.11",
+]
 dependencies = [
     "duckdb>=1.4.1",
     "numpy>=2.3.2",
@@ -12,3 +24,8 @@ dependencies = [
     "scipy>=1.16.1",
     "streamlit>=1.49.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Teev-dev/HAILIE_Insights_Engine"
+Repository = "https://github.com/Teev-dev/HAILIE_Insights_Engine"
+Issues = "https://github.com/Teev-dev/HAILIE_Insights_Engine/issues"

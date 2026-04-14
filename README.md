@@ -4,7 +4,7 @@ A Streamlit web application that transforms UK government TSM (Tenant Satisfacti
 
 ## Overview
 
-HAILIE Insights Engine delivers instant analytics from pre-processed TSM 2024 government data, supporting both LCRA (Low Cost Rental Accommodation) and LCHO (Low Cost Home Ownership) providers with dataset-specific peer comparisons.
+HAILIE Insights Engine delivers instant analytics from pre-processed TSM 2024-2025 government data, supporting both LCRA (Low Cost Rental Accommodation) and LCHO (Low Cost Home Ownership) providers with dataset-specific peer comparisons.
 
 ## Key Features
 
@@ -19,26 +19,43 @@ HAILIE Insights Engine delivers instant analytics from pre-processed TSM 2024 go
 - **Automatic Detection**: System automatically identifies provider type and compares within appropriate peer group
 - **Isolated Analytics**: Rankings and percentiles calculated within dataset type only
 
-## Installation
+## Quick Start
 
-1. Clone this repository
-2. Install required dependencies:
-   ```bash
-   pip install streamlit pandas numpy duckdb openpyxl scipy plotly
-   ```
+### Local Development
+
+```bash
+git clone https://github.com/Teev-dev/HAILIE_Insights_Engine.git
+cd HAILIE_Insights_Engine
+pip install .
+streamlit run app.py
+```
+
+### Docker
+
+```bash
+docker build -t hailie-insights .
+docker run -p 8501:8501 -e PORT=8501 hailie-insights
+```
+
+Open http://localhost:8501, select your provider code, and view your dashboard.
+
+## Deployment on Railway
+
+1. Connect your GitHub repo to [Railway](https://railway.app)
+2. Railway auto-detects the `Dockerfile` and `railway.toml`
+3. The app binds to Railway's injected `$PORT` automatically
+
+**Production with persistent storage:**
+
+Set the `DATA_PATH` environment variable to a Railway persistent volume mount to store the DuckDB database independently of the container image. Without this, the baked-in database from the Docker image is used (suitable for demos and open-source use).
+
+For full deployment instructions including persistent disk setup, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Usage
 
-1. Start the application:
-   ```bash
-   streamlit run app.py --server.port 5000
-   ```
-
-2. Select your provider code from the dropdown (auto-detects LCRA/LCHO)
-
-3. View your executive dashboard with three key performance insights
-
-4. Explore detailed analytics and visualizations
+1. Select your provider code from the dropdown (auto-detects LCRA/LCHO)
+2. View your executive dashboard with three key performance insights
+3. Explore detailed analytics and visualizations
 
 ## Technical Architecture
 
@@ -50,7 +67,7 @@ HAILIE Insights Engine delivers instant analytics from pre-processed TSM 2024 go
 
 ## Data Processing
 
-The system uses pre-processed TSM 2024 data stored in `attached_assets/hailie_analytics_v2.duckdb`:
+The system uses pre-processed TSM data stored in `data/hailie_analytics_v2.duckdb`:
 
 - **Raw Scores**: All provider satisfaction measures
 - **Calculated Percentiles**: Pre-computed rankings for instant retrieval
@@ -100,14 +117,33 @@ The application includes responsive design features:
 - Touch-friendly interface elements
 - Optimized chart rendering for smaller displays
 
+## Contributing
+
+See [guides/collaboration-protocol.md](guides/collaboration-protocol.md) for contributor guidelines, including paths for domain experts, developers, and AI agents.
+
 ## License
 
-This project is licensed under CC-BY 4.0 - see the LICENSE file for details.
+- **Code:** MIT License — see [LICENSE-CODE](LICENSE-CODE)
+- **Documentation and data:** CC-BY 4.0 — see [LICENSE-DOCS](LICENSE-DOCS)
+
+## Project Structure
+
+```
+├── app.py                    # Streamlit entry point
+├── dashboard.py              # Executive dashboard rendering
+├── analytics_refactored.py   # Core analytics engine
+├── data_processor_enhanced.py # DuckDB data access layer
+├── config.py                 # Data path configuration
+├── data/                     # Runtime data (DuckDB)
+│   └── source/               # Source xlsx files
+├── Dockerfile                # Container build
+├── railway.toml              # Railway deployment config
+└── MASTERPLAN.md             # Project vision & principles
+```
 
 ## Support
 
 For issues with the application, please verify:
-1. Database file exists at `attached_assets/hailie_analytics_v2.duckdb`
-2. Your provider code is in the current TSM 2024 dataset
+1. Database file exists at `data/hailie_analytics_v2.duckdb`
+2. Your provider code is in the current TSM dataset
 3. Python dependencies are correctly installed
-4. Streamlit server is running on port 5000

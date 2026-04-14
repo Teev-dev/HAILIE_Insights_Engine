@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
 """
 CSS Styles Module for HAILIE TSM Insights Engine
 Contains all custom CSS styling for the Streamlit application
@@ -9,6 +12,12 @@ def get_main_css():
     """
     return """
 <style>
+    /* Hide sidebar collapse button (renders as text when Material Icons unavailable) */
+    button[data-testid="stBaseButton-headerNoPadding"],
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+
     /* Global Responsive Variables - Mobile First Approach */
     :root {
         --primary-color: #2E5BBA;

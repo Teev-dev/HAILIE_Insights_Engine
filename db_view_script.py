@@ -6,10 +6,12 @@ Interactive script to explore HAILIE Analytics Database
 import duckdb
 import pandas as pd
 import sys
+from config import DATA_DIR
+import os
 
 def main():
     # Connect to the database
-    db_path = "attached_assets/hailie_analytics.duckdb"
+    db_path = os.path.join(DATA_DIR, "hailie_analytics.duckdb")
     print(f"Connecting to database: {db_path}")
 
     try:

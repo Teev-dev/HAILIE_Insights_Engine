@@ -1,3 +1,7 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
+
+import html
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -90,7 +94,9 @@ class ExecutiveDashboard:
                 st.caption(f"Based on {provider_ranking['measures_count']} satisfaction measures")
             else:
                 # Desktop: Use custom HTML
-                quartile_class = f"quartile-{provider_ranking['quartile'].lower()}"
+                quartile_class = f"quartile-{html.escape(provider_ranking['quartile'].lower())}"
+                quartile_color = html.escape(str(provider_ranking['quartile_color']))
+                quartile_name = html.escape(provider_ranking['quartile'])
                 st.markdown(f"""
                 <div class="metric-card {quartile_class}">
                     <p class="metric-label">YOUR RANK</p>
@@ -98,8 +104,8 @@ class ExecutiveDashboard:
                     <p style="font-size: 1.1rem; margin: 0.5rem 0; color: #64748B;">
                         of {provider_ranking['total_providers']} providers
                     </p>
-                    <p style="font-size: 1rem; font-weight: 600; color: {provider_ranking['quartile_color']};">
-                        {provider_ranking['quartile']} Quartile ({provider_ranking['percentile']:.1f}th percentile)
+                    <p style="font-size: 1rem; font-weight: 600; color: {quartile_color};">
+                        {quartile_name} Quartile ({provider_ranking['percentile']:.1f}th percentile)
                     </p>
                     <p style="font-size: 0.9rem; color: #64748B; margin-top: 0.5rem;">
                         Based on {provider_ranking['measures_count']} satisfaction measures
@@ -139,14 +145,17 @@ class ExecutiveDashboard:
             else:
                 # Desktop: Use custom HTML
                 if momentum.get('disabled', False):
+                    mom_color = html.escape(str(momentum['momentum_color']))
+                    mom_icon = html.escape(str(momentum['momentum_icon']))
+                    mom_text = html.escape(str(momentum['momentum_text']))
                     st.markdown(f"""
                     <div class="metric-card">
                         <p class="metric-label">YOUR MOMENTUM</p>
-                        <p class="metric-value" style="color: {momentum['momentum_color']};">
-                            {momentum['momentum_icon']}
+                        <p class="metric-value" style="color: {mom_color};">
+                            {mom_icon}
                         </p>
-                        <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
-                            {momentum['momentum_text']}
+                        <p style="font-size: 1.5rem; font-weight: 600; color: {mom_color}; margin: 0.5rem 0;">
+                            {mom_text}
                         </p>
                         <p style="font-size: 0.9rem; color: #64748B;">
                             Insufficient multi-year data
@@ -159,14 +168,17 @@ class ExecutiveDashboard:
                     declined = momentum.get('declined_measures', [])
                     
                     # Start building the HTML
+                    mom_color = html.escape(str(momentum['momentum_color']))
+                    mom_icon = html.escape(str(momentum['momentum_icon']))
+                    mom_text = html.escape(str(momentum['momentum_text']))
                     card_html = f"""
                     <div class="metric-card">
                         <p class="metric-label">YOUR MOMENTUM</p>
-                        <p class="metric-value" style="color: {momentum['momentum_color']};">
-                            {momentum['momentum_icon']}
+                        <p class="metric-value" style="color: {mom_color};">
+                            {mom_icon}
                         </p>
-                        <p style="font-size: 1.5rem; font-weight: 600; color: {momentum['momentum_color']}; margin: 0.5rem 0;">
-                            {momentum['momentum_text']}
+                        <p style="font-size: 1.5rem; font-weight: 600; color: {mom_color}; margin: 0.5rem 0;">
+                            {mom_text}
                         </p>
                         <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 0.25rem;">
                             <strong>2025 vs 2024:</strong> {momentum['year_over_year_change']:+.1f} points average
@@ -178,18 +190,20 @@ class ExecutiveDashboard:
                             Your 2025 vs 2024 performance:
                         </p>
                     """
-                    
+
                     # Add improvements section if available
                     if improved:
                         card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #22C55E; margin-bottom: 0.25rem;">Top Improvements:</p>'
                         for measure in improved[:3]:
-                            card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: +{measure["change"]:.1f} pts</p>'
-                    
+                            desc = html.escape(str(measure["description"]))
+                            card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">&bull; {desc}: +{measure["change"]:.1f} pts</p>'
+
                     # Add declined section if available
                     if declined:
                         card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #EF4444; margin-bottom: 0.25rem; margin-top: 0.5rem;">Areas Needing Attention:</p>'
                         for measure in declined[:3]:
-                            card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">• {measure["description"]}: {measure["change"]:.1f} pts</p>'
+                            desc = html.escape(str(measure["description"]))
+                            card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">&bull; {desc}: {measure["change"]:.1f} pts</p>'
                     
                     # Close the card
                     card_html += "</div>"
@@ -255,26 +269,31 @@ class ExecutiveDashboard:
             else:
                 # Desktop: Use custom HTML
                 priority_class = "priority-high" if priority.get('priority_level', '') in ['Critical', 'High'] else ""
+                priority_color = html.escape(str(priority.get('priority_color', '#2E5BBA')))
+                priority_level = html.escape(str(priority.get('priority_level', 'Medium')))
+                safe_measure_code = html.escape(str(measure_code))
+                safe_measure_desc = html.escape(str(measure_desc))
+                safe_corr_text = html.escape(str(corr_text))
                 st.markdown(f"""
                 <div class="metric-card {priority_class}">
                     <p class="metric-label">YOUR PRIORITY</p>
-                    <p class="metric-value" style="font-size: 1.8rem; color: {priority.get('priority_color', '#2E5BBA')};">
-                        {priority.get('priority_level', 'Medium')}
+                    <p class="metric-value" style="font-size: 1.8rem; color: {priority_color};">
+                        {priority_level}
                     </p>
                     <p style="font-size: 1.3rem; font-weight: 700; margin: 0.3rem 0; color: #2E5BBA;">
-                        {measure_code}
+                        {safe_measure_code}
                     </p>
                     <p style="font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; color: #1E293B;">
-                        {measure_desc}
+                        {safe_measure_desc}
                     </p>
                     <p style="font-size: 0.9rem; color: #64748B;">
                         Current: {current_percentile:.1f}th percentile
                     </p>
-                    <p style="font-size: 0.9rem; color: {priority.get('priority_color', '#2E5BBA')}; font-weight: 500;">
+                    <p style="font-size: 0.9rem; color: {priority_color}; font-weight: 500;">
                         Improvement potential: {improvement:.1f}%
                     </p>
                     <p style="font-size: 0.85rem; color: #475569; margin-top: 0.3rem;">
-                        TP01 correlation: {corr_text} ({corr_strength:.1f}%)
+                        TP01 correlation: {safe_corr_text} ({corr_strength:.1f}%)
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
