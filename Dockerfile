@@ -1,7 +1,8 @@
 FROM python:3.11-slim
 
-# Security: run as non-root user
-RUN groupadd -r hailie && useradd -r -g hailie -m hailie
+# Security: non-root user for running the app, gosu for permission handoff
+RUN groupadd -r hailie && useradd -r -g hailie -m hailie \
+    && apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -19,10 +20,9 @@ COPY .streamlit/ .streamlit/
 # Production deployments can override with DATA_PATH env var pointing to a persistent volume
 COPY data/hailie_analytics_v2.duckdb data/
 
-# Own the app directory and ensure volume mount point is writable
-RUN chown -R hailie:hailie /app && mkdir -p /data && chown hailie:hailie /data
-
-USER hailie
+# Copy entrypoint and set ownership
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && chown -R hailie:hailie /app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -31,4 +31,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Railway injects $PORT; default to 8501 for local development
 EXPOSE ${PORT:-8501}
 
-CMD ["sh", "-c", "streamlit run app.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true"]
+# Start as root, fix volume permissions, then drop to hailie user via gosu
+ENTRYPOINT ["/app/entrypoint.sh"]
