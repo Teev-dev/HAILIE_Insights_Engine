@@ -1,81 +1,175 @@
-# Session Handoff: Replit → Railway Migration
+# Session Handoff: Branch Cleanup & Cherry-Picking UI/UX Features
 
 **Date:** April 2026
-**Branch:** `migration/railway` (deployed to Railway for testing)
-**Status:** Migration complete, deployed, testing in progress
+**Branch:** `main` (all migration work merged)
+**Status:** Migration complete and live. Cleanup and feature cherry-pick pending.
 
 ---
 
-## What's Done
+## Current State
 
-### Code Migration (complete)
-- [x] Deleted Replit artifacts (.replit, replit.md, screenshots)
-- [x] Restructured `attached_assets/` → `data/` (with `source/` and `docs/`)
-- [x] Created Dockerfile (python:3.11-slim, non-root user via gosu, health checks)
-- [x] Created railway.toml, .dockerignore, .gitignore
-- [x] Created config.py with DATA_PATH env var + auto-seed from baked-in DB
-- [x] Updated all Python files to use config.py paths
-- [x] Applied html.escape() security fix to dashboard.py
-- [x] Fixed pyproject.toml metadata
-- [x] Added SPDX license identifiers to all main code files
-- [x] Added copyright footer: Tom Stephenson (Teev-dev), MIT/CC-BY 4.0
-- [x] Fixed Railway volume permissions (entrypoint.sh + gosu)
-- [x] Fixed sidebar "double_arrow_right" text rendering glitch
+### Live Production
+- **URL:** https://insights.housingai.org
+- **Platform:** Railway (Docker, python:3.11-slim)
+- **Volume:** `/data` (DATA_PATH env var)
+- **Cert:** Let's Encrypt (auto-renewed)
+- **Source:** `main` branch (auto-deploys on push)
 
-### Documentation (complete)
-- [x] Created CLAUDE.md (AI agent constitution)
-- [x] Created ADR-004 (Replit → Railway migration decision)
-- [x] Created MASTERPLAN.md, DEPLOYMENT.md, MAINTENANCE.md
-- [x] Created LICENSE-CODE (MIT) and LICENSE-DOCS (CC-BY 4.0)
-- [x] Updated Architecture doc, ADR-001, README
-- [x] Added collaboration protocol and setup guides
+### Recently Merged PRs
+| PR | Title | Status |
+|----|-------|--------|
+| #13 | Migrate from Replit to Railway with Docker containerisation | Merged |
+| #14 | Fix LCRA/LCHO dataset mix-up and TP description drift | Merged |
+| #15 | Add tsm_measures.py to Dockerfile COPY list | Merged |
+| #16 | Harden Docker image (allowlist .dockerignore) + add gitleaks pre-commit | Merged |
+| #17 | docs: Update documentation with custom domain URL | Merged |
+| #18 | Document pre-commit hook setup in README | Merged |
 
-### Railway Deployment (live, testing)
-- [x] Railway project: extraordinary-trust
-- [x] Branch: migration/railway (temporary, for testing before merge to main)
-- [x] Volume mounted at /data with DATA_PATH=/data
-- [x] Public URL: https://insights.housingai.org
-- [x] Auto-seed working (config.py copies baked-in DB to volume on first deploy)
-- [x] App loads and functions correctly
+### Open PRs
+| PR | Title | Action Needed |
+|----|-------|---------------|
+| #12 | Fix critical data bugs, improve UI/UX, add Railway deployment config | Cherry-pick unique features (see Task 2) |
 
 ---
 
-## What's Next
+## Task 1: Safe Branch Deletions
 
-### 1. Verify sidebar fix deployed
-Check the public URL — the "double_arrow_right" text at top should be gone.
+Run these commands in the cleanup session:
 
-### 2. Investigate data accuracy reports
-**Users have reported inaccuracies in the data the app produces.** This needs investigation in a fresh session. Areas to check:
-- `build_analytics_db_v2.py` — ETL pipeline, data ingestion from xlsx
-- `data_processor_enhanced.py` — query logic, percentile calculations, peer isolation
-- `analytics_refactored.py` — ranking, momentum, priority calculations
-- Year defaults (currently 2025) — are queries hitting the right year?
-- LCRA/LCHO isolation — are peer comparisons correctly separated?
-- Hardcoded `year = 2025` on `data_processor_enhanced.py:461` — potential issue
-- Source data integrity — compare raw xlsx values against what the DB returns
-- Diagnostic tools available: `python diagnose_duplicates.py`, `python db_view_script.py`, `python review_pvalues.py`
+```bash
+# Remote branch deletions (all merged, nothing lost)
+git push origin --delete migration/railway
+git push origin --delete docs/custom-domain-url
+git push origin --delete Feature_2025_data
 
-### 3. After testing is confirmed good
-- Switch Railway back to `main` branch (Settings > Source)
-- Create PR from `migration/railway` → `main`
-- Merge
-- Railway auto-redeploys from main
-- Delete stale branches: `replit-agent`, `security/review-fixes`
+# Replit-agent branch - review first (Replit auto-publishes, likely stale)
+# Check: git log origin/replit-agent --not origin/main --oneline
+# If all commits are Replit auto-publishes (no unique user work), delete:
+git push origin --delete replit-agent
+
+# Local branch cleanup
+git branch -D migration/railway
+git branch -D fix/data-accuracy-lcra-lcho
+git branch -D docs/custom-domain-url
+git branch -D security/review-fixes
+
+# Drop stale stash (only adds `import html` — already in main)
+git stash drop stash@{0}
+```
+
+**Keep these branches:**
+- `main` (obviously)
+- `feature/ui-ux-improvements` (has open PR #12 with unique features — see Task 2)
 
 ---
 
-## Key Context
+## Task 2: Cherry-Pick UI/UX Features from PR #12
 
-| Item | Value |
-|------|-------|
-| Owner | Tom Stephenson (Teev-dev) |
-| License | Dual: MIT (code), CC-BY 4.0 (docs/data) |
-| Railway project | extraordinary-trust |
-| Public URL | insights.housingai.org |
-| Volume mount | /data (DATA_PATH=/data) |
-| Current branch on Railway | migration/railway |
-| Production branch | main (switch back after merge) |
+PR #12 (`feature/ui-ux-improvements` branch, commit `788a079`) contains unique features NOT in main. **The user wants ALL of these — they are positive improvements.**
+
+### Features to Cherry-Pick
+
+1. **Sentry SDK integration**
+   - New dependency: `sentry-sdk`
+   - Env var gated: `SENTRY_DSN`
+   - Add observability for production errors
+
+2. **Dismissible "Recent Updates" changelog toast**
+   - Shows on first load for returning users
+   - Dismisses on click
+   - Tracks which version/date the user has seen
+
+3. **Rename "Raw Data" section → "Score Breakdown"**
+   - User-facing UI label change
+   - More descriptive, less confusing
+
+4. **Priority formula/threshold fixes**
+   - Tooltip-to-code mismatch corrections
+   - Ensures tooltips accurately describe the actual calculation logic
+   - File: `tooltip_definitions.py` + any priority calc code
+
+5. **Correlation display format**
+   - Before: "72.0%"
+   - After: "Strong (0.72)"
+   - Qualitative label + coefficient, matches statistics conventions
+
+6. **Priority matrix quadrant labels**
+   - Fixed labels: "High Priority", "Maintain & Protect", "Lower Impact", "Low Priority"
+   - Previously had misleading quadrant names like "Quick Wins"
+
+7. **Dynamic year references**
+   - New constant: `CURRENT_DATA_YEAR`
+   - Replaces hardcoded "2025" references in user-facing text
+   - Simplifies annual updates
+
+8. **Consistent Plotly chart theming**
+   - Standardised chart styling across all visualisations
+   - Matches app brand colours (#2E5BBA primary)
+
+9. **Remove unused confidence interval checkbox**
+   - Dead UI element that did nothing
+   - Cleanup for clarity
+
+10. **`validate_etl.py` — data integrity check script**
+    - New diagnostic tool (alongside existing `diagnose_duplicates.py`, `db_view_script.py`, `review_pvalues.py`)
+    - Validates ETL output before deployment
+
+### Cherry-Pick Strategy (Recommended)
+
+**Option A: One PR per logical group** (recommended for review-ability)
+- PR: "Add Sentry observability"
+- PR: "UI polish: labels, correlations, quadrants, themes"
+- PR: "Add CURRENT_DATA_YEAR constant for dynamic year refs"
+- PR: "Add validate_etl.py diagnostic tool"
+- PR: "Add dismissible changelog toast"
+
+### Execution Plan
+
+1. **Read PR #12 diff:** `gh pr diff 12` to see full changes
+2. **Check each feature against current main** — some may have been partially ported already via PR #14
+3. **Create feature branches off main** for each logical group
+4. **Apply changes manually** (don't cherry-pick the commit directly — too much conflict potential since main has moved significantly)
+5. **Test locally** in Docker before pushing
+6. **Open draft PRs** per CLAUDE.md protocol
+7. **Close PR #12** with note that features were rescued via new PRs
+
+### Files Likely to Need Edits
+
+- `app.py` — changelog toast, `CURRENT_DATA_YEAR` constant
+- `dashboard.py` — "Raw Data" → "Score Breakdown", correlation display, quadrant labels
+- `tooltip_definitions.py` — priority formula/threshold fixes
+- `styles.py` — Plotly theme consistency
+- `pyproject.toml` — `sentry-sdk` dependency
+- New file: `validate_etl.py`
+
+### Caution Points
+
+- **Don't just merge PR #12** — it contains old Dockerfile/railway.toml versions that conflict with the migration work
+- **Check correlation display code** — current main may already have some of these fixes (from PR #14)
+- **Test Sentry integration** with a real DSN before marking PR ready
+- **Follow CLAUDE.md guardrails** — draft PRs only, TDD preferred, html.escape() on dynamic UI content
+
+---
+
+## Important Context
+
+### Key Files (Governance)
+- `CLAUDE.md` — AI agent constitution, critical guardrails
+- `MASTERPLAN.md` — project vision and principles
+- `ADRs/ADR-004-migration-replit-to-railway.md` — migration decision record
+- `MAINTENANCE.md` — annual update procedures
+- `DEPLOYMENT.md` — Railway deployment runbook
+
+### Critical Guardrails (from CLAUDE.md)
+- All data access through `data_processor_enhanced.py`
+- Analytics in `analytics_refactored.py`, rendering in `dashboard.py`
+- Data paths via `config.py` only (no hardcoding)
+- `html.escape()` required on all dynamic content in `unsafe_allow_html`
+- LCRA vs LCHO peer isolation is non-negotiable
+- No PII logging (use provider codes, not names)
+
+### Year Default (Important for Future)
+Currently `year=2025` in 10+ places. Next update: November 2026 when new TSM data publishes. Full checklist in `MAINTENANCE.md`.
 
 ---
 
@@ -83,8 +177,9 @@ Check the public URL — the "double_arrow_right" text at top should be gone.
 
 ```bash
 cd /Users/teev/Software_Projects/hailie-tsm-insights
-git checkout migration/railway
+git checkout main
+git pull origin main
 ```
 
-For data accuracy investigation, tell Claude Code:
-"Read HANDOFF.md for context. Users are reporting data inaccuracies in the app. Investigate the ETL pipeline, query logic, and calculations to find the source of the problem."
+Tell Claude Code:
+"Read HANDOFF.md for context. Start with Task 1 (safe branch deletions), then proceed with Task 2 (cherry-pick UI/UX features from PR #12). The user wants ALL features from PR #12 — they are positive improvements."
