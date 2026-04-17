@@ -480,8 +480,8 @@ def main():
 
                 dashboard.render_priority_matrix(priority, detailed_analysis)
 
-            with st.expander("📋 Raw Data", expanded=False):
-                st.markdown(f"### Raw Data - {dataset_type} Provider")
+            with st.expander("📋 Score Breakdown", expanded=False):
+                st.markdown(f"### Your TSM Scores — {dataset_type}")
 
                 scores_df = data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
                 
