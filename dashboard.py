@@ -880,8 +880,9 @@ class ExecutiveDashboard:
         raw_corr_rec = abs(priority.get('correlation_with_tp01', 0))
         impact_text = "high impact on overall satisfaction" if raw_corr_rec >= 0.70 else "moderate impact on overall satisfaction" if raw_corr_rec >= 0.40 else "some impact on overall satisfaction"
 
+        measure_name = priority.get('priority_description', priority.get('measure_name', 'this area'))
         recommendations = [
-            f"1. **Focus on {priority['measure_name']}** - This has the highest improvement potential ({priority['improvement_potential']:.1f}%) with {impact_text}",
+            f"1. **Focus on {measure_name}** - This has the highest improvement potential ({priority['improvement_potential']:.1f}%) with {impact_text}",
             f"2. **Benchmark against top quartile** - Learn from providers scoring above {provider_ranking.get('top_quartile_threshold', 'N/A')}"
         ]
 
