@@ -20,6 +20,19 @@ import os
 # are updated separately per MAINTENANCE.md — do not point them at this constant.
 CURRENT_DATA_YEAR = 2025
 
+# Sentry is a no-op unless SENTRY_DSN is set in the environment.
+# send_default_pii=False keeps IP/User headers out of events — this codebase
+# handles public provider data but CLAUDE.md forbids anything PII-adjacent.
+_sentry_dsn = os.environ.get("SENTRY_DSN", "")
+if _sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        traces_sample_rate=0.1,
+        environment=os.environ.get("ENVIRONMENT", "production"),
+        send_default_pii=False,
+    )
+
 # Page configuration - MUST be first Streamlit command
 # Using 'wide' layout for all devices, content adapts responsively
 st.set_page_config(
