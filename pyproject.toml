@@ -29,3 +29,22 @@ dependencies = [
 Homepage = "https://github.com/Teev-dev/HAILIE_Insights_Engine"
 Repository = "https://github.com/Teev-dev/HAILIE_Insights_Engine"
 Issues = "https://github.com/Teev-dev/HAILIE_Insights_Engine/issues"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Flat-layout: top-level .py files are the package, ADRs/data/pages/guides are not.
+# Without this, setuptools auto-discovery fails on the non-package top-level dirs.
+[tool.setuptools]
+py-modules = [
+    "app",
+    "dashboard",
+    "analytics_refactored",
+    "data_processor_enhanced",
+    "config",
+    "styles",
+    "tooltip_definitions",
+    "mobile_utils",
+    "tsm_measures",
+]
