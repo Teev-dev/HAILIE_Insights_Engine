@@ -369,6 +369,7 @@ def main():
             with st.container():
                 st.info("""
                 🆕 **What's new** — thanks for the feedback. We've:
+                - TSM Insights by HAILIE is fully open-source! Your organisation can use, copy, and build on everything here free of charge in line with the MIT license for code, and the CC-BY 4.0 license for everything else.
                 - Fixed some measure descriptions that were showing the wrong name
                 - Renamed "Raw Data" to "Score Breakdown" (same thing, clearer name)
                 - Given the Priority Matrix friendlier labels to show where to focus first
