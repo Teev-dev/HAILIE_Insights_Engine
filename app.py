@@ -379,6 +379,24 @@ def main():
 
         st.success(f"✅ Loaded {dataset_type} analytics for provider: {provider_code}")
 
+        # Dismissible changelog toast — appears once per session for returning users
+        if 'dismissed_changelog' not in st.session_state:
+            st.session_state.dismissed_changelog = False
+
+        if not st.session_state.dismissed_changelog:
+            with st.container():
+                st.info("""
+                🆕 **What's new** — thanks for the feedback. We've:
+                - TSM Insights by HAILIE is fully open-source! Your organisation can use, copy, and build on everything here free of charge in line with the MIT license for code, and the CC-BY 4.0 license for everything else.
+                - Fixed some measure descriptions that were showing the wrong name
+                - Renamed "Raw Data" to "Score Breakdown" (same thing, clearer name)
+                - Given the Priority Matrix friendlier labels to show where to focus first
+                - Made the help tips match what the numbers in the app actually show
+                """)
+                if st.button("Dismiss", key="dismiss_changelog"):
+                    st.session_state.dismissed_changelog = True
+                    st.rerun()
+
         # Get applicable measures for this dataset type
         applicable_measures = data_processor.get_applicable_measures(dataset_type)
 
