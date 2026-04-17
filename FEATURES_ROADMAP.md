@@ -21,6 +21,7 @@ This document tracks potential future enhancements for the HAILIE Insights Engin
 - **Goal Setting**: Track progress against custom improvement targets
 - **Quartile Movement**: Alert when provider moves between quartiles
 - **Correlation Explorer**: Interactive tool to explore relationships between measures beyond TP01
+- **Peer Learning Suggester**: Based on areas to improve, identify similar organisations performing well, with contact details
 
 ## User Experience
 **Status**: Consider for usability improvements
@@ -77,5 +78,5 @@ This roadmap is a living document. When starting a new development session:
 
 ---
 
-*Last updated: November 2025*
+*Last updated: April 2026*
 *Version: 1.0*
