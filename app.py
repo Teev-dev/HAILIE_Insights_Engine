@@ -15,6 +15,11 @@ from config import DB_PATH
 from tsm_measures import LCHO_EXCLUDED
 import os
 
+# User-facing year label for the currently-loaded TSM dataset.
+# Query-layer year defaults (data_processor_enhanced.py, analytics_refactored.py)
+# are updated separately per MAINTENANCE.md — do not point them at this constant.
+CURRENT_DATA_YEAR = 2025
+
 # Page configuration - MUST be first Streamlit command
 # Using 'wide' layout for all devices, content adapts responsively
 st.set_page_config(
@@ -267,7 +272,7 @@ def main():
 
         # Note about the enhanced architecture
         st.markdown("---")
-        st.info("""
+        st.info(f"""
         📊 **Enhanced Analytics Engine**
 
         This application uses an enhanced analytics database with:
@@ -276,7 +281,7 @@ def main():
         • Peer group isolation
         • Automatic metric adaptation
 
-        Data source: 2025 TSM Dataset
+        Data source: {CURRENT_DATA_YEAR} TSM Dataset
         """)
 
     st.markdown('<div id="provider-search-section"></div>', unsafe_allow_html=True)
@@ -503,7 +508,7 @@ def main():
         # Footer
         st.markdown("---")
         st.caption(
-            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
+            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: {CURRENT_DATA_YEAR} TSM"
         )
         st.markdown(
             '<p style="text-align: center; font-size: 0.8em; color: #94A3B8; margin: 0.25rem 0;">'
@@ -534,7 +539,7 @@ def main():
         
         # Footer with privacy link
         st.markdown("---")
-        st.caption("HAILIE TSM Insights Engine v3.0 | Data: 2025 TSM")
+        st.caption(f"HAILIE TSM Insights Engine v3.0 | Data: {CURRENT_DATA_YEAR} TSM")
         st.markdown(
             '<p style="text-align: center; font-size: 0.8em; color: #94A3B8; margin: 0.25rem 0;">'
             '&copy; 2026 Tom Stephenson (Teev-dev). Built for HAILIE. '
