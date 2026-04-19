@@ -1,8 +1,8 @@
-# Session Handoff: PR #12 Rescue Done, Group G + Follow-ups Pending
+# Session Handoff: Follow-ups Resolved, UI Polish Landed, Group G Still Pending
 
-**Date:** April 2026
-**Branch:** `main` (clean; only remaining PR #12 work is Group G)
-**Status:** PR #12 rescue complete — 6/7 cherry-pick PRs merged, PR #12 closed. Group G (dynamic ETL) deferred. Three pre-existing bugs filed as follow-up issues.
+**Date:** 2026-04-19
+**Branch:** `main` (clean; Group G is the only rescue-era task left)
+**Status:** All three PR #12 rescue follow-ups (#29/#30/#31) are resolved. A UI polish pass shipped on 2026-04-19 covering branding, emoji strip, sidebar chrome, and priority-matrix labels.
 
 ---
 
@@ -14,24 +14,26 @@
 - **Volume:** `/data` (DATA_PATH env var)
 - **Cert:** Let's Encrypt (auto-renewed)
 - **Source:** `main` branch (auto-deploys on push)
+- **Last verified:** 2026-04-19 12:20 UTC, HTTP 200, `/_stcore/health` → `ok`
 
-### Recently Merged PRs (PR #12 rescue + supporting changes)
-| PR | Title | Notes |
-|----|-------|-------|
-| #21 | fix(tooltips): align priority formula/thresholds with code | Group A |
-| #22 | feat(config): CURRENT_DATA_YEAR constant | Group B; lives in `app.py` |
-| #23 | feat(tools): add validate_etl.py ETL spot-check | Group F; excluded from Docker image |
-| #24 | feat(obs): env-gated Sentry SDK | Group E; `send_default_pii=False`; no `[streamlit]` extra (doesn't exist in sentry-sdk 2.x) |
-| #25 | feat(ui): polish labels, correlation format, quadrants, Plotly theming | Group C |
-| #26 | feat(ui): dismissible 'What's new' changelog toast | Group D; copy in plain English for housing domain users |
-| #27 | docs(handoff): mid-rescue state | superseded by this update |
-| #28 | fix(build): configure setuptools py-modules | unblocks `pip install -e .` |
+### Session 2026-04-19 — What landed
 
-### Closed without merging
-- **#12** (`feature/ui-ux-improvements`) — original PR. Its Dockerfile/railway.toml/data-path versions would have regressed the migration. Unique features rescued via PRs #21–#26. Branch deleted.
+Merged in order:
+
+| PR | Title | Summary |
+|----|-------|---------|
+| #35 | refactor(dashboard): delete orphaned `render_insights_summary` | Closes #29. Method was scaffolded in the initial Replit-Agent commit (`e6e3be4`) and never wired into `app.py`. Superseded by the card composition (`render_executive_summary` + matrix + correlation + performance). 76 lines removed. |
+| #38 | fix(analytics): remove dead fallback to nonexistent `get_percentile_for_score` | Closes #30. Fallback in `identify_priority` only fires on ETL drift (`validate_etl.py` check 5 enforces coverage). Replaced with a `print` + `continue` so drift surfaces in Railway logs. |
+| #39 | docs(roadmap): add dynamic momentum year labels | Issue #31 closed with pointer. Live behaviour (`2025 vs 2024`) is correct today; dynamic-year work captured in `FEATURES_ROADMAP.md` under Multi-Year Analytics, to be picked up alongside the Nov 2026 TSM annual update. |
+| #40 | feat(ui): add HAILIE header logo and hide sidebar chevrons in Streamlit 1.50 | `st.logo()` top-left linking to housingai.org; source image cropped 1024×1024 → 845×349 with near-white → transparent. `.dockerignore` allowlist updated. CSS now targets Streamlit 1.50 testids (`stExpandSidebarButton`, `stSidebarCollapseButton`). |
+| #41 | feat(ui): strip decorative emojis from user-facing copy | Closes #37. 44 edits across 5 files. Kept only the momentum direction arrows (↗️/↘️/→) in `analytics_refactored.py`, `styles.py`, and `tooltip_definitions.py`. |
+| #42 | fix(dashboard): stagger priority-matrix label positions by quadrant | Partial fix related to #36. `_quadrant_label_positions` helper pushes labels outward and cycles through 3 vertical variants per quadrant. **Issue #36 deliberately left open** — tight clusters can still overlap; full fix needs force-directed placement. |
+
+### Open issues
+- **[#36](https://github.com/Teev-dev/HAILIE_Insights_Engine/issues/36)** `bug` `good first issue` — priority-matrix label overlap. Partial fix shipped in #42; needs a proper collision-avoidance pass (force-directed label placement or a JS-side solver hooked into Plotly).
 
 ### Branch state
-Only `main` exists locally and on origin. All rescue branches and worktrees have been cleaned up.
+Only `main` exists locally and on origin. All session worktrees removed.
 
 ---
 
@@ -39,7 +41,7 @@ Only `main` exists locally and on origin. All rescue branches and worktrees have
 
 **Scope:** Port PR #12's `build_analytics_db_v2.py` refactor (+349 lines) that replaces hardcoded Excel column positions with dynamic header detection. Matters because the Regulator of Social Housing sometimes shifts columns between annual releases — the current hardcoded-position parser is fragile and likely to break on the November 2026 data release.
 
-**Why deferred:** Biggest and riskiest remaining change. The ETL produces the DuckDB that drives the entire app; a subtle porting error would silently corrupt analytics across all providers.
+**Why still deferred:** Biggest and riskiest remaining change. The ETL produces the DuckDB that drives the entire app; a subtle porting error would silently corrupt analytics across all providers.
 
 **Approach when ready:**
 
@@ -58,15 +60,16 @@ Only `main` exists locally and on origin. All rescue branches and worktrees have
 
 ---
 
-## Task 2: Follow-up issues (filed 2026-04-17)
+## Task 2: Priority-matrix collision avoidance (#36)
 
-Three pre-existing bugs found during the rescue — none introduced by rescue PRs, all in main pre-rescue:
+The quadrant-based stagger in PR #42 is a partial fix. When 4+ measures cluster at near-identical `(improvement_potential, correlation_strength)` coordinates inside a single quadrant, their labels still collide.
 
-- **[#29](https://github.com/Teev-dev/HAILIE_Insights_Engine/issues/29)** `bug` `good first issue` — `dashboard.py:859` subscripts `priority['measure_name']` but `identify_priority` returns `priority_description`. Latent `KeyError`. One-line fix.
-- **[#30](https://github.com/Teev-dev/HAILIE_Insights_Engine/issues/30)** `bug` — `analytics_refactored.py:265` calls `data_processor.get_percentile_for_score(...)`, which doesn't exist. Fallback branch; recommend removing in favour of an ETL-integrity check (validate_etl.py check 5 already enforces this).
-- **[#31](https://github.com/Teev-dev/HAILIE_Insights_Engine/issues/31)** `enhancement` `good first issue` — `dashboard.py` momentum labels are still effectively hardcoded `2025 vs 2024`. Infrastructure from PR #25 is in place; need `data_processor.get_provider_years` + `CURRENT_DATA_YEAR` moved to `config.py`.
+**Options for a full fix:**
+- Force-directed placement in Python before handing to Plotly (iteratively nudge labels apart based on pairwise label-box distances). Deterministic, server-side, low-risk.
+- Client-side JS solver via a Plotly extension or post-render script manipulating SVG text nodes. More dynamic but adds runtime complexity and bypasses Streamlit's rerun model.
+- Abandon on-plot labels and rely on the hover tooltip + existing ranking table directly below the chart.
 
-Priority: **#29 first** (simple one-liner, prevents a real crash if hit). Then #30 (correctness). Then #31 (enhancement; ship before November 2026 TSM data release so annual update is lower-touch).
+Recommend the server-side force-directed approach — same module-level helper pattern as the current `_quadrant_label_positions`.
 
 ---
 
@@ -78,6 +81,7 @@ Priority: **#29 first** (simple one-liner, prevents a real crash if hit). Then #
 - `ADRs/ADR-004-migration-replit-to-railway.md` — migration decision record
 - `MAINTENANCE.md` — annual update procedures
 - `DEPLOYMENT.md` — Railway deployment runbook
+- `FEATURES_ROADMAP.md` — forward-looking enhancement ideas (now includes dynamic momentum year labels under Multi-Year Analytics)
 - `guides/collaboration-protocol.md` §5 — AI autonomous session protocol (worktree isolation, draft PRs, DCO)
 
 ### Critical Guardrails (from CLAUDE.md)
@@ -87,15 +91,20 @@ Priority: **#29 first** (simple one-liner, prevents a real crash if hit). Then #
 - `html.escape()` required on all dynamic content in `unsafe_allow_html`
 - LCRA vs LCHO peer isolation is non-negotiable — always pass `dataset_type` explicitly
 - No PII logging (use provider codes, not names)
+- `.dockerignore` is allowlist-shaped — new runtime files must be explicitly re-included
 
 ### Year Default
-`year=2025` is still the default in ~10 query-layer places (see MAINTENANCE.md). PR #22 added `CURRENT_DATA_YEAR` only for user-facing text. Query-layer defaults remain maintained manually. Next annual update: November 2026.
+`year=2025` is still the default in ~10 query-layer places (see MAINTENANCE.md). PR #22 added `CURRENT_DATA_YEAR` (still in `app.py`; moving to `config.py` is roadmapped alongside the dynamic-year work). Query-layer defaults remain maintained manually. Next annual update: November 2026.
+
+### Sidebar chrome (Streamlit 1.50)
+The sidebar is intentionally inaccessible from the UI. CSS in `styles.py:15-26` hides both the open and close chevrons by targeting Streamlit 1.50 testids (`stExpandSidebarButton`, `stSidebarCollapseButton`). Legacy selectors kept as belt-and-braces. Settings inside the sidebar block (mobile toggle, confidence intervals, advanced logging) are dev affordances with sensible defaults. Note: sidebar state persists in browser localStorage under `stSidebarCollapsed-/` — test in incognito to see the true default.
 
 ### Local dev environment
 - Python 3.11 required. `.venv` must be created with `python3.11 -m venv .venv`.
 - Core deps: `pip install duckdb streamlit pandas plotly scipy numpy openpyxl 'sentry-sdk>=2.0.0' pre-commit`
 - Since PR #28, `pip install -e .` also works.
 - Pre-commit hooks require `pre-commit install` once per clone.
+- Streamlit was upgraded to 1.50 during the 2026-04-17 rescue session; CSS selectors targeting sidebar chrome must match the 1.50 DOM.
 
 ---
 
@@ -105,10 +114,10 @@ Priority: **#29 first** (simple one-liner, prevents a real crash if hit). Then #
 cd /Users/teev/Software_Projects/hailie-tsm-insights
 git checkout main
 git pull origin main
-gh issue list --label bug
+gh issue list --state open
 ```
 
 Tell Claude Code:
-*"Read HANDOFF.md. Pick up either Group G (dynamic ETL, Task 1) or one of the follow-up issues (#29, #30, #31 in Task 2) — whichever I indicate."*
+*"Read HANDOFF.md. Pick up Group G (dynamic ETL) or issue #36 (priority-matrix collision avoidance) — whichever I indicate."*
 
-Recommend starting with **#29** if you want a quick win — it's a 5-minute fix that resolves a real crash risk. Group G is a half-day at minimum with careful verification.
+Group G is a half-day+ block with end-to-end ETL verification. #36 is an afternoon of careful Plotly + placement-algorithm work.
