@@ -42,6 +42,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+st.logo(
+    os.path.join(os.path.dirname(__file__), "assets", "hailie_logo.png"),
+    link="https://housingai.org",
+    size="large",
+)
+
 # Apply custom CSS styles from styles module
 apply_css(st)
 
