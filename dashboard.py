@@ -24,6 +24,30 @@ def _corr_label(strength: float) -> str:
     return "Negligible"
 
 
+def _quadrant_label_positions(xs, ys, x_mid=50, y_mid=50):
+    """Per-point Plotly textposition array — labels pushed outward from the
+    quadrant centre AND staggered within each quadrant so clusters of 2–3
+    points at similar coords land at distinct vertical offsets instead of
+    all defaulting to the same position."""
+    # Each quadrant cycles through three vertical offsets on its outward side.
+    variants = {
+        ("top", "right"):    ("top right", "middle right", "bottom right"),
+        ("top", "left"):     ("top left", "middle left", "bottom left"),
+        ("bottom", "right"): ("bottom right", "middle right", "top right"),
+        ("bottom", "left"):  ("bottom left", "middle left", "top left"),
+    }
+    rank = {k: 0 for k in variants}
+    positions = []
+    for x, y in zip(xs, ys):
+        key = (
+            "top" if y >= y_mid else "bottom",
+            "right" if x >= x_mid else "left",
+        )
+        positions.append(variants[key][rank[key] % 3])
+        rank[key] += 1
+    return positions
+
+
 PLOTLY_LAYOUT = dict(
     font=dict(
         family='-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif',
@@ -680,7 +704,10 @@ class ExecutiveDashboard:
                             line=dict(width=1, color='white')  # Add border for better visibility
                         ),
                         text=scatter_df['Measure'],
-                        textposition="top center",
+                        textposition=_quadrant_label_positions(
+                            scatter_df['Improvement Potential'],
+                            scatter_df['Correlation'],
+                        ),
                         hovertemplate="<b>%{text}</b><br>%{customdata}<extra></extra>",
                         customdata=matrix_hover_data
                     ))
@@ -998,7 +1025,7 @@ class ExecutiveDashboard:
                 y=y_values,
                 mode='markers+text',
                 text=labels,
-                textposition='top center',
+                textposition=_quadrant_label_positions(x_values, y_values),
                 marker=dict(
                     size=12,
                     color=colors,
