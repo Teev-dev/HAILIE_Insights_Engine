@@ -11,6 +11,7 @@ This document tracks potential future enhancements for the HAILIE Insights Engin
 - **Historical Comparison**: Compare any two years side-by-side
 - **Momentum Deep Dive**: Detailed breakdown of which specific interventions drove changes
 - **Rolling Averages**: Smooth out year-to-year volatility with 2-year or 3-year averages
+- **Dynamic momentum year labels** ([#31](https://github.com/Teev-dev/HAILIE_Insights_Engine/issues/31)): `calculate_momentum` currently hardcodes `latest_year: 2025` / `prior_year: 2024` in every return branch, so the UI would still say "2025 vs 2024" after the Nov 2026 dataset lands. Fix needs `get_provider_years` on the data processor, `CURRENT_DATA_YEAR` moved to `config.py`, and the four return branches rewritten to derive years from the data. Would let the annual update procedure drop the `latest_year`/`prior_year` bullets from MAINTENANCE.md.
 
 ## Advanced Analytics
 **Status**: Potential additions
@@ -77,5 +78,5 @@ This roadmap is a living document. When starting a new development session:
 
 ---
 
-*Last updated: November 2025*
-*Version: 1.0*
+*Last updated: April 2026*
+*Version: 1.1*
