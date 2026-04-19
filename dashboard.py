@@ -108,7 +108,7 @@ class ExecutiveDashboard:
         with cols[0]:
             if is_mobile:
                 # Mobile: Use native Streamlit components
-                st.markdown("### 📊 YOUR RANK")
+                st.markdown("### YOUR RANK")
                 st.metric(
                     label="Position",
                     value=f"#{provider_ranking['rank']}",
@@ -153,7 +153,7 @@ class ExecutiveDashboard:
         with cols[1]:
             if is_mobile:
                 # Mobile: Use native Streamlit components
-                st.markdown("### 📈 YOUR MOMENTUM")
+                st.markdown("### YOUR MOMENTUM")
                 if momentum.get('disabled', False):
                     st.metric(
                         label="Trend",
@@ -281,7 +281,7 @@ class ExecutiveDashboard:
             
             if is_mobile:
                 # Mobile: Use native Streamlit components
-                st.markdown("### 🎯 YOUR PRIORITY")
+                st.markdown("### YOUR PRIORITY")
                 st.metric(
                     label=measure_code,
                     value=priority.get('priority_level', 'Medium'),
@@ -369,7 +369,7 @@ class ExecutiveDashboard:
             """)
 
         # Performance Comparison Section
-        with st.expander("📊 Performance Comparison", expanded=True):
+        with st.expander("Performance Comparison", expanded=True):
             # Create performance comparison chart
             if detailed_analysis:
                 measures = []
@@ -459,7 +459,7 @@ class ExecutiveDashboard:
                 st.table(table_df)
 
         # Correlation Analysis Section
-        with st.expander("📈 Correlation Analysis", expanded=False):
+        with st.expander("Correlation Analysis", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -594,7 +594,7 @@ class ExecutiveDashboard:
                 st.warning("Correlation analysis not available")
 
         # Priority Matrix Section
-        with st.expander("🎯 Priority Matrix", expanded=False):
+        with st.expander("Priority Matrix", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -697,8 +697,8 @@ class ExecutiveDashboard:
 
                     fig_matrix.update_layout(
                         title="Priority Matrix: Improvement Potential vs TP01 Correlation - Hover for Details",
-                        xaxis_title="Improvement Potential (%) →",
-                        yaxis_title="Relationship with Overall Satisfaction ↑",
+                        xaxis_title="Improvement Potential (%)",
+                        yaxis_title="Relationship with Overall Satisfaction",
                         height=600,
                         xaxis=dict(
                             range=[0, 100],

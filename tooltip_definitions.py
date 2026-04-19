@@ -154,7 +154,7 @@ class TooltipDefinitions:
                 • **3rd Quartile (Mid)**: Next 25% (below average)  
                 • **4th Quartile (Low)**: Bottom 25% of providers
                 
-                **Color coding**: Green (top) → Light Green → Orange → Red (bottom)
+                **Color coding**: Green (top), Light Green, Orange, Red (bottom)
                 """
             },
             'tp_measures': {
