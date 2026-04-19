@@ -263,14 +263,15 @@ class TSMAnalytics:
             for tp_measure in self.tp_codes[1:]:  # Skip TP01
                 if tp_measure not in provider_scores:
                     continue
-                    
-                # Get percentile (or calculate if not available)
-                if tp_measure in percentile_dict:
-                    percentile = percentile_dict[tp_measure]
-                else:
-                    # Fallback: calculate percentile on the fly
-                    score = provider_scores[tp_measure]
-                    percentile = self.data_processor.get_percentile_for_score(tp_measure, score)
+
+                if tp_measure not in percentile_dict:
+                    # Percentile coverage is enforced by validate_etl.py check 5.
+                    # Reaching this branch means ETL drift — skip rather than invoke
+                    # a nonexistent get_percentile_for_score method.
+                    print(f"Skipping {tp_measure} for provider {provider_code}: no pre-calculated percentile")
+                    continue
+
+                percentile = percentile_dict[tp_measure]
                 
                 # Improvement potential (lower percentile = more room for improvement)
                 improvement_potential = 100 - percentile
