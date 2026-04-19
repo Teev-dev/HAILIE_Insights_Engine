@@ -126,7 +126,7 @@ class TSMAnalytics:
                 return {
                     'direction': "insufficient_data",
                     'momentum_text': "Insufficient multi-year data",
-                    'momentum_icon': "📊",
+                    'momentum_icon': "",
                     'momentum_color': "#64748B",
                     'year_over_year_change': 0,
                     'improved_measures': [],
@@ -156,7 +156,7 @@ class TSMAnalytics:
                 return {
                     'direction': "no_comparison",
                     'momentum_text': "No comparable measures",
-                    'momentum_icon': "📊",
+                    'momentum_icon': "",
                     'momentum_color': "#64748B",
                     'year_over_year_change': 0,
                     'improved_measures': [],
@@ -214,7 +214,7 @@ class TSMAnalytics:
             return {
                 'direction': "error",
                 'momentum_text': f"Error: {str(e)}",
-                'momentum_icon': "⚠️",
+                'momentum_icon': "",
                 'momentum_color': "#64748B",
                 'year_over_year_change': 0,
                 'improved_measures': [],

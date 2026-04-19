@@ -162,7 +162,7 @@ def render_mobile_info():
     Render an info message for mobile users about limited functionality
     """
     st.info("""
-    📱 **Mobile View Activated**
+    **Mobile View Activated**
     
     You're viewing a simplified version optimized for mobile devices. 
     For full analytics including detailed charts, tables, and comprehensive reports, 
