@@ -6,19 +6,37 @@ Enhanced Data Processor for HAILIE Analytics with LCRA/LCHO Dataset Separation
 Handles automatic dataset detection and isolated peer comparisons
 """
 
-import streamlit as st
+import os
 import pandas as pd
 import duckdb
 import numpy as np
-from typing import Optional, Dict, List, Tuple
+from typing import Any, Optional, Dict, List, Tuple
 from config import DB_PATH
 from tsm_measures import TP_CODES, TP_DESCRIPTIONS, LCHO_EXCLUDED
+
+
+def _report_internal_error(context: str, payload: Any = None) -> None:
+    """Route error details to Sentry/stdout only — never to the UI.
+
+    The data layer must not render Streamlit UI; callers in app.py / dashboard.py
+    decide what the user sees. See CLAUDE.md "Layer Boundaries".
+    """
+    if payload is not None:
+        print(f"[ERROR] {context}: {payload!r}")
+    else:
+        print(f"[ERROR] {context}")
+    if os.environ.get("SENTRY_DSN") and isinstance(payload, BaseException):
+        import sentry_sdk
+        sentry_sdk.capture_exception(payload)
 
 
 class EnhancedTSMDataProcessor:
     """Enhanced processor for TSM data with dataset isolation"""
 
     def __init__(self, silent_mode=False):
+        # silent_mode is accepted for API compatibility but is now a no-op:
+        # the data layer never renders UI or emits console noise regardless.
+        # All diagnostics route through _report_internal_error.
         self.tp_codes = list(TP_CODES)
         self.tp_descriptions = dict(TP_DESCRIPTIONS)
         self.db_path = DB_PATH
@@ -30,19 +48,10 @@ class EnhancedTSMDataProcessor:
         """Connect to the enhanced DuckDB database"""
         try:
             self._connection = duckdb.connect(self.db_path, read_only=True)
-            if not self.silent_mode:
-                st.success("✅ Connected to enhanced analytics database")
         except Exception as e:
-            # Always log connection failures, even in silent mode
-            error_msg = f"❌ Failed to connect to database: {str(e)}"
-            if not self.silent_mode:
-                st.error(error_msg)
-            else:
-                # In silent mode, at least print to console for debugging
-                print(error_msg)
+            _report_internal_error("db connect failed", e)
             self._connection = None
-            # Raise exception to prevent the app from continuing with null connection
-            raise ConnectionError(f"Database connection failed: {str(e)}")
+            raise ConnectionError("Database connection failed") from e
 
     def _ensure_connection(self):
         """Ensure database connection is active, reconnect if needed"""
@@ -53,24 +62,17 @@ class EnhancedTSMDataProcessor:
             try:
                 self._connection.execute("SELECT 1").fetchone()
             except Exception as e:
-                # Connection is dead, reconnect
-                error_msg = f"⚠️ Database connection lost, attempting to reconnect: {str(e)}"
-                if not self.silent_mode:
-                    st.warning(error_msg)
-                else:
-                    print(error_msg)
+                _report_internal_error("db connection lost, reconnecting", e)
                 self._connection = None
                 self._connect_to_db()
 
     def _log_info(self, message):
-        """Log info message"""
-        if not self.silent_mode:
-            st.info(message)
+        """Deprecated no-op — kept for internal call-site stability."""
+        return
 
     def _log_error(self, message):
-        """Log error message"""
-        if not self.silent_mode:
-            st.error(message)
+        """Route internal diagnostics to the stdout/Sentry pipeline."""
+        _report_internal_error(str(message))
 
     def get_provider_dataset_type(self, provider_code: str, provider_name: Optional[str] = None) -> Optional[str]:
         """
@@ -181,8 +183,7 @@ class EnhancedTSMDataProcessor:
 
             return result[0] > 0 if result else False
         except Exception as e:
-            if not self.silent_mode:
-                st.error(f"Error checking provider existence: {str(e)}")
+            _report_internal_error("checking provider existence", e)
             return False
 
     def get_all_provider_codes(self) -> List[Dict[str, str]]:
@@ -411,16 +412,10 @@ class EnhancedTSMDataProcessor:
             if not isinstance(df, pd.DataFrame):
                 return pd.DataFrame()
 
-            # Log dataset-specific counts for debugging
-            if dataset_type and not self.silent_mode:
-                st.info(f"📊 Found {len(df)} providers in {dataset_type} dataset for rankings")
-
             return df
 
         except Exception as e:
-            self._log_error(f"Error fetching providers with scores: {str(e)}")
-            if not self.silent_mode:
-                st.error(f"Debug: Query failed - {str(e)}")
+            _report_internal_error("fetching providers with scores", e)
             return pd.DataFrame()
 
     def get_applicable_measures(self, dataset_type: str) -> List[str]:
@@ -462,16 +457,10 @@ class EnhancedTSMDataProcessor:
                 result['loaded_dataset'] = dataset_type
                 result['applicable_measures'] = [self.get_applicable_measures(dataset_type)]
 
-                # Log dataset info
-                if not self.silent_mode:
-                    st.info(f"📊 Loaded {dataset_type} data for provider {provider_code}")
-                    if dataset_type == 'LCHO':
-                        st.info("ℹ️ Note: Repairs metrics (TP02-TP04) are not applicable for LCHO providers")
-
                 return result
             return None
         except Exception as e:
-            self._log_error(f"Error loading provider data: {str(e)}")
+            _report_internal_error("loading provider data", e)
             return None
 
     def close(self):
@@ -480,8 +469,7 @@ class EnhancedTSMDataProcessor:
             try:
                 self._connection.close()
             except Exception as e:
-                if not self.silent_mode:
-                    st.warning(f"⚠️ Error closing database connection: {str(e)}")
+                _report_internal_error("closing database connection", e)
             finally:
                 self._connection = None
 
