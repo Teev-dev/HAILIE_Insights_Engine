@@ -127,6 +127,72 @@ Streamlit has no built-in rate limiting. Apply ingress-level controls at whichev
 - **Bot Fight Mode** (Cloudflare) or equivalent to reduce automated traffic.
 - Consider per-endpoint caps on `/_stcore/` health and websocket endpoints if you see abnormal traffic.
 
+### Cloudflare setup runbook
+
+Concrete steps to put the Railway app behind Cloudflare's free tier. Use this when taking a new deployment public, or when retrofitting an existing public deployment that has only Railway's native TLS.
+
+**Prerequisites:**
+- A custom domain you control (e.g. `hailie.housingai.org`). Railway's `*.railway.app` subdomain cannot be proxied through Cloudflare.
+- A Cloudflare account (free tier is sufficient for everything in this runbook).
+
+**1. Proxy the custom domain through Cloudflare.**
+
+- In Cloudflare: `Sites → Add site`. Enter your apex domain. Pick the Free plan.
+- Update the domain's nameservers at your registrar to the two Cloudflare assigns. Propagation typically completes within an hour.
+- In Railway: `Service → Settings → Networking → Custom Domain`. Add your hostname. Railway returns a `CNAME` target (e.g. `abc123.up.railway.app`).
+- In Cloudflare DNS: add a `CNAME` record pointing your hostname at Railway's target. **Orange cloud on** (proxy enabled). Cloudflare provisions an edge TLS certificate automatically.
+
+**2. Enable WebSocket proxying.** Streamlit's client uses WebSockets for every rerun — without this toggle, the app renders blank or stalls.
+
+- Cloudflare: `Network → WebSockets → ON`.
+- Also verify `SSL/TLS → Overview → Encryption mode` is `Full` (not `Flexible` — Flexible breaks Streamlit's handshake).
+
+**3. Bot mitigation.**
+
+- Cloudflare: `Security → Bots → Bot Fight Mode → ON`. Free. Blocks obvious automated scraping of the provider dropdown.
+
+**4. Rate limiting.** The free tier allows one rule; use it to cap per-IP traffic.
+
+- Cloudflare: `Security → WAF → Rate limiting rules → Create rule`.
+- Field: `IP source address`. Threshold: `100 requests per 1 minute`. Action: `Block` for `1 hour`.
+
+**5. Security headers.**
+
+- Cloudflare: `Rules → Transform Rules → Modify Response Header → Create`.
+- Add the following response headers (one rule each, matching `hostname eq "yourdomain"`):
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+
+**6. (Optional) Authentication gate.**
+
+Only needed if the app is intended for named users rather than fully public. Cloudflare Access (Zero Trust plan, ~$3/user/month) fronts the app with a login page backed by Google/Microsoft/magic-link SSO. No code changes required on the Streamlit side.
+
+- Cloudflare: `Zero Trust → Access → Applications → Add an application → Self-hosted`.
+- Application domain: your hostname. Policy: allow specific emails or a mail domain.
+
+#### Verification
+
+After DNS propagation completes:
+
+```bash
+# Headers should include `server: cloudflare` and the new security headers.
+curl -sI https://yourdomain | grep -iE 'server|strict-transport|x-content-type|referrer-policy'
+
+# Load the app in a browser. Select a provider. Charts should render normally
+# — proves WebSocket proxying through Cloudflare is working.
+
+# Rate limit should trip around request 100.
+ab -n 500 -c 10 https://yourdomain/
+```
+
+If the app loads but charts never render, re-check step 2 (WebSockets toggle + `Full` SSL mode). If TLS warnings appear, wait for the Cloudflare edge certificate to finish provisioning (up to 24 hours for fresh domains, usually minutes).
+
+#### What this does not cover
+
+- **Railway outages.** Cloudflare cannot route around Railway being down. True multi-region availability requires a second deployment target, which is out of scope for this service's size.
+- **Credential stuffing / brute force.** Not applicable unless authentication is added. When Cloudflare Access is enabled (step 6), the upstream IdP handles this.
+
 ### Replica guidance
 
 `railway.toml` sets `numReplicas = 2` as the baseline. This gives:
