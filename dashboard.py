@@ -2,6 +2,7 @@
 # Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
 
 import html
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,6 +11,17 @@ import plotly.graph_objects as go
 from typing import Dict, Any
 from tooltip_definitions import TooltipDefinitions
 from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
+
+
+def _report_internal_error(context: str, payload: Any = None) -> None:
+    """Route error details to Sentry/stdout only — never to the UI."""
+    if payload is not None:
+        print(f"[ERROR] {context}: {payload!r}")
+    else:
+        print(f"[ERROR] {context}")
+    if os.environ.get("SENTRY_DSN") and isinstance(payload, BaseException):
+        import sentry_sdk
+        sentry_sdk.capture_exception(payload)
 
 
 def _corr_label(strength: float) -> str:
@@ -103,15 +115,18 @@ class ExecutiveDashboard:
 
         # Check for errors
         if "error" in rankings:
-            st.error(f"Rankings Error: {rankings['error']}")
+            _report_internal_error("rankings error", rankings.get("error"))
+            st.error("We couldn't calculate your rank right now. Try another provider or refresh.")
             return
 
         if "error" in momentum:
-            st.error(f"Momentum Error: {momentum['error']}")
+            _report_internal_error("momentum error", momentum.get("error"))
+            st.error("Momentum data is unavailable right now. Please try again later.")
             return
 
         if "error" in priority:
-            st.error(f"Priority Error: {priority['error']}")
+            _report_internal_error("priority error", priority.get("error"))
+            st.error("We couldn't identify a priority measure. Try another provider or refresh.")
             return
 
         # Get provider data
@@ -375,7 +390,8 @@ class ExecutiveDashboard:
         priority_data = analytics.identify_priority(df, provider_code)
 
         if "error" in detailed_analysis:
-            st.error(detailed_analysis["error"])
+            _report_internal_error("detailed analysis error", detailed_analysis.get("error"))
+            st.error("Detailed analysis is unavailable right now. Try another provider or refresh.")
             return
 
         # Add help information for the detailed analysis section
@@ -866,7 +882,8 @@ class ExecutiveDashboard:
             return
 
         if "error" in detailed_analysis:
-            st.error(detailed_analysis["error"])
+            _report_internal_error("performance analysis error", detailed_analysis.get("error"))
+            st.error("Performance analysis is unavailable right now. Try another provider or refresh.")
             return
 
         if detailed_analysis and len(detailed_analysis) > 0:
@@ -990,7 +1007,8 @@ class ExecutiveDashboard:
         st.markdown("### Priority Matrix")
 
         if "error" in priority:
-            st.error(priority["error"])
+            _report_internal_error("priority matrix error", priority.get("error"))
+            st.error("Priority matrix is unavailable right now. Try another provider or refresh.")
             return
 
         # Extract priorities if available

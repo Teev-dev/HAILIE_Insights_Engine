@@ -98,3 +98,40 @@ When new government TSM data is published (typically November each year):
 ## Architecture Reference
 
 See `ADRs/ADR-004-migration-replit-to-railway.md` for the full decision record on this deployment architecture.
+
+## Security & Availability
+
+### Internal exceptions are never shown to users
+
+The runtime app (`app.py`, `dashboard.py`, `data_processor_enhanced.py`) follows a strict rule: raw exception messages, stack traces, and internal file paths never reach the browser. User-facing errors are short, generic, and actionable (e.g. "Database is unavailable. Please contact support.", "Try another provider or refresh.").
+
+Diagnostic details are routed through a private `_report_internal_error()` helper in each module, which writes to stdout and — when `SENTRY_DSN` is set — calls `sentry_sdk.capture_exception()`. The data layer never imports `streamlit`; it returns neutral values (`None`, empty `DataFrame`, `{}`) on failure and lets the UI layer decide what the user sees.
+
+If you add new exception handling, follow the same pattern: generic `st.error(...)` string + `_report_internal_error("<context>", exc)` call. Never interpolate `str(e)`, dict `['error']` payloads, or path variables into user-visible markdown.
+
+### Edge protection for public exposure
+
+Railway does not provide a Web Application Firewall. If the app is exposed to the public internet, front it with an edge layer that provides:
+
+- **Authentication / access control** — SSO, IP allowlist, or basic-auth gateway. Cloudflare Access, a reverse proxy with OAuth, or similar.
+- **TLS termination** — Railway provides TLS for the `*.railway.app` hostname, but custom domains must be configured correctly.
+- **Bot mitigation** — Cloudflare's managed challenge, or equivalent, to block scraping of the provider dropdown.
+
+If the app is intended for authenticated internal use only, put it behind a VPN or organisation-SSO gateway rather than relying on obscurity.
+
+### Rate limiting & bot mitigation
+
+Streamlit has no built-in rate limiting. Apply ingress-level controls at whichever layer fronts Railway:
+
+- **Cloudflare rate-limiting rules** — 100 requests/min/IP is a sensible starting point for a dashboard of this shape.
+- **Bot Fight Mode** (Cloudflare) or equivalent to reduce automated traffic.
+- Consider per-endpoint caps on `/_stcore/` health and websocket endpoints if you see abnormal traffic.
+
+### Replica guidance
+
+`railway.toml` sets `numReplicas = 2` as the baseline. This gives:
+
+- **Zero-downtime deploys** — one replica serves traffic while the other is rolling.
+- **Crash tolerance** — a single-replica crash (segfault, OOM, hung event loop) takes the service fully offline; two replicas buy you time to auto-restart.
+
+Scale above `2` if traffic justifies it (>50 concurrent users, noticeable latency). Above `4` consider a proper load-balancer health strategy and sticky sessions, since Streamlit websocket state is per-replica and not shared.

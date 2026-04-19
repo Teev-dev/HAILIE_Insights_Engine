@@ -18,11 +18,17 @@ def detect_mobile():
     if hasattr(st.session_state, 'force_mobile_view'):
         return st.session_state.force_mobile_view
     
-    # Check for manual override via query params
+    # Check for manual override via query params.
+    # Only exact "true" / "false" are honoured — any other value is ignored so
+    # malformed input falls through to normal detection instead of silently
+    # coercing to False.
     query_params = st.query_params
     if 'mobile' in query_params:
-        override_value = query_params['mobile'].lower() == 'true'
-        return override_value
+        raw = query_params['mobile'].lower()
+        if raw == 'true':
+            return True
+        if raw == 'false':
+            return False
     
     # Initialize session state for mobile detection if not exists
     if 'is_mobile_device' not in st.session_state:
@@ -41,7 +47,13 @@ def detect_mobile():
             // Consider it mobile if user agent matches OR (touch + small screen)
             const mobile = isMobile || (hasTouch && smallScreen);
             
-            // Send result back to Streamlit
+            // Send result back to Streamlit.
+            // Target origin is '*' because the Streamlit components iframe has
+            // no reliable way to learn its parent origin at runtime. The payload
+            // here is a single boolean — no session tokens, provider data, or
+            // credentials — so the information-disclosure impact is nil. If a
+            // stricter target becomes supportable by the Streamlit component
+            // API, migrate this to that origin.
             if (window.parent) {
                 window.parent.postMessage({
                     type: 'streamlit:setComponentValue',

@@ -9,10 +9,10 @@ from analytics_refactored import TSMAnalytics
 from dashboard import ExecutiveDashboard
 from styles import apply_css
 from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_info, should_show_component
-import traceback
 from contextlib import contextmanager
 from config import DB_PATH
 from tsm_measures import LCHO_EXCLUDED
+import html
 import os
 
 # User-facing year label for the currently-loaded TSM dataset.
@@ -50,6 +50,17 @@ st.logo(
 
 # Apply custom CSS styles from styles module
 apply_css(st)
+
+
+def _report_internal_error(context: str, exc: Exception | None = None) -> None:
+    """Route error details to Sentry/stdout only — never to the UI."""
+    if exc is not None:
+        print(f"[ERROR] {context}: {type(exc).__name__}")
+    else:
+        print(f"[ERROR] {context}")
+    if _sentry_dsn and exc is not None:
+        import sentry_sdk
+        sentry_sdk.capture_exception(exc)
 
 
 def render_landing_hero():
@@ -155,7 +166,8 @@ def check_database_exists():
 
     # Check if file is readable
     if not os.access(db_path, os.R_OK):
-        st.error(f"Database file exists but is not readable: {db_path}")
+        _report_internal_error("database file exists but is not readable")
+        st.error("Database is unavailable. Please contact support.")
         return False
 
     # Check if it's a valid DuckDB file (basic check)
@@ -166,7 +178,8 @@ def check_database_exists():
         conn.close()
         return True
     except Exception as e:
-        st.error(f"Database file exists but appears corrupted: {str(e)}")
+        _report_internal_error("database corruption check failed", e)
+        st.error("Database is unavailable. Please contact support.")
         return False
 
 
@@ -185,12 +198,17 @@ def render_dataset_indicator(dataset_type: str, peer_count: int):
         description = "Combined Dataset"
         note = "Providers with combined reporting"
 
+    safe_dataset = html.escape(dataset_type)
+    safe_description = html.escape(description)
+    safe_note = html.escape(note)
+    safe_peer_count = html.escape(str(peer_count))
+
     st.markdown(f"""
     <div style="background-color: {color}15; border-left: 4px solid {color}; padding: 10px; margin: 10px 0; border-radius: 4px;">
-        <strong style="color: {color};">Dataset: {dataset_type}</strong><br/>
-        <small>{description}</small><br/>
-        <small style="opacity: 0.8;">{note}</small><br/>
-        <small style="opacity: 0.8;">Comparing with {peer_count} peer providers in {dataset_type} group</small>
+        <strong style="color: {color};">Dataset: {safe_dataset}</strong><br/>
+        <small>{safe_description}</small><br/>
+        <small style="opacity: 0.8;">{safe_note}</small><br/>
+        <small style="opacity: 0.8;">Comparing with {safe_peer_count} peer providers in {safe_dataset} group</small>
     </div>
     """, unsafe_allow_html=True)
 
@@ -226,22 +244,21 @@ def main():
         data_processor_for_options = EnhancedTSMDataProcessor(silent_mode=True)
         provider_options = data_processor_for_options.get_provider_options()
     except ConnectionError as e:
-        st.error(f"""
+        _report_internal_error("processor init: ConnectionError", e)
+        st.error("""
         **Database Connection Failed**
 
-        Unable to connect to the analytics database: {str(e)}
+        Unable to connect to the analytics database.
 
-        Please ensure the database file exists at:
-        `{DB_PATH}`
-
-        If the database is missing, run:
+        If you're running locally and the database is missing, run:
         ```bash
         python build_analytics_db_v2.py
         ```
         """)
         return
     except Exception as e:
-        st.error(f"Unexpected error initializing data processor: {str(e)}")
+        _report_internal_error("processor init: unexpected error", e)
+        st.error("Something went wrong starting the application. Please contact support.")
         return
 
     provider_code = None
@@ -346,16 +363,12 @@ def main():
         try:
             data_processor = EnhancedTSMDataProcessor(silent_mode=not show_advanced_logging)
         except ConnectionError as e:
-            st.error(f"""
-            **Database Connection Failed**
-
-            Unable to connect to the analytics database: {str(e)}
-
-            The database file may be corrupted or inaccessible.
-            """)
+            _report_internal_error("per-provider processor init: ConnectionError", e)
+            st.error("Database is unavailable. Please try again later or contact support.")
             return
         except Exception as e:
-            st.error(f"Unexpected error: {str(e)}")
+            _report_internal_error("per-provider processor init: unexpected error", e)
+            st.error("Something went wrong loading your provider. Please try another provider or refresh.")
             return
 
         # Check if provider exists in database
