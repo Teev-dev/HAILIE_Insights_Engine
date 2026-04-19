@@ -129,9 +129,18 @@ Streamlit has no built-in rate limiting. Apply ingress-level controls at whichev
 
 ### Replica guidance
 
-`railway.toml` sets `numReplicas = 2` as the baseline. This gives:
+`railway.toml` sets `numReplicas = 1`. This is a Railway platform constraint, not a preference: the production service has a persistent volume attached (`hailie_insights_engine-volume`, mounted at `/data`), and Railway blocks deploys with `numReplicas > 1` whenever a volume is attached — volumes are bound to a single instance.
 
-- **Zero-downtime deploys** — one replica serves traffic while the other is rolling.
-- **Crash tolerance** — a single-replica crash (segfault, OOM, hung event loop) takes the service fully offline; two replicas buy you time to auto-restart.
+**Consequences of the single-replica setup:**
 
-Scale above `2` if traffic justifies it (>50 concurrent users, noticeable latency). Above `4` consider a proper load-balancer health strategy and sticky sessions, since Streamlit websocket state is per-replica and not shared.
+- **No zero-downtime deploys.** Brief (~30–60s) unavailability while the old container is replaced.
+- **No crash tolerance.** A segfault, OOM, or hung event loop takes the service fully offline until Railway's `restartPolicyType = "ON_FAILURE"` auto-restart kicks in (up to 3 retries per `restartPolicyMaxRetries`).
+
+**To regain horizontal scaling:** remove the volume and rely on the baked-in database shipped inside the Docker image (`.dockerignore` explicitly re-includes `data/hailie_analytics_v2.duckdb`). The runtime opens the DB read-only, so nothing depends on volume persistence. Concretely:
+
+1. Delete the Railway volume (or detach it via the service's Settings).
+2. Remove the `DATA_PATH` env var; `config.py` falls back to `_BAKED_IN_DATA`.
+3. Bump `numReplicas` back to 2+.
+4. Ship annual TSM updates via rebuild-and-redeploy (which matches `MAINTENANCE.md`'s existing flow anyway).
+
+Scale above `2` replicas (post-volume-removal) only if traffic justifies it (>50 concurrent users, noticeable latency). Above `4` consider a proper load-balancer health strategy and sticky sessions, since Streamlit websocket state is per-replica and not shared.
