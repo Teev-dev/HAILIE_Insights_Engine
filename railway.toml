@@ -3,7 +3,13 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-numReplicas = 2
+# Railway rejects numReplicas > 1 when a persistent volume is attached
+# (volumes are bound to a single instance). The production deployment has
+# `hailie_insights_engine-volume` mounted at /data for the TSM database,
+# so numReplicas must stay at 1 until/unless the volume is removed and
+# the baked-in DB becomes the source of truth. See DEPLOYMENT.md
+# "Replica guidance" for the trade-off.
+numReplicas = 1
 healthcheckPath = "/_stcore/health"
 healthcheckTimeout = 10
 restartPolicyType = "ON_FAILURE"
