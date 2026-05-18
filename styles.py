@@ -12,7 +12,16 @@ def get_main_css():
     """
     return """
 <style>
-    /* Hide sidebar collapse button (renders as text when Material Icons unavailable) */
+    /* Hide both sidebar collapse and expand controls across Streamlit 1.x–1.50.
+       Streamlit 1.50 renames split the single legacy `collapsedControl` into
+       `stExpandSidebarButton` (open, shown when collapsed) and
+       `stSidebarCollapseButton` (close, shown when expanded). Prior CSS only
+       covered legacy names, so the expand-chevron began showing after the
+       1.50 upgrade on 2026-04-17. Sidebar settings remain reachable via
+       initial_sidebar_state="expanded" if we ever want to re-enable; today
+       the settings are dev/debug affordances and the app defaults suffice. */
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapseButton"],
     button[data-testid="stBaseButton-headerNoPadding"],
     [data-testid="collapsedControl"] {
         display: none !important;

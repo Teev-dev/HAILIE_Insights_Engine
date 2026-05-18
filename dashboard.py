@@ -2,6 +2,7 @@
 # Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
 
 import html
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,6 +11,66 @@ import plotly.graph_objects as go
 from typing import Dict, Any
 from tooltip_definitions import TooltipDefinitions
 from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
+
+
+def _report_internal_error(context: str, payload: Any = None) -> None:
+    """Route error details to Sentry/stdout only — never to the UI."""
+    if payload is not None:
+        print(f"[ERROR] {context}: {payload!r}")
+    else:
+        print(f"[ERROR] {context}")
+    if os.environ.get("SENTRY_DSN") and isinstance(payload, BaseException):
+        import sentry_sdk
+        sentry_sdk.capture_exception(payload)
+
+
+def _corr_label(strength: float) -> str:
+    """Qualitative label for a correlation coefficient (absolute value)."""
+    s = abs(strength)
+    if s >= 0.70:
+        return "Strong"
+    if s >= 0.40:
+        return "Moderate"
+    if s >= 0.20:
+        return "Weak"
+    return "Negligible"
+
+
+def _quadrant_label_positions(xs, ys, x_mid=50, y_mid=50):
+    """Per-point Plotly textposition array — labels pushed outward from the
+    quadrant centre AND staggered within each quadrant so clusters of 2–3
+    points at similar coords land at distinct vertical offsets instead of
+    all defaulting to the same position."""
+    # Each quadrant cycles through three vertical offsets on its outward side.
+    variants = {
+        ("top", "right"):    ("top right", "middle right", "bottom right"),
+        ("top", "left"):     ("top left", "middle left", "bottom left"),
+        ("bottom", "right"): ("bottom right", "middle right", "top right"),
+        ("bottom", "left"):  ("bottom left", "middle left", "top left"),
+    }
+    rank = {k: 0 for k in variants}
+    positions = []
+    for x, y in zip(xs, ys):
+        key = (
+            "top" if y >= y_mid else "bottom",
+            "right" if x >= x_mid else "left",
+        )
+        positions.append(variants[key][rank[key] % 3])
+        rank[key] += 1
+    return positions
+
+
+PLOTLY_LAYOUT = dict(
+    font=dict(
+        family='-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif',
+        size=12,
+        color='#1E293B',
+    ),
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(250,250,250,1)',
+    margin=dict(l=60, r=20, t=50, b=60),
+)
+
 
 class ExecutiveDashboard:
     """
@@ -54,15 +115,18 @@ class ExecutiveDashboard:
 
         # Check for errors
         if "error" in rankings:
-            st.error(f"Rankings Error: {rankings['error']}")
+            _report_internal_error("rankings error", rankings.get("error"))
+            st.error("We couldn't calculate your rank right now. Try another provider or refresh.")
             return
 
         if "error" in momentum:
-            st.error(f"Momentum Error: {momentum['error']}")
+            _report_internal_error("momentum error", momentum.get("error"))
+            st.error("Momentum data is unavailable right now. Please try again later.")
             return
 
         if "error" in priority:
-            st.error(f"Priority Error: {priority['error']}")
+            _report_internal_error("priority error", priority.get("error"))
+            st.error("We couldn't identify a priority measure. Try another provider or refresh.")
             return
 
         # Get provider data
@@ -83,7 +147,7 @@ class ExecutiveDashboard:
         with cols[0]:
             if is_mobile:
                 # Mobile: Use native Streamlit components
-                st.markdown("### 📊 YOUR RANK")
+                st.markdown("### YOUR RANK")
                 st.metric(
                     label="Position",
                     value=f"#{provider_ranking['rank']}",
@@ -128,7 +192,7 @@ class ExecutiveDashboard:
         with cols[1]:
             if is_mobile:
                 # Mobile: Use native Streamlit components
-                st.markdown("### 📈 YOUR MOMENTUM")
+                st.markdown("### YOUR MOMENTUM")
                 if momentum.get('disabled', False):
                     st.metric(
                         label="Trend",
@@ -181,13 +245,13 @@ class ExecutiveDashboard:
                             {mom_text}
                         </p>
                         <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 0.25rem;">
-                            <strong>2025 vs 2024:</strong> {momentum['year_over_year_change']:+.1f} points average
+                            <strong>{momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)}:</strong> {momentum['year_over_year_change']:+.1f} points average
                         </p>
                         <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 0.5rem;">
                             {momentum.get('total_measures_compared', 0)} measures compared
                         </p>
                         <p style="font-size: 0.9rem; font-weight: 600; color: #1E293B; margin-top: 0.5rem; margin-bottom: 0.5rem;">
-                            Your 2025 vs 2024 performance:
+                            Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:
                         </p>
                     """
 
@@ -224,7 +288,7 @@ class ExecutiveDashboard:
                     """)
                 else:
                     st.markdown(f"""
-                    **Your 2025 vs 2024 performance:**
+                    **Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:**
                     - **Overall change**: {momentum['year_over_year_change']:+.1f} points average
                     - **Measures compared**: {momentum.get('total_measures_compared', 0)} satisfaction measures
                     """)
@@ -245,11 +309,9 @@ class ExecutiveDashboard:
 
         # YOUR PRIORITY
         with cols[2]:
-            # Format data for display
-            corr_strength = priority.get('correlation_strength', 0)
-            if corr_strength == 0 and 'correlation_with_tp01' in priority:
-                corr_strength = abs(priority['correlation_with_tp01']) * 100
-            corr_text = "Strong" if corr_strength > 70 else "Moderate" if corr_strength > 40 else "Weak"
+            # Correlation shown as qualitative label + raw coefficient, e.g. "Strong (0.72)"
+            raw_corr = abs(priority.get('correlation_with_tp01', 0))
+            corr_text = _corr_label(raw_corr)
 
             measure_code = priority.get('priority_measure', priority.get('measure', 'N/A'))
             measure_desc = priority.get('priority_description', priority.get('measure_name', 'No priority identified'))
@@ -258,7 +320,7 @@ class ExecutiveDashboard:
             
             if is_mobile:
                 # Mobile: Use native Streamlit components
-                st.markdown("### 🎯 YOUR PRIORITY")
+                st.markdown("### YOUR PRIORITY")
                 st.metric(
                     label=measure_code,
                     value=priority.get('priority_level', 'Medium'),
@@ -293,7 +355,7 @@ class ExecutiveDashboard:
                         Improvement potential: {improvement:.1f}%
                     </p>
                     <p style="font-size: 0.85rem; color: #475569; margin-top: 0.3rem;">
-                        TP01 correlation: {safe_corr_text} ({corr_strength:.1f}%)
+                        TP01 correlation: {safe_corr_text} ({raw_corr:.2f})
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -306,7 +368,7 @@ class ExecutiveDashboard:
                 - **Focus area**: {measure_desc} ({measure_code})
                 - **Current performance**: {current_percentile:.1f}th percentile
                 - **Improvement potential**: {improvement:.1f}% (room to improve)
-                - **TP01 correlation**: {corr_strength:.1f}% ({corr_text.lower()} relationship with overall satisfaction)
+                - **TP01 correlation**: {corr_text} ({raw_corr:.2f})
                 - **Weighted priority score**: {priority.get('priority_score', priority.get('weighted_priority_score', 0)):.1f}
                 - **Current score**: {priority.get('current_score', 'N/A')}
 
@@ -328,7 +390,8 @@ class ExecutiveDashboard:
         priority_data = analytics.identify_priority(df, provider_code)
 
         if "error" in detailed_analysis:
-            st.error(detailed_analysis["error"])
+            _report_internal_error("detailed analysis error", detailed_analysis.get("error"))
+            st.error("Detailed analysis is unavailable right now. Try another provider or refresh.")
             return
 
         # Add help information for the detailed analysis section
@@ -346,7 +409,7 @@ class ExecutiveDashboard:
             """)
 
         # Performance Comparison Section
-        with st.expander("📊 Performance Comparison", expanded=True):
+        with st.expander("Performance Comparison", expanded=True):
             # Create performance comparison chart
             if detailed_analysis:
                 measures = []
@@ -436,7 +499,7 @@ class ExecutiveDashboard:
                 st.table(table_df)
 
         # Correlation Analysis Section
-        with st.expander("📈 Correlation Analysis", expanded=False):
+        with st.expander("Correlation Analysis", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -571,7 +634,7 @@ class ExecutiveDashboard:
                 st.warning("Correlation analysis not available")
 
         # Priority Matrix Section
-        with st.expander("🎯 Priority Matrix", expanded=False):
+        with st.expander("Priority Matrix", expanded=False):
             # Add header with tooltip help
             col_header1, col_header2 = st.columns([4, 1])
             with col_header1:
@@ -588,10 +651,10 @@ class ExecutiveDashboard:
                     - **Bubble size**: Combined priority score
 
                     **Quadrants**:
-                    - **Top-Right (High Priority)**: High impact + High potential 
-                    - **Top-Left (Quick Wins)**: High impact + Lower potential
-                    - **Bottom-Right (Monitor)**: Lower impact + High potential
-                    - **Bottom-Left (Low Priority)**: Lower impact + Lower potential
+                    - **Top-Right (High Priority)**: High impact + High potential — focus here first
+                    - **Top-Left (Maintain & Protect)**: High impact + Already strong — protect these strengths
+                    - **Bottom-Right (Lower Impact)**: High potential + Lower impact on overall satisfaction
+                    - **Bottom-Left (Low Priority)**: Lower impact + Already performing well
 
                     **Focus on measures in the top-right quadrant for maximum impact.**
                     """)
@@ -632,11 +695,12 @@ class ExecutiveDashboard:
                         else:
                             priority_level = "Low"
 
+                        corr_raw = row['Correlation'] / 100
                         hover_text = (
                             f"{row['Description']}<br>"
                             f"Priority Level: {priority_level}<br>"
                             f"Improvement Potential: {row['Improvement Potential']:.1f}%<br>"
-                            f"TP01 Correlation: {row['Correlation']:.1f}%<br>"
+                            f"TP01 Correlation: {_corr_label(corr_raw)} ({corr_raw:.2f})<br>"
                             f"Weighted Priority Score: {priority_score:.1f}<br>"
                             f"Focus Area Ranking: {'Top 3' if priority_score >= sorted(scatter_df['Weighted Priority'], reverse=True)[2] else 'Lower Priority'}"
                         )
@@ -656,7 +720,10 @@ class ExecutiveDashboard:
                             line=dict(width=1, color='white')  # Add border for better visibility
                         ),
                         text=scatter_df['Measure'],
-                        textposition="top center",
+                        textposition=_quadrant_label_positions(
+                            scatter_df['Improvement Potential'],
+                            scatter_df['Correlation'],
+                        ),
                         hovertemplate="<b>%{text}</b><br>%{customdata}<extra></extra>",
                         customdata=matrix_hover_data
                     ))
@@ -667,14 +734,14 @@ class ExecutiveDashboard:
 
                     # Add quadrant labels
                     fig_matrix.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=12, color="red"))
-                    fig_matrix.add_annotation(x=25, y=75, text="Quick Wins", showarrow=False, font=dict(size=12, color="green"))
-                    fig_matrix.add_annotation(x=75, y=25, text="Monitor", showarrow=False, font=dict(size=12, color="orange"))
+                    fig_matrix.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=12, color="green"))
+                    fig_matrix.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=12, color="orange"))
                     fig_matrix.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=12, color="gray"))
 
                     fig_matrix.update_layout(
                         title="Priority Matrix: Improvement Potential vs TP01 Correlation - Hover for Details",
-                        xaxis_title="Improvement Potential (%) →",
-                        yaxis_title="Correlation with Overall Satisfaction (%) ↑",
+                        xaxis_title="Improvement Potential (%)",
+                        yaxis_title="Relationship with Overall Satisfaction",
                         height=600,
                         xaxis=dict(
                             range=[0, 100],
@@ -806,80 +873,6 @@ class ExecutiveDashboard:
             ranges_df = pd.DataFrame(ranges_data)
             st.table(ranges_df)
 
-    def render_insights_summary(self, rankings: Dict, momentum: Dict, priority: Dict, provider_code: str):
-        """
-        Render actionable insights summary
-        """
-        st.markdown("### Key Insights & Recommendations")
-
-        if provider_code not in rankings:
-            st.warning("No ranking data available for insights")
-            return
-
-        provider_ranking = rankings[provider_code]
-
-        insights = []
-
-        # Ranking insights
-        if provider_ranking['quartile'] == 'Top':
-            insights.append("**Excellent performance** - You're in the top quartile of providers!")
-        elif provider_ranking['quartile'] == 'Low':
-            insights.append("**Performance attention needed** - You're in the bottom quartile.")
-
-        # Momentum insights
-        if momentum.get('disabled', False):
-            insights.append("**Momentum analysis** - Insufficient data for year-over-year comparison.")
-        elif momentum['direction'] == 'up':
-            improved_count = len(momentum.get('improved_measures', []))
-            insights.append(f"**Positive momentum** - {momentum['momentum_text']} with {improved_count} measures showing significant improvement.")
-        elif momentum['direction'] == 'down':
-            declined_count = len(momentum.get('declined_measures', []))
-            insights.append(f"**Declining trend** - {momentum['momentum_text']} with {declined_count} measures needing immediate attention.")
-        elif momentum['direction'] == 'stable':
-            insights.append(f"**Stable performance** - {momentum['momentum_text']} year-over-year.")
-
-        # Priority insights with correlation context
-        if priority['priority_level'] in ['Critical', 'High']:
-            corr_strength = priority.get('correlation_strength', 0)
-            corr_text = "strong" if corr_strength > 70 else "moderate" if corr_strength > 40 else "weak"
-            insights.append(f"**Priority action required** - Focus on {priority['measure_name']} for maximum impact (has {corr_text} correlation with overall satisfaction).")
-
-        # Display insights
-        for insight in insights:
-            st.markdown(insight)
-
-        # Recommendations
-        st.markdown("#### Recommended Actions")
-
-        # Enhanced recommendations with correlation insights
-        corr_strength = priority.get('correlation_strength', 0)
-        impact_text = "high impact on overall satisfaction" if corr_strength > 70 else "moderate impact on overall satisfaction" if corr_strength > 40 else "some impact on overall satisfaction"
-
-        recommendations = [
-            f"1. **Focus on {priority['measure_name']}** - This has the highest improvement potential ({priority['improvement_potential']:.1f}%) with {impact_text}",
-            f"2. **Benchmark against top quartile** - Learn from providers scoring above {provider_ranking.get('top_quartile_threshold', 'N/A')}"
-        ]
-
-        # Add momentum recommendation only if not disabled
-        if not momentum.get('disabled', False):
-            if momentum['direction'] == 'up':
-                recommendations.append(f"3. **Sustain improvements** - Continue focus areas that drove {len(momentum.get('improved_measures', []))} measure improvements")
-            elif momentum['direction'] == 'down':
-                declined = momentum.get('declined_measures', [])
-                if declined:
-                    recommendations.append(f"3. **Address decline** - Prioritize {declined[0]['description']} which declined {declined[0]['change']:.1f} points")
-            else:
-                recommendations.append("3. **Build on stability** - Identify breakthrough opportunities to move from stable to improving")
-        else:
-            recommendations.append("3. **Establish baseline** - Ensure 2025 data collection for future year-over-year tracking")
-
-        # Add top 3 priorities if available
-        if 'top_3_priorities' in priority and len(priority['top_3_priorities']) > 1:
-            recommendations.append(f"4. **Secondary priorities** - Also consider {priority['top_3_priorities'][1]['name']} and {priority['top_3_priorities'][2]['name'] if len(priority['top_3_priorities']) > 2 else 'other measures'}")
-
-        for rec in recommendations:
-            st.markdown(rec)
-
     def render_performance_analysis(self, detailed_analysis: Dict):
         """
         Render performance analysis visualization
@@ -889,7 +882,8 @@ class ExecutiveDashboard:
             return
 
         if "error" in detailed_analysis:
-            st.error(detailed_analysis["error"])
+            _report_internal_error("performance analysis error", detailed_analysis.get("error"))
+            st.error("Performance analysis is unavailable right now. Try another provider or refresh.")
             return
 
         if detailed_analysis and len(detailed_analysis) > 0:
@@ -932,7 +926,8 @@ class ExecutiveDashboard:
                 xaxis_title="TSM Measures",
                 yaxis_title="Score",
                 barmode='group',
-                height=400
+                height=400,
+                **PLOTLY_LAYOUT,
             )
 
             st.plotly_chart(fig, width='stretch')
@@ -984,7 +979,8 @@ class ExecutiveDashboard:
             title="Correlation with Overall Satisfaction (TP01)",
             xaxis_title="Correlation Coefficient",
             yaxis_title="TSM Measure",
-            height=400
+            height=400,
+            **PLOTLY_LAYOUT,
         )
 
         st.plotly_chart(fig, width='stretch')
@@ -1011,7 +1007,8 @@ class ExecutiveDashboard:
         st.markdown("### Priority Matrix")
 
         if "error" in priority:
-            st.error(priority["error"])
+            _report_internal_error("priority matrix error", priority.get("error"))
+            st.error("Priority matrix is unavailable right now. Try another provider or refresh.")
             return
 
         # Extract priorities if available
@@ -1046,26 +1043,33 @@ class ExecutiveDashboard:
                 y=y_values,
                 mode='markers+text',
                 text=labels,
-                textposition='top center',
+                textposition=_quadrant_label_positions(x_values, y_values),
                 marker=dict(
                     size=12,
                     color=colors,
                     line=dict(width=2, color='white')
                 ),
-                hovertemplate="<b>%{text}</b><br>Improvement: %{x:.1f}%<br>Correlation: %{y:.1f}%<extra></extra>"
+                hovertemplate="<b>%{text}</b><br>Improvement: %{x:.1f}%<br>Correlation Strength: %{y:.0f}/100<extra></extra>"
             ))
 
             fig.update_layout(
                 title="Priority Matrix: Improvement Potential vs Impact",
                 xaxis_title="Improvement Potential (%)",
-                yaxis_title="Correlation Strength with TP01 (%)",
+                yaxis_title="Relationship with Overall Satisfaction",
                 height=500,
-                showlegend=False
+                showlegend=False,
+                **PLOTLY_LAYOUT,
             )
 
             # Add quadrant lines
             fig.add_hline(y=50, line_dash="dash", line_color="gray", opacity=0.3)
             fig.add_vline(x=50, line_dash="dash", line_color="gray", opacity=0.3)
+
+            # Add quadrant labels
+            fig.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=11, color="red"))
+            fig.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=11, color="green"))
+            fig.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=11, color="orange"))
+            fig.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=11, color="gray"))
 
             st.plotly_chart(fig, width='stretch')
 
@@ -1077,12 +1081,13 @@ class ExecutiveDashboard:
 
             table_data = []
             for i, (measure, data) in enumerate(priority_list, 1):
+                cs = data['correlation_strength']
                 table_data.append({
                     'Rank': i,
                     'Measure': measure,
                     'Priority Score': f"{data['priority_score']:.1f}",
                     'Improvement Potential': f"{data['improvement_potential']:.1f}%",
-                    'Correlation': f"{data['correlation_strength']:.1f}%"
+                    'Correlation': f"{_corr_label(cs)} ({cs:.2f})"
                 })
 
             table_df = pd.DataFrame(table_data)

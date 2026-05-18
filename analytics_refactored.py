@@ -126,11 +126,13 @@ class TSMAnalytics:
                 return {
                     'direction': "insufficient_data",
                     'momentum_text': "Insufficient multi-year data",
-                    'momentum_icon': "📊",
+                    'momentum_icon': "",
                     'momentum_color': "#64748B",
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
+                    'latest_year': 2025,
+                    'prior_year': 2024,
                     'disabled': True
                 }
             
@@ -154,11 +156,13 @@ class TSMAnalytics:
                 return {
                     'direction': "no_comparison",
                     'momentum_text': "No comparable measures",
-                    'momentum_icon': "📊",
+                    'momentum_icon': "",
                     'momentum_color': "#64748B",
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
+                    'latest_year': 2025,
+                    'prior_year': 2024,
                     'disabled': True
                 }
             
@@ -196,11 +200,13 @@ class TSMAnalytics:
                 'momentum_icon': momentum_icon,
                 'momentum_color': momentum_color,
                 'year_over_year_change': avg_change,
-                'improved_measures': [{'code': tp, 'description': data['description'], 'change': data['change']} 
+                'improved_measures': [{'code': tp, 'description': data['description'], 'change': data['change']}
                                      for tp, data in improved[:3]],
-                'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']} 
+                'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']}
                                      for tp, data in declined[:3]],
                 'total_measures_compared': len(measure_changes),
+                'latest_year': 2025,
+                'prior_year': 2024,
                 'disabled': False
             }
             
@@ -208,11 +214,13 @@ class TSMAnalytics:
             return {
                 'direction': "error",
                 'momentum_text': f"Error: {str(e)}",
-                'momentum_icon': "⚠️",
+                'momentum_icon': "",
                 'momentum_color': "#64748B",
                 'year_over_year_change': 0,
                 'improved_measures': [],
                 'declined_measures': [],
+                'latest_year': 2025,
+                'prior_year': 2024,
                 'disabled': True
             }
     
@@ -255,14 +263,15 @@ class TSMAnalytics:
             for tp_measure in self.tp_codes[1:]:  # Skip TP01
                 if tp_measure not in provider_scores:
                     continue
-                    
-                # Get percentile (or calculate if not available)
-                if tp_measure in percentile_dict:
-                    percentile = percentile_dict[tp_measure]
-                else:
-                    # Fallback: calculate percentile on the fly
-                    score = provider_scores[tp_measure]
-                    percentile = self.data_processor.get_percentile_for_score(tp_measure, score)
+
+                if tp_measure not in percentile_dict:
+                    # Percentile coverage is enforced by validate_etl.py check 5.
+                    # Reaching this branch means ETL drift — skip rather than invoke
+                    # a nonexistent get_percentile_for_score method.
+                    print(f"Skipping {tp_measure} for provider {provider_code}: no pre-calculated percentile")
+                    continue
+
+                percentile = percentile_dict[tp_measure]
                 
                 # Improvement potential (lower percentile = more room for improvement)
                 improvement_potential = 100 - percentile

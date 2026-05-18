@@ -1,8 +1,8 @@
-# Session Handoff: Branch Cleanup & Cherry-Picking UI/UX Features
+# Session Handoff: Follow-ups Resolved, UI Polish Landed, Group G Still Pending
 
-**Date:** April 2026
-**Branch:** `main` (all migration work merged)
-**Status:** Migration complete and live. Cleanup and feature cherry-pick pending.
+**Date:** 2026-04-19
+**Branch:** `main` (clean; Group G is the only rescue-era task left)
+**Status:** All three PR #12 rescue follow-ups (#29/#30/#31) are resolved. A UI polish pass shipped on 2026-04-19 covering branding, emoji strip, sidebar chrome, and priority-matrix labels.
 
 ---
 
@@ -14,140 +14,62 @@
 - **Volume:** `/data` (DATA_PATH env var)
 - **Cert:** Let's Encrypt (auto-renewed)
 - **Source:** `main` branch (auto-deploys on push)
+- **Last verified:** 2026-04-19 12:20 UTC, HTTP 200, `/_stcore/health` → `ok`
 
-### Recently Merged PRs
-| PR | Title | Status |
-|----|-------|--------|
-| #13 | Migrate from Replit to Railway with Docker containerisation | Merged |
-| #14 | Fix LCRA/LCHO dataset mix-up and TP description drift | Merged |
-| #15 | Add tsm_measures.py to Dockerfile COPY list | Merged |
-| #16 | Harden Docker image (allowlist .dockerignore) + add gitleaks pre-commit | Merged |
-| #17 | docs: Update documentation with custom domain URL | Merged |
-| #18 | Document pre-commit hook setup in README | Merged |
+### Session 2026-04-19 — What landed
 
-### Open PRs
-| PR | Title | Action Needed |
-|----|-------|---------------|
-| #12 | Fix critical data bugs, improve UI/UX, add Railway deployment config | Cherry-pick unique features (see Task 2) |
+Merged in order:
 
----
+| PR | Title | Summary |
+|----|-------|---------|
+| #35 | refactor(dashboard): delete orphaned `render_insights_summary` | Closes #29. Method was scaffolded in the initial Replit-Agent commit (`e6e3be4`) and never wired into `app.py`. Superseded by the card composition (`render_executive_summary` + matrix + correlation + performance). 76 lines removed. |
+| #38 | fix(analytics): remove dead fallback to nonexistent `get_percentile_for_score` | Closes #30. Fallback in `identify_priority` only fires on ETL drift (`validate_etl.py` check 5 enforces coverage). Replaced with a `print` + `continue` so drift surfaces in Railway logs. |
+| #39 | docs(roadmap): add dynamic momentum year labels | Issue #31 closed with pointer. Live behaviour (`2025 vs 2024`) is correct today; dynamic-year work captured in `FEATURES_ROADMAP.md` under Multi-Year Analytics, to be picked up alongside the Nov 2026 TSM annual update. |
+| #40 | feat(ui): add HAILIE header logo and hide sidebar chevrons in Streamlit 1.50 | `st.logo()` top-left linking to housingai.org; source image cropped 1024×1024 → 845×349 with near-white → transparent. `.dockerignore` allowlist updated. CSS now targets Streamlit 1.50 testids (`stExpandSidebarButton`, `stSidebarCollapseButton`). |
+| #41 | feat(ui): strip decorative emojis from user-facing copy | Closes #37. 44 edits across 5 files. Kept only the momentum direction arrows (↗️/↘️/→) in `analytics_refactored.py`, `styles.py`, and `tooltip_definitions.py`. |
+| #42 | fix(dashboard): stagger priority-matrix label positions by quadrant | Partial fix related to #36. `_quadrant_label_positions` helper pushes labels outward and cycles through 3 vertical variants per quadrant. **Issue #36 deliberately left open** — tight clusters can still overlap; full fix needs force-directed placement. |
 
-## Task 1: Safe Branch Deletions
+### Open issues
+- **[#36](https://github.com/Teev-dev/HAILIE_Insights_Engine/issues/36)** `bug` `good first issue` — priority-matrix label overlap. Partial fix shipped in #42; needs a proper collision-avoidance pass (force-directed label placement or a JS-side solver hooked into Plotly).
 
-Run these commands in the cleanup session:
-
-```bash
-# Remote branch deletions (all merged, nothing lost)
-git push origin --delete migration/railway
-git push origin --delete docs/custom-domain-url
-git push origin --delete Feature_2025_data
-
-# Replit-agent branch - review first (Replit auto-publishes, likely stale)
-# Check: git log origin/replit-agent --not origin/main --oneline
-# If all commits are Replit auto-publishes (no unique user work), delete:
-git push origin --delete replit-agent
-
-# Local branch cleanup
-git branch -D migration/railway
-git branch -D fix/data-accuracy-lcra-lcho
-git branch -D docs/custom-domain-url
-git branch -D security/review-fixes
-
-# Drop stale stash (only adds `import html` — already in main)
-git stash drop stash@{0}
-```
-
-**Keep these branches:**
-- `main` (obviously)
-- `feature/ui-ux-improvements` (has open PR #12 with unique features — see Task 2)
+### Branch state
+Only `main` exists locally and on origin. All session worktrees removed.
 
 ---
 
-## Task 2: Cherry-Pick UI/UX Features from PR #12
+## Task 1: Group G — Dynamic ETL Header Detection
 
-PR #12 (`feature/ui-ux-improvements` branch, commit `788a079`) contains unique features NOT in main. **The user wants ALL of these — they are positive improvements.**
+**Scope:** Port PR #12's `build_analytics_db_v2.py` refactor (+349 lines) that replaces hardcoded Excel column positions with dynamic header detection. Matters because the Regulator of Social Housing sometimes shifts columns between annual releases — the current hardcoded-position parser is fragile and likely to break on the November 2026 data release.
 
-### Features to Cherry-Pick
+**Why still deferred:** Biggest and riskiest remaining change. The ETL produces the DuckDB that drives the entire app; a subtle porting error would silently corrupt analytics across all providers.
 
-1. **Sentry SDK integration**
-   - New dependency: `sentry-sdk`
-   - Env var gated: `SENTRY_DSN`
-   - Add observability for production errors
+**Approach when ready:**
 
-2. **Dismissible "Recent Updates" changelog toast**
-   - Shows on first load for returning users
-   - Dismisses on click
-   - Tracks which version/date the user has seen
+1. Fresh worktree off latest `main`:
+   ```bash
+   git worktree add /Users/teev/Software_Projects/hailie-worktrees/group-g-dynamic-etl -b feat/etl-dynamic-headers origin/main
+   ```
+2. Port `build_analytics_db_v2.py` from the now-closed `feature/ui-ux-improvements` branch (git has it even though the branch is deleted — see `git log --all`). Preserve main's current path/import conventions (`config.py`, `tsm_measures.py`).
+3. **End-to-end ETL run required before marking ready:**
+   ```bash
+   python3 build_analytics_db_v2.py
+   python3 validate_etl.py    # all 6 checks must pass
+   ```
+4. **Diff the new DuckDB against the current production one** to confirm no regressions in provider scores, percentiles, correlations. Spot-check at least 5 providers (including 1 LCHO, 1 COMBINED) against the source Excel files by hand.
+5. Open draft PR only after steps 3 and 4 pass.
 
-3. **Rename "Raw Data" section → "Score Breakdown"**
-   - User-facing UI label change
-   - More descriptive, less confusing
+---
 
-4. **Priority formula/threshold fixes**
-   - Tooltip-to-code mismatch corrections
-   - Ensures tooltips accurately describe the actual calculation logic
-   - File: `tooltip_definitions.py` + any priority calc code
+## Task 2: Priority-matrix collision avoidance (#36)
 
-5. **Correlation display format**
-   - Before: "72.0%"
-   - After: "Strong (0.72)"
-   - Qualitative label + coefficient, matches statistics conventions
+The quadrant-based stagger in PR #42 is a partial fix. When 4+ measures cluster at near-identical `(improvement_potential, correlation_strength)` coordinates inside a single quadrant, their labels still collide.
 
-6. **Priority matrix quadrant labels**
-   - Fixed labels: "High Priority", "Maintain & Protect", "Lower Impact", "Low Priority"
-   - Previously had misleading quadrant names like "Quick Wins"
+**Options for a full fix:**
+- Force-directed placement in Python before handing to Plotly (iteratively nudge labels apart based on pairwise label-box distances). Deterministic, server-side, low-risk.
+- Client-side JS solver via a Plotly extension or post-render script manipulating SVG text nodes. More dynamic but adds runtime complexity and bypasses Streamlit's rerun model.
+- Abandon on-plot labels and rely on the hover tooltip + existing ranking table directly below the chart.
 
-7. **Dynamic year references**
-   - New constant: `CURRENT_DATA_YEAR`
-   - Replaces hardcoded "2025" references in user-facing text
-   - Simplifies annual updates
-
-8. **Consistent Plotly chart theming**
-   - Standardised chart styling across all visualisations
-   - Matches app brand colours (#2E5BBA primary)
-
-9. **Remove unused confidence interval checkbox**
-   - Dead UI element that did nothing
-   - Cleanup for clarity
-
-10. **`validate_etl.py` — data integrity check script**
-    - New diagnostic tool (alongside existing `diagnose_duplicates.py`, `db_view_script.py`, `review_pvalues.py`)
-    - Validates ETL output before deployment
-
-### Cherry-Pick Strategy (Recommended)
-
-**Option A: One PR per logical group** (recommended for review-ability)
-- PR: "Add Sentry observability"
-- PR: "UI polish: labels, correlations, quadrants, themes"
-- PR: "Add CURRENT_DATA_YEAR constant for dynamic year refs"
-- PR: "Add validate_etl.py diagnostic tool"
-- PR: "Add dismissible changelog toast"
-
-### Execution Plan
-
-1. **Read PR #12 diff:** `gh pr diff 12` to see full changes
-2. **Check each feature against current main** — some may have been partially ported already via PR #14
-3. **Create feature branches off main** for each logical group
-4. **Apply changes manually** (don't cherry-pick the commit directly — too much conflict potential since main has moved significantly)
-5. **Test locally** in Docker before pushing
-6. **Open draft PRs** per CLAUDE.md protocol
-7. **Close PR #12** with note that features were rescued via new PRs
-
-### Files Likely to Need Edits
-
-- `app.py` — changelog toast, `CURRENT_DATA_YEAR` constant
-- `dashboard.py` — "Raw Data" → "Score Breakdown", correlation display, quadrant labels
-- `tooltip_definitions.py` — priority formula/threshold fixes
-- `styles.py` — Plotly theme consistency
-- `pyproject.toml` — `sentry-sdk` dependency
-- New file: `validate_etl.py`
-
-### Caution Points
-
-- **Don't just merge PR #12** — it contains old Dockerfile/railway.toml versions that conflict with the migration work
-- **Check correlation display code** — current main may already have some of these fixes (from PR #14)
-- **Test Sentry integration** with a real DSN before marking PR ready
-- **Follow CLAUDE.md guardrails** — draft PRs only, TDD preferred, html.escape() on dynamic UI content
+Recommend the server-side force-directed approach — same module-level helper pattern as the current `_quadrant_label_positions`.
 
 ---
 
@@ -159,17 +81,30 @@ PR #12 (`feature/ui-ux-improvements` branch, commit `788a079`) contains unique f
 - `ADRs/ADR-004-migration-replit-to-railway.md` — migration decision record
 - `MAINTENANCE.md` — annual update procedures
 - `DEPLOYMENT.md` — Railway deployment runbook
+- `FEATURES_ROADMAP.md` — forward-looking enhancement ideas (now includes dynamic momentum year labels under Multi-Year Analytics)
+- `guides/collaboration-protocol.md` §5 — AI autonomous session protocol (worktree isolation, draft PRs, DCO)
 
 ### Critical Guardrails (from CLAUDE.md)
 - All data access through `data_processor_enhanced.py`
 - Analytics in `analytics_refactored.py`, rendering in `dashboard.py`
 - Data paths via `config.py` only (no hardcoding)
 - `html.escape()` required on all dynamic content in `unsafe_allow_html`
-- LCRA vs LCHO peer isolation is non-negotiable
+- LCRA vs LCHO peer isolation is non-negotiable — always pass `dataset_type` explicitly
 - No PII logging (use provider codes, not names)
+- `.dockerignore` is allowlist-shaped — new runtime files must be explicitly re-included
 
-### Year Default (Important for Future)
-Currently `year=2025` in 10+ places. Next update: November 2026 when new TSM data publishes. Full checklist in `MAINTENANCE.md`.
+### Year Default
+`year=2025` is still the default in ~10 query-layer places (see MAINTENANCE.md). PR #22 added `CURRENT_DATA_YEAR` (still in `app.py`; moving to `config.py` is roadmapped alongside the dynamic-year work). Query-layer defaults remain maintained manually. Next annual update: November 2026.
+
+### Sidebar chrome (Streamlit 1.50)
+The sidebar is intentionally inaccessible from the UI. CSS in `styles.py:15-26` hides both the open and close chevrons by targeting Streamlit 1.50 testids (`stExpandSidebarButton`, `stSidebarCollapseButton`). Legacy selectors kept as belt-and-braces. Settings inside the sidebar block (mobile toggle, confidence intervals, advanced logging) are dev affordances with sensible defaults. Note: sidebar state persists in browser localStorage under `stSidebarCollapsed-/` — test in incognito to see the true default.
+
+### Local dev environment
+- Python 3.11 required. `.venv` must be created with `python3.11 -m venv .venv`.
+- Core deps: `pip install duckdb streamlit pandas plotly scipy numpy openpyxl 'sentry-sdk>=2.0.0' pre-commit`
+- Since PR #28, `pip install -e .` also works.
+- Pre-commit hooks require `pre-commit install` once per clone.
+- Streamlit was upgraded to 1.50 during the 2026-04-17 rescue session; CSS selectors targeting sidebar chrome must match the 1.50 DOM.
 
 ---
 
@@ -179,7 +114,10 @@ Currently `year=2025` in 10+ places. Next update: November 2026 when new TSM dat
 cd /Users/teev/Software_Projects/hailie-tsm-insights
 git checkout main
 git pull origin main
+gh issue list --state open
 ```
 
 Tell Claude Code:
-"Read HANDOFF.md for context. Start with Task 1 (safe branch deletions), then proceed with Task 2 (cherry-pick UI/UX features from PR #12). The user wants ALL features from PR #12 — they are positive improvements."
+*"Read HANDOFF.md. Pick up Group G (dynamic ETL) or issue #36 (priority-matrix collision avoidance) — whichever I indicate."*
+
+Group G is a half-day+ block with end-to-end ETL verification. #36 is an afternoon of careful Plotly + placement-algorithm work.

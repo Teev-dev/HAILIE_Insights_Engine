@@ -25,6 +25,7 @@
 # (that would re-include any future siblings by default).
 !pages/**/*.py
 !.streamlit/**/*.toml
+!assets/hailie_logo.png
 
 # --- Baked-in default analytics database ---
 # Source xlsx files, docs, and the legacy duckdb stay excluded by default.

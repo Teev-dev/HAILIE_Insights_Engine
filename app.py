@@ -9,23 +9,58 @@ from analytics_refactored import TSMAnalytics
 from dashboard import ExecutiveDashboard
 from styles import apply_css
 from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_info, should_show_component
-import traceback
 from contextlib import contextmanager
 from config import DB_PATH
 from tsm_measures import LCHO_EXCLUDED
+import html
 import os
+
+# User-facing year label for the currently-loaded TSM dataset.
+# Query-layer year defaults (data_processor_enhanced.py, analytics_refactored.py)
+# are updated separately per MAINTENANCE.md — do not point them at this constant.
+CURRENT_DATA_YEAR = 2025
+
+# Sentry is a no-op unless SENTRY_DSN is set in the environment.
+# send_default_pii=False keeps IP/User headers out of events — this codebase
+# handles public provider data but CLAUDE.md forbids anything PII-adjacent.
+_sentry_dsn = os.environ.get("SENTRY_DSN", "")
+if _sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        traces_sample_rate=0.1,
+        environment=os.environ.get("ENVIRONMENT", "production"),
+        send_default_pii=False,
+    )
 
 # Page configuration - MUST be first Streamlit command
 # Using 'wide' layout for all devices, content adapts responsively
 st.set_page_config(
     page_title="HAILIE TSM Insights Engine",
-    page_icon="✓",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
+st.logo(
+    os.path.join(os.path.dirname(__file__), "assets", "hailie_logo.png"),
+    link="https://housingai.org",
+    size="large",
+)
+
 # Apply custom CSS styles from styles module
 apply_css(st)
+
+
+def _report_internal_error(context: str, exc: Exception | None = None) -> None:
+    """Route error details to Sentry/stdout only — never to the UI."""
+    if exc is not None:
+        print(f"[ERROR] {context}: {type(exc).__name__}")
+    else:
+        print(f"[ERROR] {context}")
+    if _sentry_dsn and exc is not None:
+        import sentry_sdk
+        sentry_sdk.capture_exception(exc)
 
 
 def render_landing_hero():
@@ -80,13 +115,13 @@ def render_features_overview():
         st.markdown("### Key Insights We Provide")
         
         with st.container():
-            st.markdown("**📊 Your Rank**")
+            st.markdown("**Your Rank**")
             st.markdown("See exactly how your housing provider compares to peers with quartile-based scoring.")
-            
-            st.markdown("**📈 Your Momentum**")
+
+            st.markdown("**Your Momentum**")
             st.markdown("Track your 12-month performance trajectory across key satisfaction measures.")
-            
-            st.markdown("**🎯 Your Priority**")
+
+            st.markdown("**Your Priority**")
             st.markdown("Identify the single most critical area for improvement based on data-driven analysis.")
     else:
         # Desktop version - use custom HTML grid
@@ -131,7 +166,8 @@ def check_database_exists():
 
     # Check if file is readable
     if not os.access(db_path, os.R_OK):
-        st.error(f"❌ Database file exists but is not readable: {db_path}")
+        _report_internal_error("database file exists but is not readable")
+        st.error("Database is unavailable. Please contact support.")
         return False
 
     # Check if it's a valid DuckDB file (basic check)
@@ -142,7 +178,8 @@ def check_database_exists():
         conn.close()
         return True
     except Exception as e:
-        st.error(f"❌ Database file exists but appears corrupted: {str(e)}")
+        _report_internal_error("database corruption check failed", e)
+        st.error("Database is unavailable. Please contact support.")
         return False
 
 
@@ -161,12 +198,17 @@ def render_dataset_indicator(dataset_type: str, peer_count: int):
         description = "Combined Dataset"
         note = "Providers with combined reporting"
 
+    safe_dataset = html.escape(dataset_type)
+    safe_description = html.escape(description)
+    safe_note = html.escape(note)
+    safe_peer_count = html.escape(str(peer_count))
+
     st.markdown(f"""
     <div style="background-color: {color}15; border-left: 4px solid {color}; padding: 10px; margin: 10px 0; border-radius: 4px;">
-        <strong style="color: {color};">Dataset: {dataset_type}</strong><br/>
-        <small>{description}</small><br/>
-        <small style="opacity: 0.8;">{note}</small><br/>
-        <small style="opacity: 0.8;">📊 Comparing with {peer_count} peer providers in {dataset_type} group</small>
+        <strong style="color: {color};">Dataset: {safe_dataset}</strong><br/>
+        <small>{safe_description}</small><br/>
+        <small style="opacity: 0.8;">{safe_note}</small><br/>
+        <small style="opacity: 0.8;">Comparing with {safe_peer_count} peer providers in {safe_dataset} group</small>
     </div>
     """, unsafe_allow_html=True)
 
@@ -181,7 +223,7 @@ def main():
     # Check if database exists
     if not check_database_exists():
         st.error("""
-        ❌ **Enhanced Analytics Database Not Found**
+        **Enhanced Analytics Database Not Found**
 
         The enhanced analytics database with LCRA/LCHO separation has not been generated yet.
         Please run the enhanced ETL pipeline first:
@@ -202,22 +244,21 @@ def main():
         data_processor_for_options = EnhancedTSMDataProcessor(silent_mode=True)
         provider_options = data_processor_for_options.get_provider_options()
     except ConnectionError as e:
-        st.error(f"""
-        ❌ **Database Connection Failed**
+        _report_internal_error("processor init: ConnectionError", e)
+        st.error("""
+        **Database Connection Failed**
 
-        Unable to connect to the analytics database: {str(e)}
+        Unable to connect to the analytics database.
 
-        Please ensure the database file exists at:
-        `{DB_PATH}`
-
-        If the database is missing, run:
+        If you're running locally and the database is missing, run:
         ```bash
         python build_analytics_db_v2.py
         ```
         """)
         return
     except Exception as e:
-        st.error(f"❌ Unexpected error initializing data processor: {str(e)}")
+        _report_internal_error("processor init: unexpected error", e)
+        st.error("Something went wrong starting the application. Please contact support.")
         return
 
     provider_code = None
@@ -228,7 +269,7 @@ def main():
         # Device view toggle
         st.header("View Settings")
         force_mobile = st.checkbox(
-            "📱 Use Mobile View",
+            "Use Mobile View",
             value=detect_mobile(),
             help="Toggle mobile-optimized layout"
         )
@@ -248,7 +289,7 @@ def main():
 
         # Note about dataset separation
         st.info("""
-        🔄 **Automatic Dataset Detection**
+        **Automatic Dataset Detection**
 
         The system automatically detects whether your selected provider 
         belongs to the LCRA or LCHO dataset and compares only with 
@@ -267,8 +308,8 @@ def main():
 
         # Note about the enhanced architecture
         st.markdown("---")
-        st.info("""
-        📊 **Enhanced Analytics Engine**
+        st.info(f"""
+        **Enhanced Analytics Engine**
 
         This application uses an enhanced analytics database with:
         • Separate LCRA and LCHO datasets
@@ -276,7 +317,7 @@ def main():
         • Peer group isolation
         • Automatic metric adaptation
 
-        Data source: 2025 TSM Dataset
+        Data source: {CURRENT_DATA_YEAR} TSM Dataset
         """)
 
     st.markdown('<div id="provider-search-section"></div>', unsafe_allow_html=True)
@@ -309,7 +350,7 @@ def main():
             selected_provider = None
             provider_name_only = None
     else:
-        st.error("❌ Unable to load provider list. Please try refreshing the page.")
+        st.error("Unable to load provider list. Please try refreshing the page.")
         provider_code = None
         selected_provider = None
         provider_name_only = None
@@ -322,27 +363,23 @@ def main():
         try:
             data_processor = EnhancedTSMDataProcessor(silent_mode=not show_advanced_logging)
         except ConnectionError as e:
-            st.error(f"""
-            ❌ **Database Connection Failed**
-
-            Unable to connect to the analytics database: {str(e)}
-
-            The database file may be corrupted or inaccessible.
-            """)
+            _report_internal_error("per-provider processor init: ConnectionError", e)
+            st.error("Database is unavailable. Please try again later or contact support.")
             return
         except Exception as e:
-            st.error(f"❌ Unexpected error: {str(e)}")
+            _report_internal_error("per-provider processor init: unexpected error", e)
+            st.error("Something went wrong loading your provider. Please try another provider or refresh.")
             return
 
         # Check if provider exists in database
         if not data_processor.get_provider_exists(provider_code):
-            st.error(f"❌ Provider '{provider_code}' not found. Please check the code and try again.")
+            st.error(f"Provider '{provider_code}' not found. Please check the code and try again.")
             return
 
         # Get the dataset type for this provider (use the name without the code part)
         dataset_type = data_processor.get_provider_dataset_type(provider_code, provider_name_only)
         if not dataset_type:
-            st.error(f"❌ Could not determine dataset type for provider '{provider_code}'")
+            st.error(f"Could not determine dataset type for provider '{provider_code}'")
             return
 
         # Get dataset summary stats for context
@@ -356,10 +393,28 @@ def main():
         df = data_processor.load_default_data(provider_code, provider_name_only)
 
         if df is None or df.empty:
-            st.error("❌ Unable to load provider data. Please try again later.")
+            st.error("Unable to load provider data. Please try again later.")
             return
 
-        st.success(f"✅ Loaded {dataset_type} analytics for provider: {provider_code}")
+        st.success(f"Loaded {dataset_type} analytics for provider: {provider_code}")
+
+        # Dismissible changelog toast — appears once per session for returning users
+        if 'dismissed_changelog' not in st.session_state:
+            st.session_state.dismissed_changelog = False
+
+        if not st.session_state.dismissed_changelog:
+            with st.container():
+                st.info("""
+                🆕 **What's new** — thanks for the feedback. We've:
+                - TSM Insights by HAILIE is fully open-source! Your organisation can use, copy, and build on everything here free of charge in line with the MIT license for code, and the CC-BY 4.0 license for everything else.
+                - Fixed some measure descriptions that were showing the wrong name
+                - Renamed "Raw Data" to "Score Breakdown" (same thing, clearer name)
+                - Given the Priority Matrix friendlier labels to show where to focus first
+                - Made the help tips match what the numbers in the app actually show
+                """)
+                if st.button("Dismiss", key="dismiss_changelog"):
+                    st.session_state.dismissed_changelog = True
+                    st.rerun()
 
         # Get applicable measures for this dataset type
         applicable_measures = data_processor.get_applicable_measures(dataset_type)
@@ -398,13 +453,13 @@ def main():
             st.markdown("---")
             st.markdown("## Detailed Analysis")
             
-            with st.expander("📊 Performance Analysis", expanded=True):
+            with st.expander("Performance Analysis", expanded=True):
                 st.markdown(f"### Performance Analysis - {dataset_type} Peer Group")
 
                 # Show note for LCHO providers about missing metrics
                 if dataset_type == 'LCHO':
                     st.info("""
-                    ℹ️ **Note for LCHO Providers**: 
+                    **Note for LCHO Providers**:
                     Repairs metrics (TP02-TP04) are not applicable to LCHO providers 
                     and are excluded from this analysis. All comparisons are made 
                     within your LCHO peer group only.
@@ -438,7 +493,7 @@ def main():
                 else:
                     dashboard.render_performance_analysis(detailed_analysis)
 
-            with st.expander("📈 Measure Correlations", expanded=False):
+            with st.expander("Measure Correlations", expanded=False):
                 st.markdown(f"### Correlation Analysis - {dataset_type} Dataset")
 
                 # Get dataset-specific correlations
@@ -451,7 +506,7 @@ def main():
 
                 dashboard.render_correlation_analysis(correlations, priority)
 
-            with st.expander("🎯 Priority Matrix", expanded=False):
+            with st.expander("Priority Matrix", expanded=False):
                 st.markdown(f"### Priority Matrix - {dataset_type} Context")
 
                 # Filter priority matrix for LCHO if needed
@@ -462,8 +517,8 @@ def main():
 
                 dashboard.render_priority_matrix(priority, detailed_analysis)
 
-            with st.expander("📋 Raw Data", expanded=False):
-                st.markdown(f"### Raw Data - {dataset_type} Provider")
+            with st.expander("Score Breakdown", expanded=False):
+                st.markdown(f"### Your TSM Scores — {dataset_type}")
 
                 scores_df = data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
                 
@@ -476,7 +531,7 @@ def main():
                         if dataset_type == 'LCHO':
                             scores_df = scores_df[~scores_df['tp_measure'].isin(LCHO_EXCLUDED)]
 
-                            st.info("ℹ️ **Note**: Measures TP02-TP04 (repairs and home-maintenance) are not applicable to LCHO providers and are excluded from this view.")
+                            st.info("**Note**: Measures TP02-TP04 (repairs and home-maintenance) are not applicable to LCHO providers and are excluded from this view.")
 
                         # Format for display
                         display_df = scores_df[['tp_measure', 'description', 'score']].copy()
@@ -503,7 +558,7 @@ def main():
         # Footer
         st.markdown("---")
         st.caption(
-            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: 2025 TSM"
+            f"HAILIE TSM Insights Engine v3.0 | Enhanced Analytics with {dataset_type} Dataset | Data: {CURRENT_DATA_YEAR} TSM"
         )
         st.markdown(
             '<p style="text-align: center; font-size: 0.8em; color: #94A3B8; margin: 0.25rem 0;">'
@@ -512,7 +567,7 @@ def main():
             '/<a href="https://creativecommons.org/licenses/by/4.0/" style="color: #94A3B8;">CC-BY 4.0</a>.'
             '</p>'
             '<p style="text-align: center; font-size: 0.85em; color: #666; margin-top: 0.25rem;">'
-            '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
+            '<a href="/privacy_policy" target="_self">Privacy Policy</a>'
             '</p>',
             unsafe_allow_html=True
         )
@@ -524,7 +579,7 @@ def main():
         # Instructions when no provider is selected
         st.markdown("---")
         st.info("""
-        👆 **Getting Started:**
+        **Getting Started:**
 
         Search for your provider name in the dropdown above.
         Start typing to filter the list and find your provider quickly.
@@ -534,7 +589,7 @@ def main():
         
         # Footer with privacy link
         st.markdown("---")
-        st.caption("HAILIE TSM Insights Engine v3.0 | Data: 2025 TSM")
+        st.caption(f"HAILIE TSM Insights Engine v3.0 | Data: {CURRENT_DATA_YEAR} TSM")
         st.markdown(
             '<p style="text-align: center; font-size: 0.8em; color: #94A3B8; margin: 0.25rem 0;">'
             '&copy; 2026 Tom Stephenson (Teev-dev). Built for HAILIE. '
@@ -542,7 +597,7 @@ def main():
             '/<a href="https://creativecommons.org/licenses/by/4.0/" style="color: #94A3B8;">CC-BY 4.0</a>.'
             '</p>'
             '<p style="text-align: center; font-size: 0.85em; color: #666; margin-top: 0.25rem;">'
-            '🔒 <a href="/privacy_policy" target="_self">Privacy Policy</a>'
+            '<a href="/privacy_policy" target="_self">Privacy Policy</a>'
             '</p>',
             unsafe_allow_html=True
         )
