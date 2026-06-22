@@ -1119,7 +1119,7 @@ class ExecutiveDashboard:
             "Feature request or something else",
         ]
 
-        with st.expander("Spotted a data issue? Tell us", expanded=False):
+        with st.expander("Spotted a data issue or want to suggest a feature? Tell us here", expanded=False):
             # Intro callout — left-border house style, matching the dataset
             # indicator so it reads as part of the app, not a bolt-on.
             st.markdown(
