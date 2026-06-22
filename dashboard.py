@@ -64,7 +64,7 @@ PLOTLY_LAYOUT = dict(
     font=dict(
         family='-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif',
         size=12,
-        color='#1E293B',
+        color='#1F2933',
     ),
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(250,250,250,1)',
@@ -77,7 +77,7 @@ class ExecutiveDashboard:
     Renders the executive dashboard with key metrics
     """
 
-    def render_executive_summary(self, provider_code: str, rankings: Dict, momentum: Dict, priority: Dict, include_confidence: bool = True):
+    def render_executive_summary(self, provider_code: str, rankings: Dict, momentum: Dict, priority: Dict, include_confidence: bool = True, provider_name: str | None = None):
         """
         Render the main executive summary with three key metrics
         """
@@ -85,15 +85,20 @@ class ExecutiveDashboard:
         tooltips = TooltipDefinitions()
         metric_tooltips = tooltips.get_metric_tooltips()
         technical_tooltips = tooltips.get_technical_tooltips()
-        
+
         # Check if mobile
         is_mobile = detect_mobile()
+
+        # Human-readable provider label: "Name (CODE)" when the name is known,
+        # falling back to the bare code. provider_code stays the key for all
+        # data lookups below — only the heading text changes.
+        provider_display = f"{provider_name} ({provider_code})" if provider_name else provider_code
 
         if not is_mobile:
             col_header1, col_header2 = st.columns([4, 1], gap="medium")
             with col_header1:
                 st.markdown("## Executive Summary")
-                st.markdown(f"**Provider:** {provider_code}")
+                st.markdown(f"**Provider:** {provider_display}")
             with col_header2:
                 # Add overall help for the executive summary
                 with st.expander("Understanding Your Dashboard", expanded=False):
@@ -109,7 +114,7 @@ class ExecutiveDashboard:
         else:
             # Mobile: Simpler header
             st.markdown("## Executive Summary")
-            st.markdown(f"**Provider:** {provider_code}")
+            st.markdown(f"**Provider:** {provider_display}")
 
         st.markdown("---")
 
@@ -165,13 +170,13 @@ class ExecutiveDashboard:
                 <div class="metric-card {quartile_class}">
                     <p class="metric-label">YOUR RANK</p>
                     <p class="metric-value">#{provider_ranking['rank']}</p>
-                    <p style="font-size: 1.1rem; margin: 0.5rem 0; color: #64748B;">
+                    <p style="font-size: 1.1rem; margin: 0.5rem 0; color: #6C7A89;">
                         of {provider_ranking['total_providers']} providers
                     </p>
                     <p style="font-size: 1rem; font-weight: 600; color: {quartile_color};">
                         {quartile_name} Quartile ({provider_ranking['percentile']:.1f}th percentile)
                     </p>
-                    <p style="font-size: 0.9rem; color: #64748B; margin-top: 0.5rem;">
+                    <p style="font-size: 0.9rem; color: #6C7A89; margin-top: 0.5rem;">
                         Based on {provider_ranking['measures_count']} satisfaction measures
                     </p>
                 </div>
@@ -221,7 +226,7 @@ class ExecutiveDashboard:
                         <p style="font-size: 1.5rem; font-weight: 600; color: {mom_color}; margin: 0.5rem 0;">
                             {mom_text}
                         </p>
-                        <p style="font-size: 0.9rem; color: #64748B;">
+                        <p style="font-size: 0.9rem; color: #6C7A89;">
                             Insufficient multi-year data
                         </p>
                     </div>
@@ -244,27 +249,27 @@ class ExecutiveDashboard:
                         <p style="font-size: 1.5rem; font-weight: 600; color: {mom_color}; margin: 0.5rem 0;">
                             {mom_text}
                         </p>
-                        <p style="font-size: 0.9rem; color: #64748B; margin-bottom: 0.25rem;">
+                        <p style="font-size: 0.9rem; color: #6C7A89; margin-bottom: 0.25rem;">
                             <strong>{momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)}:</strong> {momentum['year_over_year_change']:+.1f} points average
                         </p>
-                        <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 0.5rem;">
+                        <p style="font-size: 0.8rem; color: #6C7A89; margin-bottom: 0.5rem;">
                             {momentum.get('total_measures_compared', 0)} measures compared
                         </p>
-                        <p style="font-size: 0.9rem; font-weight: 600; color: #1E293B; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                        <p style="font-size: 0.9rem; font-weight: 600; color: #1F2933; margin-top: 0.5rem; margin-bottom: 0.5rem;">
                             Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:
                         </p>
                     """
 
                     # Add improvements section if available
                     if improved:
-                        card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #22C55E; margin-bottom: 0.25rem;">Top Improvements:</p>'
+                        card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #1F94A3; margin-bottom: 0.25rem;">Top Improvements:</p>'
                         for measure in improved[:3]:
                             desc = html.escape(str(measure["description"]))
                             card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">&bull; {desc}: +{measure["change"]:.1f} pts</p>'
 
                     # Add declined section if available
                     if declined:
-                        card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #EF4444; margin-bottom: 0.25rem; margin-top: 0.5rem;">Areas Needing Attention:</p>'
+                        card_html += '<p style="font-size: 0.85rem; font-weight: 600; color: #C85C4A; margin-bottom: 0.25rem; margin-top: 0.5rem;">Areas Needing Attention:</p>'
                         for measure in declined[:3]:
                             desc = html.escape(str(measure["description"]))
                             card_html += f'<p style="font-size: 0.8rem; color: #475569; margin: 0.1rem 0; padding-left: 0.5rem;">&bull; {desc}: {measure["change"]:.1f} pts</p>'
@@ -331,7 +336,7 @@ class ExecutiveDashboard:
             else:
                 # Desktop: Use custom HTML
                 priority_class = "priority-high" if priority.get('priority_level', '') in ['Critical', 'High'] else ""
-                priority_color = html.escape(str(priority.get('priority_color', '#2E5BBA')))
+                priority_color = html.escape(str(priority.get('priority_color', '#0B5C70')))
                 priority_level = html.escape(str(priority.get('priority_level', 'Medium')))
                 safe_measure_code = html.escape(str(measure_code))
                 safe_measure_desc = html.escape(str(measure_desc))
@@ -342,13 +347,13 @@ class ExecutiveDashboard:
                     <p class="metric-value" style="font-size: 1.8rem; color: {priority_color};">
                         {priority_level}
                     </p>
-                    <p style="font-size: 1.3rem; font-weight: 700; margin: 0.3rem 0; color: #2E5BBA;">
+                    <p style="font-size: 1.3rem; font-weight: 700; margin: 0.3rem 0; color: #0B5C70;">
                         {safe_measure_code}
                     </p>
-                    <p style="font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; color: #1E293B;">
+                    <p style="font-size: 1.1rem; font-weight: 600; margin: 0.5rem 0; color: #1F2933;">
                         {safe_measure_desc}
                     </p>
-                    <p style="font-size: 0.9rem; color: #64748B;">
+                    <p style="font-size: 0.9rem; color: #6C7A89;">
                         Current: {current_percentile:.1f}th percentile
                     </p>
                     <p style="font-size: 0.9rem; color: {priority_color}; font-weight: 500;">
@@ -437,7 +442,7 @@ class ExecutiveDashboard:
                     name='Your Score',
                     x=measures,
                     y=provider_scores,
-                    marker_color='#2E5BBA',
+                    marker_color='#0B5C70',
                     hovertemplate="<b>%{x}</b><br>%{customdata}<extra></extra>",
                     customdata=hover_data_your
                 ))
@@ -446,7 +451,7 @@ class ExecutiveDashboard:
                     name='Peer Average',
                     x=measures,
                     y=peer_averages,
-                    marker_color='#64748B',
+                    marker_color='#6C7A89',
                     opacity=0.7,
                     hovertemplate="<b>%{x}</b><br>%{customdata}<extra></extra>",
                     customdata=hover_data_peer
@@ -531,7 +536,7 @@ class ExecutiveDashboard:
                     # Create correlation bar chart
                     fig_corr = go.Figure()
 
-                    colors = ['#22C55E' if c > 0 else '#EF4444' for c in corr_df['Correlation']]
+                    colors = ['#1F94A3' if c > 0 else '#C85C4A' for c in corr_df['Correlation']]
 
                     # Prepare enhanced hover data for correlation chart
                     correlation_hover_data = []
@@ -714,7 +719,8 @@ class ExecutiveDashboard:
                         marker=dict(
                             size=scatter_df['Weighted Priority']*0.8+10,  # Better size scaling
                             color=scatter_df['Weighted Priority'],
-                            colorscale='RdYlGn_r',
+                            # HAILIE ramp: Bright Teal (low) -> Civic Gold (mid) -> Brick Coral (high)
+                            colorscale=[[0.0, '#1F94A3'], [0.5, '#D8A62A'], [1.0, '#C85C4A']],
                             showscale=True,
                             colorbar=dict(title="Priority Score"),
                             line=dict(width=1, color='white')  # Add border for better visibility
@@ -733,10 +739,10 @@ class ExecutiveDashboard:
                     fig_matrix.add_vline(x=50, line_dash="dash", line_color="gray", opacity=0.5)
 
                     # Add quadrant labels
-                    fig_matrix.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=12, color="red"))
-                    fig_matrix.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=12, color="green"))
-                    fig_matrix.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=12, color="orange"))
-                    fig_matrix.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=12, color="gray"))
+                    fig_matrix.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=12, color="#C85C4A"))
+                    fig_matrix.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=12, color="#1F94A3"))
+                    fig_matrix.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=12, color="#D8A62A"))
+                    fig_matrix.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=12, color="#6C7A89"))
 
                     fig_matrix.update_layout(
                         title="Priority Matrix: Improvement Potential vs TP01 Correlation - Hover for Details",
@@ -908,7 +914,7 @@ class ExecutiveDashboard:
                 name='Your Score',
                 x=measures,
                 y=provider_scores,
-                marker_color='#2E5BBA',
+                marker_color='#0B5C70',
                 text=[f"{s:.1f}" for s in provider_scores],
                 textposition='outside'
             ))
@@ -917,7 +923,7 @@ class ExecutiveDashboard:
                 name='Peer Average',
                 x=measures,
                 y=peer_averages,
-                marker_color='#64748B',
+                marker_color='#6C7A89',
                 opacity=0.7
             ))
 
@@ -964,7 +970,7 @@ class ExecutiveDashboard:
         correlations['abs_corr'] = correlations['correlation_with_tp01'].abs()
         correlations = correlations.sort_values('abs_corr', ascending=False)
 
-        colors = ['#22C55E' if c > 0 else '#EF4444' for c in correlations['correlation_with_tp01']]
+        colors = ['#1F94A3' if c > 0 else '#C85C4A' for c in correlations['correlation_with_tp01']]
 
         fig.add_trace(go.Bar(
             x=correlations['correlation_with_tp01'],
@@ -1028,15 +1034,15 @@ class ExecutiveDashboard:
                 y_values.append(data['correlation_strength'] * 100)
                 labels.append(measure)
 
-                # Color based on priority score
+                # Colour ramp by priority score (HAILIE palette).
                 if data['priority_score'] > 70:
-                    colors.append('#EF4444')  # Red - Critical
+                    colors.append('#C85C4A')  # Brick Coral - Critical
                 elif data['priority_score'] > 50:
-                    colors.append('#F59E0B')  # Orange - High
+                    colors.append('#D8A62A')  # Civic Gold - High
                 elif data['priority_score'] > 30:
-                    colors.append('#EAB308')  # Yellow - Medium
+                    colors.append('#E8C96B')  # Soft Gold - Medium
                 else:
-                    colors.append('#22C55E')  # Green - Low
+                    colors.append('#1F94A3')  # Bright Teal - Low
 
             fig.add_trace(go.Scatter(
                 x=x_values,
@@ -1066,10 +1072,10 @@ class ExecutiveDashboard:
             fig.add_vline(x=50, line_dash="dash", line_color="gray", opacity=0.3)
 
             # Add quadrant labels
-            fig.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=11, color="red"))
-            fig.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=11, color="green"))
-            fig.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=11, color="orange"))
-            fig.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=11, color="gray"))
+            fig.add_annotation(x=75, y=75, text="High Priority", showarrow=False, font=dict(size=11, color="#C85C4A"))
+            fig.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=11, color="#1F94A3"))
+            fig.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=11, color="#D8A62A"))
+            fig.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=11, color="#6C7A89"))
 
             st.plotly_chart(fig, width='stretch')
 

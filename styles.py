@@ -12,35 +12,58 @@ def get_main_css():
     """
     return """
 <style>
-    /* Hide both sidebar collapse and expand controls across Streamlit 1.x–1.50.
-       Streamlit 1.50 renames split the single legacy `collapsedControl` into
+    /* Inter — the HAILIE design-system typeface (design_system_preview.html).
+       @import must precede every other rule in the stylesheet. */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Sidebar toggle — visible and themed (Settings live in the sidebar).
+       Streamlit 1.50 split the legacy `collapsedControl` into
        `stExpandSidebarButton` (open, shown when collapsed) and
-       `stSidebarCollapseButton` (close, shown when expanded). Prior CSS only
-       covered legacy names, so the expand-chevron began showing after the
-       1.50 upgrade on 2026-04-17. Sidebar settings remain reachable via
-       initial_sidebar_state="expanded" if we ever want to re-enable; today
-       the settings are dev/debug affordances and the app defaults suffice. */
+       `stSidebarCollapseButton` (close, shown when expanded). In 1.5x the
+       data-testid sits on the <button> ITSELF, so we style that element
+       directly. Tinted with HAILIE primary teal so the control reads as
+       intentional brand chrome rather than a default. */
     [data-testid="stExpandSidebarButton"],
-    [data-testid="stSidebarCollapseButton"],
-    button[data-testid="stBaseButton-headerNoPadding"],
-    [data-testid="collapsedControl"] {
-        display: none !important;
+    [data-testid="stSidebarCollapseButton"] {
+        color: var(--primary-color) !important;
+        border-radius: var(--border-radius-md) !important;
+        transition: background 0.15s ease, color 0.15s ease !important;
+    }
+    [data-testid="stExpandSidebarButton"] svg,
+    [data-testid="stSidebarCollapseButton"] svg {
+        color: var(--primary-color) !important;
+        fill: var(--primary-color) !important;
+    }
+    [data-testid="stExpandSidebarButton"]:hover,
+    [data-testid="stSidebarCollapseButton"]:hover {
+        background: rgba(11, 92, 112, 0.08) !important;
+        color: var(--primary-dark) !important;
+    }
+    /* Make the collapsed-state opener clearly tappable: a soft-mist pill with
+       a teal border, anchored top-left, so users discover the Settings panel. */
+    [data-testid="stExpandSidebarButton"] {
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: var(--shadow-sm) !important;
     }
 
-    /* Global Responsive Variables - Mobile First Approach */
+    /* Global Responsive Variables - Mobile First Approach.
+       Palette mapped to the HAILIE design system (design_system_preview.html):
+       Deep HAILIE Teal primary, Bright Teal secondary, Civic Gold warning,
+       Brick Coral risk, Charcoal text on Soft Mist / white surfaces. */
     :root {
-        --primary-color: #2E5BBA;
-        --primary-dark: #050B1F;
-        --secondary-color: #22C55E;
-        --warning-color: #F59E0B;
-        --danger-color: #EF4444;
-        --text-primary: #1E293B;
-        --text-secondary: #111827;
-        --text-light: #94A3B8;
-        --bg-primary: #FFFFFF;
-        --bg-secondary: #F8FAFC;
-        --bg-tertiary: #F1F5F9;
-        --border-color: #E2E8F0;
+        --primary-color: #0B5C70;   /* Deep HAILIE Teal */
+        --primary-dark: #083E4D;    /* Deep Teal Shade  */
+        --secondary-color: #1F94A3; /* Bright Teal      */
+        --warning-color: #D8A62A;   /* Civic Gold       */
+        --danger-color: #C85C4A;    /* Brick Coral      */
+        --text-primary: #1F2933;    /* Charcoal         */
+        --text-secondary: #1F2933;  /* Charcoal         */
+        --text-light: #6C7A89;      /* Charcoal Muted   */
+        --bg-primary: #FFFFFF;      /* Clean White      */
+        --bg-secondary: #F4F8F9;    /* Soft Mist        */
+        --bg-tertiary: #EAF2F4;     /* Mist tint        */
+        --border-color: #DDE6E9;    /* Mist Border      */
         --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -111,6 +134,18 @@ def get_main_css():
         min-height: 100vh !important;
     }
 
+    /* Inter across the app surfaces. Scoped to text/containers and form
+       controls (not a universal selector) so Streamlit's Material Symbols
+       icon fonts — which set their own font-family — are left untouched. */
+    html, body,
+    [data-testid="stAppViewContainer"], [data-testid="stSidebar"],
+    [data-testid="stMarkdownContainer"],
+    h1, h2, h3, h4, h5, h6, p, label,
+    .stButton > button, button, input, select, textarea,
+    .stSelectbox, .stTextInput, .stCheckbox {
+        font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
     /* Prevent any parent containers from hiding content */
     #root, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
         overflow: visible !important;
@@ -139,6 +174,17 @@ def get_main_css():
         .main .block-container {
             max-width: 1200px !important;
             margin: 0 auto !important;
+        }
+    }
+
+    /* Widen the desktop sidebar ONLY when it's open, so single-line settings
+       labels (e.g. "Show advanced logging view") don't wrap. Scoped to
+       [aria-expanded="true"] — without this, forcing a width on the collapsed
+       sidebar reserves layout space and stops the main content filling the
+       window. min-width (not width) keeps Streamlit's drag-to-resize intact. */
+    @media (min-width: 769px) {
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            min-width: 380px !important;
         }
     }
 
@@ -476,23 +522,24 @@ def get_main_css():
         transform: scale(1.1);
     }
 
-    /* Professional icon styles for features */
+    /* Professional icon styles for features — HAILIE teal family, with
+       Brick Coral reserved for Priority (the "needs attention" signal). */
     .rank-icon {
-        background: linear-gradient(135deg, #22C55E, #16A34A);
+        background: linear-gradient(135deg, #0B5C70, #083E4D);
     }
     .rank-icon::before {
         content: "R";
     }
 
     .momentum-icon {
-        background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+        background: linear-gradient(135deg, #1F94A3, #0B5C70);
     }
     .momentum-icon::before {
         content: "M";
     }
 
     .priority-icon {
-        background: linear-gradient(135deg, #EF4444, #DC2626);
+        background: linear-gradient(135deg, #C85C4A, #A8472F);
     }
     .priority-icon::before {
         content: "P";
@@ -650,23 +697,23 @@ def get_main_css():
         transform: scale(1.1);
     }
 
-    /* Professional workflow step icons */
+    /* Professional workflow step icons — teal progression for cohesion. */
     .building-icon {
-        background: linear-gradient(135deg, #64748B, #475569);
+        background: linear-gradient(135deg, #083E4D, #0B5C70);
     }
     .building-icon::before {
         content: "1";
     }
 
     .analytics-icon {
-        background: linear-gradient(135deg, #F59E0B, #D97706);
+        background: linear-gradient(135deg, #0B5C70, #1F94A3);
     }
     .analytics-icon::before {
         content: "2";
     }
 
     .dashboard-icon {
-        background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+        background: linear-gradient(135deg, #1F94A3, #157986);
     }
     .dashboard-icon::before {
         content: "3";
@@ -757,23 +804,23 @@ def get_main_css():
         font-size: 0.8rem;
     }
 
-    /* Professional result icons */
+    /* Professional result icons — teal family, coral for the priority flag. */
     .rank-result {
-        background: linear-gradient(135deg, #22C55E, #16A34A);
+        background: linear-gradient(135deg, #0B5C70, #083E4D);
     }
     .rank-result::before {
         content: "R";
     }
 
     .momentum-result {
-        background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+        background: linear-gradient(135deg, #1F94A3, #0B5C70);
     }
     .momentum-result::before {
         content: "↗";
     }
 
     .priority-result {
-        background: linear-gradient(135deg, #EF4444, #DC2626);
+        background: linear-gradient(135deg, #C85C4A, #A8472F);
     }
     .priority-result::before {
         content: "!";
@@ -876,7 +923,7 @@ def get_main_css():
     }
 
     .quartile-high {
-        border-left-color: #84CC16 !important;
+        border-left-color: #1F94A3 !important;
     }
 
     .quartile-mid {
@@ -887,25 +934,28 @@ def get_main_css():
         border-left-color: var(--danger-color) !important;
     }
 
+    /* Momentum direction — Bright Teal up, Brick Coral down, muted stable;
+       keeps positive/negative signalling on the HAILIE palette (no off-brand
+       green/red). */
     .momentum-up {
-        color: #22C55E;
+        color: #1F94A3;
     }
 
     .momentum-down {
-        color: #EF4444;
+        color: #C85C4A;
     }
 
     .momentum-stable {
-        color: #64748B;
+        color: #6C7A89;
     }
 
     .priority-high {
         background: #FFFFFF;
-        border-left: 3px solid #EF4444 !important;
+        border-left: 3px solid #C85C4A !important;
     }
 
     .main-title {
-        color: #1E293B;
+        color: #1F2933;
         font-size: clamp(1.75rem, 4vw, 2.5rem);
         font-weight: 700;
         margin-bottom: 0.5rem;
@@ -913,7 +963,7 @@ def get_main_css():
     }
 
     .subtitle {
-        color: #64748B;
+        color: #6C7A89;
         font-size: clamp(1rem, 2.5vw, 1.2rem);
         margin-bottom: var(--spacing-xl);
         line-height: 1.4;
@@ -1256,7 +1306,7 @@ def get_main_css():
     /* Feedback form intro callout — shares the left-border language of the
        dataset indicator so the "report a data issue" form reads as native. */
     .feedback-intro {
-        background-color: rgba(46, 91, 186, 0.06);
+        background-color: rgba(11, 92, 112, 0.06);
         border-left: 4px solid var(--primary-color);
         padding: 0.9rem 1rem;
         margin: 0 0 1rem 0;

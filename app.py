@@ -33,17 +33,22 @@ if _sentry_dsn:
         send_default_pii=False,
     )
 
+# HAILIE branding assets. The full wordmark logo is shown in-app (top-left);
+# the browser tab icon uses just the house glyph on a page-matching background.
+_LOGO_PATH = os.path.join(os.path.dirname(__file__), "assets", "hailie_logo.png")
+_FAVICON_PATH = os.path.join(os.path.dirname(__file__), "assets", "hailie_favicon.png")
+
 # Page configuration - MUST be first Streamlit command
 # Using 'wide' layout for all devices, content adapts responsively
 st.set_page_config(
     page_title="HAILIE TSM Insights Engine",
-    page_icon=None,
+    page_icon=_FAVICON_PATH,
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 st.logo(
-    os.path.join(os.path.dirname(__file__), "assets", "hailie_logo.png"),
+    _LOGO_PATH,
     link="https://housingai.org",
     size="large",
 )
@@ -71,7 +76,7 @@ def render_landing_hero():
         # Mobile version - styled gradient header
         st.markdown("""
         <div style="
-            background: linear-gradient(135deg, #2E5BBA 0%, #050B1F 100%);
+            background: linear-gradient(135deg, #0B5C70 0%, #083E4D 100%);
             color: white;
             padding: 1.5rem 1rem;
             border-radius: 12px;
@@ -186,15 +191,15 @@ def check_database_exists():
 def render_dataset_indicator(dataset_type: str, peer_count: int):
     """Render a visual indicator showing which dataset is being used"""
     if dataset_type == 'LCRA':
-        color = "#2E7D32"  # Green
+        color = "#0B5C70"  # Deep HAILIE Teal
         description = "Large-scale Council & Registered Providers"
         note = "Full TSM metrics including repairs satisfaction"
     elif dataset_type == 'LCHO':
-        color = "#1565C0"  # Blue
+        color = "#1F94A3"  # Bright Teal
         description = "Large-scale Voluntary Transfer Organizations"
         note = "Core TSM metrics (repairs metrics not applicable)"
     else:
-        color = "#757575"  # Grey
+        color = "#6C7A89"  # Charcoal Muted
         description = "Combined Dataset"
         note = "Providers with combined reporting"
 
@@ -405,12 +410,11 @@ def main():
         if not st.session_state.dismissed_changelog:
             with st.container():
                 st.info("""
-                🆕 **What's new** — thanks for the feedback. We've:
-                - TSM Insights by HAILIE is fully open-source! Your organisation can use, copy, and build on everything here free of charge in line with the MIT license for code, and the CC-BY 4.0 license for everything else.
-                - Fixed some measure descriptions that were showing the wrong name
-                - Renamed "Raw Data" to "Score Breakdown" (same thing, clearer name)
-                - Given the Priority Matrix friendlier labels to show where to focus first
-                - Made the help tips match what the numbers in the app actually show
+                **What's new** — thanks for the feedback. We've:
+                - Given the app a fresh new look — cleaner layout, clearer charts, and updated HAILIE branding throughout.
+                - Added your organisation's name next to its code in the summary, so it's easier to see at a glance who you're looking at.
+                - Made it easy to tell us about a data issue or suggest a new feature, right here in the app — just scroll to the form near the bottom of the page.
+                - Tidied up the settings panel on the left so everything fits neatly on screen.
                 """)
                 if st.button("Dismiss", key="dismiss_changelog"):
                     st.session_state.dismissed_changelog = True
@@ -438,7 +442,7 @@ def main():
 
         # Executive Summary
         dashboard.render_executive_summary(provider_code, rankings, momentum,
-                                          priority)
+                                          priority, provider_name=provider_name_only)
 
         # Check if mobile
         is_mobile = detect_mobile()
