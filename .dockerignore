@@ -15,6 +15,7 @@
 !mobile_utils.py
 !config.py
 !tsm_measures.py
+!feedback_service.py
 
 # --- Package metadata (required by `pip install .`) ---
 !pyproject.toml

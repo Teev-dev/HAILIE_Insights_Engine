@@ -555,6 +555,10 @@ def main():
                 else:
                     st.warning("No score data available for this provider")
 
+        # Report a data issue / feature request — provider context attached
+        st.markdown("---")
+        dashboard.render_feedback_form(provider_code, dataset_type)
+
         # Footer
         st.markdown("---")
         st.caption(
@@ -586,7 +590,11 @@ def main():
 
         The system will instantly retrieve your pre-calculated analytics.
         """)
-        
+
+        # Report a data issue / feature request — available before selecting a provider too
+        st.markdown("---")
+        ExecutiveDashboard().render_feedback_form()
+
         # Footer with privacy link
         st.markdown("---")
         st.caption(f"HAILIE TSM Insights Engine v3.0 | Data: {CURRENT_DATA_YEAR} TSM")

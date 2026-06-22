@@ -1252,6 +1252,23 @@ def get_main_css():
         margin: 0;
         line-height: 1.6;
     }
+
+    /* Feedback form intro callout — shares the left-border language of the
+       dataset indicator so the "report a data issue" form reads as native. */
+    .feedback-intro {
+        background-color: rgba(46, 91, 186, 0.06);
+        border-left: 4px solid var(--primary-color);
+        padding: 0.9rem 1rem;
+        margin: 0 0 1rem 0;
+        border-radius: 4px;
+        color: var(--text-secondary);
+        font-size: clamp(0.9rem, 2vw, 0.95rem);
+        line-height: 1.6;
+    }
+
+    .feedback-intro strong {
+        color: var(--primary-color);
+    }
 </style>
 """
 

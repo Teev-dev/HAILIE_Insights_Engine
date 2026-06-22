@@ -1094,3 +1094,100 @@ class ExecutiveDashboard:
             st.table(table_df)
         else:
             st.info("Priority matrix data not available")
+
+    def render_feedback_form(self, provider_code: str = None, dataset_type: str = None):
+        """Render the "report a data issue / feature request" form.
+
+        Lives on the main page as an expander, available with or without a
+        provider selected. When one is selected, its code and dataset are
+        attached to the report so maintainers know what the reporter was
+        looking at. Email transport is delegated to feedback_service; this
+        method only collects input, validates lightly, and shows the result.
+        """
+        import time
+
+        from feedback_service import looks_like_email, send_feedback
+
+        # Categories mirror the real signals we want to capture: source-data
+        # problems, calculation/ranking errors, stale data, misinterpretation
+        # risk, and open feature requests.
+        categories = [
+            "Source data looks wrong",
+            "A calculation or ranking looks off",
+            "The data looks out of date",
+            "A result could be misread or is misleading",
+            "Feature request or something else",
+        ]
+
+        with st.expander("Spotted a data issue? Tell us", expanded=False):
+            # Intro callout — left-border house style, matching the dataset
+            # indicator so it reads as part of the app, not a bolt-on.
+            st.markdown(
+                '<div class="feedback-intro">'
+                '<strong>Spotted something off in the data?</strong><br/>'
+                'These figures feed board reports and regulatory returns, so getting '
+                'them right matters to us. Flag a wrong number, a ranking that looks '
+                'off, data that seems out of date, a result that could be misread — '
+                'or tell us what you wish the tool did. It comes straight to the team.'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+
+            with st.form("feedback_form", clear_on_submit=False):
+                category = st.selectbox("What's this about?", categories)
+                area = st.text_input(
+                    "Which measure or section? (optional)",
+                    max_chars=200,
+                    placeholder="e.g. the repairs satisfaction score, or the priority matrix",
+                )
+                message = st.text_area(
+                    "Tell us what you noticed",
+                    max_chars=5000,
+                    placeholder="What did you expect to see, and what did you see instead?",
+                    height=140,
+                )
+                reporter_email = st.text_input(
+                    "Your email (optional — only used to reply)",
+                    max_chars=200,
+                    placeholder="you@yourorganisation.org",
+                )
+                submitted = st.form_submit_button("Send report")
+
+            if not submitted:
+                return
+
+            # Lightweight per-session guards against accidental floods.
+            sent_count = st.session_state.get("_feedback_count", 0)
+            last_sent = st.session_state.get("_feedback_last_sent", 0.0)
+            now = time.time()
+            if sent_count >= 5:
+                st.warning(
+                    "Thanks for all the reports — that's the limit for this session. "
+                    "Please come back later if you spot more."
+                )
+                return
+            if now - last_sent < 15:
+                st.warning("Just a moment — please wait a few seconds before sending another report.")
+                return
+
+            if reporter_email.strip() and not looks_like_email(reporter_email):
+                st.warning(
+                    "That email address doesn't look right. Correct it, or clear the "
+                    "field to send without one."
+                )
+                return
+
+            result = send_feedback(
+                category=category,
+                message=message,
+                area=area,
+                reporter_email=reporter_email,
+                provider_code=provider_code,
+                dataset_type=dataset_type,
+            )
+            if result.ok:
+                st.session_state["_feedback_count"] = sent_count + 1
+                st.session_state["_feedback_last_sent"] = now
+                st.success(result.user_message)
+            else:
+                st.error(result.user_message)
