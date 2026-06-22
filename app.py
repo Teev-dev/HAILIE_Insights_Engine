@@ -10,7 +10,7 @@ from dashboard import ExecutiveDashboard
 from styles import apply_css
 from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_info, should_show_component
 from contextlib import contextmanager
-from config import DB_PATH
+from config import DB_PATH, FEEDBACK_FORM_ENABLED
 from tsm_measures import LCHO_EXCLUDED
 import html
 import os
@@ -559,9 +559,12 @@ def main():
                 else:
                     st.warning("No score data available for this provider")
 
-        # Report a data issue / feature request — provider context attached
-        st.markdown("---")
-        dashboard.render_feedback_form(provider_code, dataset_type)
+        # Report a data issue / feature request — provider context attached.
+        # Hidden by default until email delivery is configured (see
+        # FEEDBACK_FORM_ENABLED in config.py).
+        if FEEDBACK_FORM_ENABLED:
+            st.markdown("---")
+            dashboard.render_feedback_form(provider_code, dataset_type)
 
         # Footer
         st.markdown("---")
@@ -595,9 +598,12 @@ def main():
         The system will instantly retrieve your pre-calculated analytics.
         """)
 
-        # Report a data issue / feature request — available before selecting a provider too
-        st.markdown("---")
-        ExecutiveDashboard().render_feedback_form()
+        # Report a data issue / feature request — available before selecting a
+        # provider too. Hidden by default until email delivery is configured
+        # (see FEEDBACK_FORM_ENABLED in config.py).
+        if FEEDBACK_FORM_ENABLED:
+            st.markdown("---")
+            ExecutiveDashboard().render_feedback_form()
 
         # Footer with privacy link
         st.markdown("---")

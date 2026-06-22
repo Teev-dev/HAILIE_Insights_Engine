@@ -26,10 +26,21 @@ SOURCE_DIR = os.path.join(DATA_DIR, "source")
 # when RESEND_API_KEY is unset the form degrades to a "not configured yet"
 # message instead of failing, so the app runs without any mail setup.
 # See feedback_service.py for how these are used.
+#   FEEDBACK_FORM_ENABLED — master switch for showing the form at all. Defaults
+#                         off so the form stays hidden in production until the
+#                         Resend + Cloudflare email delivery is set up (see the
+#                         feedback-form handoff plan / future ADR). Flip to a
+#                         truthy value ("1"/"true"/"yes"/"on") to reveal it.
 #   RESEND_API_KEY      — Resend API key (https://resend.com). Unset => form off.
 #   FEEDBACK_FROM_EMAIL — verified Resend sender. The sandbox default works the
 #                         moment a key is added; swap to a verified domain later.
 #   FEEDBACK_TO_EMAIL   — maintainer inbox that receives reports.
+FEEDBACK_FORM_ENABLED = os.environ.get("FEEDBACK_FORM_ENABLED", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 FEEDBACK_FROM_EMAIL = os.environ.get(
     "FEEDBACK_FROM_EMAIL", "HAILIE Insights <onboarding@resend.dev>"
