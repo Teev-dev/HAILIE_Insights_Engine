@@ -15,6 +15,7 @@
 !mobile_utils.py
 !config.py
 !tsm_measures.py
+!feedback_service.py
 
 # --- Package metadata (required by `pip install .`) ---
 !pyproject.toml
@@ -26,6 +27,7 @@
 !pages/**/*.py
 !.streamlit/**/*.toml
 !assets/hailie_logo.png
+!assets/hailie_favicon.png
 
 # --- Baked-in default analytics database ---
 # Source xlsx files, docs, and the legacy duckdb stay excluded by default.

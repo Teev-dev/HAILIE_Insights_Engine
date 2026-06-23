@@ -17,8 +17,10 @@ fastReruns = true
 showSidebarNavigation = false
 toolbarMode = "minimal"
 
+# HAILIE design system palette (see design_system_preview.html)
+# Deep HAILIE Teal primary, white-dominant cards on a soft-mist page.
 [theme]
-primaryColor = "#2E5BBA"
-backgroundColor = "#F8FAFC"
+primaryColor = "#0B5C70"
+backgroundColor = "#F4F8F9"
 secondaryBackgroundColor = "#FFFFFF"
-textColor = "#1E293B"
+textColor = "#1F2933"

@@ -84,16 +84,16 @@ class TSMAnalytics:
                 # Determine quartile
                 if percentile >= 75:
                     quartile = "Top"
-                    quartile_color = "#22C55E"
+                    quartile_color = "#1F94A3"
                 elif percentile >= 50:
                     quartile = "High"
                     quartile_color = "#84CC16"
                 elif percentile >= 25:
                     quartile = "Mid"
-                    quartile_color = "#F59E0B"
+                    quartile_color = "#D8A62A"
                 else:
                     quartile = "Low"
-                    quartile_color = "#EF4444"
+                    quartile_color = "#C85C4A"
                 
                 rankings[provider] = {
                     'rank': rank,
@@ -181,17 +181,17 @@ class TSMAnalytics:
             if avg_change > 0.5:
                 direction = "up"
                 momentum_icon = "↗️"
-                momentum_color = "#22C55E"
+                momentum_color = "#1F94A3"
                 momentum_text = f"Improving (+{avg_change:.1f} points avg)"
             elif avg_change < -0.5:
                 direction = "down"
                 momentum_icon = "↘️"
-                momentum_color = "#EF4444"
+                momentum_color = "#C85C4A"
                 momentum_text = f"Declining ({avg_change:.1f} points avg)"
             else:
                 direction = "stable"
                 momentum_icon = "→"
-                momentum_color = "#F59E0B"
+                momentum_color = "#D8A62A"
                 momentum_text = "Stable performance"
             
             return {
@@ -304,16 +304,16 @@ class TSMAnalytics:
             # Determine priority level
             if highest_priority['priority_score'] > 70:
                 priority_level = "Critical"
-                priority_color = "#EF4444"
+                priority_color = "#C85C4A"
             elif highest_priority['priority_score'] > 50:
                 priority_level = "High"
-                priority_color = "#F59E0B"
+                priority_color = "#D8A62A"
             elif highest_priority['priority_score'] > 30:
                 priority_level = "Medium"
-                priority_color = "#EAB308"
+                priority_color = "#E8C96B"
             else:
                 priority_level = "Low"
-                priority_color = "#22C55E"
+                priority_color = "#1F94A3"
             
             return {
                 'priority_measure': highest_priority['measure'],
