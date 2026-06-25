@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2025-2026 Tom Stephenson (Teev-dev)
 
+from enum import Enum
 import html
 import os
 import streamlit as st
@@ -11,6 +12,19 @@ import plotly.graph_objects as go
 from typing import Dict, Any
 from tooltip_definitions import TooltipDefinitions
 from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
+
+class Direction(Enum):
+    """Enum for storing possible directions for labels in
+    the priority matrix scatterplot. The order given here
+    is from most preferred placement to least."""
+    TOP_MIDDLE = 1
+    BOTTOM_MIDDLE = 2
+    TOP_RIGHT = 3
+    TOP_LEFT = 4
+    MIDDLE_RIGHT = 5
+    MIDDLE_LEFT = 6
+    BOTTOM_RIGHT = 7
+    BOTTOM_LEFT = 8
 
 
 def _report_internal_error(context: str, payload: Any = None) -> None:
@@ -36,29 +50,77 @@ def _corr_label(strength: float) -> str:
     return "Negligible"
 
 
-def _quadrant_label_positions(xs, ys, x_mid=50, y_mid=50):
-    """Per-point Plotly textposition array — labels pushed outward from the
-    quadrant centre AND staggered within each quadrant so clusters of 2–3
-    points at similar coords land at distinct vertical offsets instead of
-    all defaulting to the same position."""
-    # Each quadrant cycles through three vertical offsets on its outward side.
-    variants = {
-        ("top", "right"):    ("top right", "middle right", "bottom right"),
-        ("top", "left"):     ("top left", "middle left", "bottom left"),
-        ("bottom", "right"): ("bottom right", "middle right", "top right"),
-        ("bottom", "left"):  ("bottom left", "middle left", "top left"),
-    }
-    rank = {k: 0 for k in variants}
-    positions = []
-    for x, y in zip(xs, ys):
-        key = (
-            "top" if y >= y_mid else "bottom",
-            "right" if x >= x_mid else "left",
-        )
-        positions.append(variants[key][rank[key] % 3])
-        rank[key] += 1
-    return positions
+def _add_point_labels(fig: go.Figure, xs: list[float], ys: list[float], labels: list[str]):
+    """ Add labels to the priority matrix scatterplot points. 
+    Collision avoidance is implemented by defining bounding boxes around around each point,
+    the quadrant labels, and each text label as they are generated. If a potential label's
+    box overlaps any of the other boxes, we reject that placement and consider the next possibility.
+    Boxes are given as 2D lists where the first element is the coordinates of the bottom left
+    corner, and the second the coordinates of the top right corner"""
+    point_boxes = [[[x-0.5, y-1], [x+0.5, y+1]] for x, y in zip(xs, ys)] +\
+                  [[[70, 73], [80, 77]], [[20, 73], [30, 77]], [[70, 23], [80, 27]], [[20, 23], [30, 27]]] # quadrant labels
 
+
+    def dir_to_coord(p: list[float], direction: Direction) -> list[float]:
+        """
+        Given a point and a direction for the label, returns the label's coordinates
+        """
+        if direction == Direction.TOP_MIDDLE:
+            return [p[0], p[1] + 3]
+        elif direction == Direction.TOP_RIGHT:
+            return [p[0] + 2, p[1] + 3]
+        elif direction == Direction.MIDDLE_RIGHT:
+            return [p[0] + 2, p[1]]
+        elif direction == Direction.BOTTOM_RIGHT:
+            return [p[0] + 2, p[1] - 3]
+        elif direction == Direction.BOTTOM_MIDDLE:
+            return [p[0], p[1] - 3]
+        elif direction == Direction.BOTTOM_LEFT:
+            return [p[0] - 2, p[1] - 3]
+        elif direction == Direction.MIDDLE_LEFT:
+            return [p[0] - 2, p[1]]
+        elif direction == Direction.TOP_LEFT:
+            return [p[0] - 2, p[1] + 3]
+
+
+    def draw_label(p, priority:list, boxes: list, label: str):
+        """
+        Recursive function for drawing labels
+        priority is a list of Direction (TOP_MIDDLE, MIDDLE_RIGHT, etc.) we pop the first item from this list,
+        and try to draw the label in that position. If that causes a collision with another label or point,
+        we call this function again, trying a different position.
+        If priority is empty, there is nowhere for the label to be drawn so we give up and draw the label
+        above the point (TOP_MIDDLE). This is an arbitrary choice.
+        Given that we only have 12 points, and 8 possible directions, it is unlikely that we will ever encounter an issue.
+        """
+        if priority == []:
+            # This branch is entered only if all possible label placements result in collisions
+            # Default to drawing the label in the top middle
+            fig.add_annotation(x=p[0], y=p[1]+3, text=label, showarrow=False, font=dict(size=11, color="black"))
+            return
+
+        label_location = dir_to_coord(p, priority.pop(0))
+        # Create a 3x3 bounding box around this label
+        new_label_box = [[label_location[0]-1.5, label_location[1]-1.5], [label_location[0]+1.5, label_location[1]+1.5]]
+        for box in boxes:
+            # Check if the new label box overlaps this box OR if the new label would overlap one of the quadrant separating lines
+            if (box[0][0] < new_label_box[1][0] and box[1][0] > new_label_box[0][0] and \
+                box[1][1] > new_label_box[0][1] and box[0][1] < new_label_box[1][1]) or \
+                new_label_box[0][0] <= 50 <= new_label_box[1][0] or \
+                new_label_box[0][1] <= 50 <= new_label_box[1][1]:
+                draw_label(p, priority, boxes, label)
+                return
+        # Draw label
+        fig.add_annotation(x=label_location[0], y=label_location[1], text=label, showarrow=False, font=dict(size=11, color="black"))
+        # Add this label's bounding box to the box list
+        boxes.append(new_label_box)
+
+
+    # Iteratively create labels
+    for label, point in zip(labels, zip(xs, ys)):
+        priority = [dir for dir in Direction]
+        draw_label(point, priority, point_boxes, label)
+    
 
 PLOTLY_LAYOUT = dict(
     font=dict(
@@ -726,10 +788,6 @@ class ExecutiveDashboard:
                             line=dict(width=1, color='white')  # Add border for better visibility
                         ),
                         text=scatter_df['Measure'],
-                        textposition=_quadrant_label_positions(
-                            scatter_df['Improvement Potential'],
-                            scatter_df['Correlation'],
-                        ),
                         hovertemplate="<b>%{text}</b><br>%{customdata}<extra></extra>",
                         customdata=matrix_hover_data
                     ))
@@ -743,6 +801,14 @@ class ExecutiveDashboard:
                     fig_matrix.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=12, color="#1F94A3"))
                     fig_matrix.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=12, color="#D8A62A"))
                     fig_matrix.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=12, color="#6C7A89"))
+
+                    # Add point labels
+                    _add_point_labels(
+                        fig_matrix,
+                        list(scatter_df['Improvement Potential']),
+                        list(scatter_df['Correlation']),
+                        list(scatter_df['Measure'])
+                    )
 
                     fig_matrix.update_layout(
                         title="Priority Matrix: Improvement Potential vs TP01 Correlation - Hover for Details",
@@ -1047,9 +1113,8 @@ class ExecutiveDashboard:
             fig.add_trace(go.Scatter(
                 x=x_values,
                 y=y_values,
-                mode='markers+text',
+                mode='markers',
                 text=labels,
-                textposition=_quadrant_label_positions(x_values, y_values),
                 marker=dict(
                     size=12,
                     color=colors,
@@ -1076,6 +1141,9 @@ class ExecutiveDashboard:
             fig.add_annotation(x=25, y=75, text="Maintain & Protect", showarrow=False, font=dict(size=11, color="#1F94A3"))
             fig.add_annotation(x=75, y=25, text="Lower Impact", showarrow=False, font=dict(size=11, color="#D8A62A"))
             fig.add_annotation(x=25, y=25, text="Low Priority", showarrow=False, font=dict(size=11, color="#6C7A89"))
+
+            # Add point labels
+            _add_point_labels(fig, x_values, y_values, labels)
 
             st.plotly_chart(fig, width='stretch')
 
