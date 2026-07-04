@@ -52,7 +52,7 @@ def _corr_label(strength: float) -> str:
 
 def _add_point_labels(fig: go.Figure, xs: list[float], ys: list[float], labels: list[str]):
     """ Add labels to the priority matrix scatterplot points. 
-    Collision avoidance is implemented by defining bounding boxes around around each point,
+    Collision avoidance is implemented by defining bounding boxes around each point,
     the quadrant labels, and each text label as they are generated. If a potential label's
     box overlaps any of the other boxes, we reject that placement and consider the next possibility.
     Boxes are given as 2D lists where the first element is the coordinates of the bottom left
@@ -96,7 +96,7 @@ def _add_point_labels(fig: go.Figure, xs: list[float], ys: list[float], labels: 
         if priority == []:
             # This branch is entered only if all possible label placements result in collisions
             # Default to drawing the label in the top middle
-            fig.add_annotation(x=p[0], y=p[1]+3, text=label, showarrow=False, font=dict(size=11, color="black"))
+            fig.add_annotation(x=p[0], y=p[1]+3, text=label, showarrow=False, font=dict(size=11, color="#1F2933"))
             return
 
         label_location = dir_to_coord(p, priority.pop(0))
@@ -111,14 +111,14 @@ def _add_point_labels(fig: go.Figure, xs: list[float], ys: list[float], labels: 
                 draw_label(p, priority, boxes, label)
                 return
         # Draw label
-        fig.add_annotation(x=label_location[0], y=label_location[1], text=label, showarrow=False, font=dict(size=11, color="black"))
+        fig.add_annotation(x=label_location[0], y=label_location[1], text=label, showarrow=False, font=dict(size=11, color="#1F2933"))
         # Add this label's bounding box to the box list
         boxes.append(new_label_box)
 
 
     # Iteratively create labels
     for label, point in zip(labels, zip(xs, ys)):
-        priority = [dir for dir in Direction]
+        priority = [d for d in Direction]
         draw_label(point, priority, point_boxes, label)
     
 
@@ -777,7 +777,7 @@ class ExecutiveDashboard:
                     fig_matrix.add_trace(go.Scatter(
                         x=scatter_df['Improvement Potential'],
                         y=scatter_df['Correlation'],
-                        mode='markers+text',
+                        mode='markers',
                         marker=dict(
                             size=scatter_df['Weighted Priority']*0.8+10,  # Better size scaling
                             color=scatter_df['Weighted Priority'],
