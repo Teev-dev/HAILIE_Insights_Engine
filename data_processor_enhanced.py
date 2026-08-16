@@ -261,6 +261,7 @@ class EnhancedTSMDataProcessor:
 
         query = """
         SELECT 
+            RANK() OVER (ORDER BY rs.score DESC) AS Rank,
             rs.provider_code,
             rs.provider_name,
             rs.score,
@@ -271,6 +272,7 @@ class EnhancedTSMDataProcessor:
             ON rs.provider_code = cp.provider_code 
             AND rs.tp_measure = cp.tp_measure
             AND rs.year = cp.year
+            AND rs.dataset_type = cp.dataset_type
         WHERE rs.tp_measure = ?
             AND rs.dataset_type = ?
             AND rs.year = ?
