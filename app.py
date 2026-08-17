@@ -428,14 +428,14 @@ def main():
 
         # Calculate key metrics using pre-calculated data within the correct peer group
         rankings = analytics.calculate_rankings(df, "All Providers", dataset_type)
-        momentum = analytics.calculate_momentum(df, provider_code, dataset_type=dataset_type)
+        momentum = analytics.calculate_momentum(df, provider_code, provider_name_only, dataset_type=dataset_type)
 
         # Get dataset-specific correlations for priority calculation
         if dataset_type == 'LCHO':
             correlations_df = data_processor.get_dataset_correlations('LCHO')
         else:
             correlations_df = data_processor.get_dataset_correlations('LCRA')
-        priority = analytics.identify_priority(df, provider_code, dataset_type=dataset_type)
+        priority = analytics.identify_priority(df, provider_code, provider_name_only, dataset_type=dataset_type)
 
         # Initialize and render dashboard
         dashboard = ExecutiveDashboard()
@@ -470,7 +470,7 @@ def main():
                     """)
 
                 detailed_analysis = analytics.get_detailed_performance_analysis(
-                    df, provider_code, dataset_type=dataset_type)
+                    df, provider_code, provider_name_only, dataset_type=dataset_type)
 
                 # Debug logging
                 if show_advanced_logging:
