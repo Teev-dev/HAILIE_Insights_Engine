@@ -74,7 +74,7 @@ class EnhancedTSMDataProcessor:
         """Route internal diagnostics to the stdout/Sentry pipeline."""
         _report_internal_error(str(message))
 
-    def get_provider_dataset_type(self, provider_code: str, provider_name: Optional[str] = None) -> Optional[str]:
+    def get_provider_dataset_type(self, provider_code: str, provider_name: str) -> Optional[str]:
         """
         Get the dataset type for a specific provider (LCRA, LCHO, or COMBINED)
         Now uses provider name suffix to determine dataset type when available
@@ -83,31 +83,13 @@ class EnhancedTSMDataProcessor:
         if not self._connection:
             return None
 
-        # If provider_name is provided and has a suffix, extract dataset type from it
-        if provider_name and ' - ' in provider_name:
+        # If provider_name has a suffix, extract dataset type from it (all names should be formatted like this)
+        if ' - ' in provider_name:
             suffix = provider_name.split(' - ')[-1]
             if suffix in ['LCRA', 'LCHO', 'COMBINED']:
                 return suffix
-
-        # Otherwise, look it up in database (this shouldn't happen with new naming)
-        query = """
-        SELECT dataset_type 
-        FROM provider_dataset_mapping 
-        WHERE provider_code = ? AND dataset_type != 'COMBINED'
-        ORDER BY 
-            CASE 
-                WHEN dataset_type = 'LCRA' THEN 1  -- Prioritize LCRA (full metrics)
-                WHEN dataset_type = 'LCHO' THEN 2
-                ELSE 3
-            END
-        LIMIT 1
-        """
-
-        try:
-            result = self._connection.execute(query, [provider_code]).fetchone()
-            return result[0] if result else None
-        except Exception as e:
-            self._log_error(f"Error fetching dataset type: {str(e)}")
+        else:
+            self._log_error(f"Error fetching dataset type - provider name not formatted correctly")
             return None
 
     def get_provider_percentiles(self, provider_code: str, year: int = 2025, dataset_type: Optional[str] = None) -> pd.DataFrame:
@@ -263,7 +245,7 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching provider scores: {str(e)}")
             return pd.DataFrame()
 
-    def get_peer_comparison_data(self, provider_code: str, tp_measure: str, year: int = 2025) -> pd.DataFrame:
+    def get_peer_comparison_data(self, provider_code: str, provider_name: str, tp_measure: str, year: int = 2025) -> pd.DataFrame:
         """
         Get comparison data for a specific measure within the same dataset
         Defaults to year 2025 (latest data)
@@ -273,7 +255,7 @@ class EnhancedTSMDataProcessor:
             return pd.DataFrame()
             
         # Get provider's dataset type
-        dataset_type = self.get_provider_dataset_type(provider_code)
+        dataset_type = self.get_provider_dataset_type(provider_code, provider_name)
         if not dataset_type:
             return pd.DataFrame()
 
