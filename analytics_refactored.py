@@ -110,14 +110,14 @@ class TSMAnalytics:
         except Exception as e:
             return {"error": f"Error calculating rankings: {str(e)}"}
     
-    def calculate_momentum(self, df: pd.DataFrame, provider_code: str, dataset_type: Optional[str] = None) -> Dict:
+    def calculate_momentum(self, df: pd.DataFrame, provider_code: str, provider_name: Optional[str] = None, dataset_type: Optional[str] = None) -> Dict:
         """
         Calculate year-over-year momentum: compare 2025 vs 2024 performance
         Identifies which measures improved/declined and overall trajectory
         """
         try:
             if not dataset_type:
-                dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
             provider_2024 = self.data_processor.get_provider_scores(provider_code, year=2024, dataset_type=dataset_type)
             provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025, dataset_type=dataset_type)
             
@@ -224,7 +224,7 @@ class TSMAnalytics:
                 'disabled': True
             }
     
-    def identify_priority(self, df: pd.DataFrame, provider_code: str, dataset_type: Optional[str] = None) -> Dict:
+    def identify_priority(self, df: pd.DataFrame, provider_code: str, provider_name: Optional[str] = None, dataset_type: Optional[str] = None) -> Dict:
         """
         Identify highest-priority improvement area using pre-calculated correlations and percentiles
         """
@@ -233,7 +233,7 @@ class TSMAnalytics:
                 return {"error": f"Provider {provider_code} not found"}
 
             if not dataset_type:
-                dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
             if not dataset_type:
                 dataset_type = 'LCRA'  # Default fallback
 
@@ -339,7 +339,7 @@ class TSMAnalytics:
         # This would require additional metadata about providers
         return df
     
-    def get_detailed_performance_analysis(self, df: pd.DataFrame, provider_code: str, dataset_type: Optional[str] = None) -> Dict:
+    def get_detailed_performance_analysis(self, df: pd.DataFrame, provider_code: str, provider_name: Optional[str] = None, dataset_type: Optional[str] = None) -> Dict:
         """
         Get detailed performance analysis using pre-calculated percentiles.
 
@@ -353,7 +353,7 @@ class TSMAnalytics:
                 return {"error": f"Provider {provider_code} not found"}
 
             if not dataset_type:
-                dataset_type = self.data_processor.get_provider_dataset_type(provider_code)
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
             if not dataset_type:
                 return {"error": "Could not determine dataset type"}
 
