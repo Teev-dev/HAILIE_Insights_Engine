@@ -117,7 +117,7 @@ class TSMAnalytics:
         """
         try:
             if not dataset_type:
-                dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_name)
             provider_2024 = self.data_processor.get_provider_scores(provider_code, year=2024, dataset_type=dataset_type)
             provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025, dataset_type=dataset_type)
             
@@ -233,7 +233,7 @@ class TSMAnalytics:
                 return {"error": f"Provider {provider_code} not found"}
 
             if not dataset_type:
-                dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_name)
             if not dataset_type:
                 dataset_type = 'LCRA'  # Default fallback
 
@@ -353,7 +353,7 @@ class TSMAnalytics:
                 return {"error": f"Provider {provider_code} not found"}
 
             if not dataset_type:
-                dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
+                dataset_type = self.data_processor.get_provider_dataset_type(provider_name)
             if not dataset_type:
                 return {"error": "Could not determine dataset type"}
 
