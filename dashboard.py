@@ -312,13 +312,13 @@ class ExecutiveDashboard:
                             {mom_text}
                         </p>
                         <p style="font-size: 0.9rem; color: #6C7A89; margin-bottom: 0.25rem;">
-                            <strong>{momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)}:</strong> {momentum['year_over_year_change']:+.1f} points average
+                            <strong>{momentum.get('latest_year', 2026)} vs {momentum.get('prior_year', 2025)}:</strong> {momentum['year_over_year_change']:+.1f} points average
                         </p>
                         <p style="font-size: 0.8rem; color: #6C7A89; margin-bottom: 0.5rem;">
                             {momentum.get('total_measures_compared', 0)} measures compared
                         </p>
                         <p style="font-size: 0.9rem; font-weight: 600; color: #1F2933; margin-top: 0.5rem; margin-bottom: 0.5rem;">
-                            Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:
+                            Your {momentum.get('latest_year', 2026)} vs {momentum.get('prior_year', 2025)} performance:
                         </p>
                     """
 
@@ -355,7 +355,7 @@ class ExecutiveDashboard:
                     """)
                 else:
                     st.markdown(f"""
-                    **Your {momentum.get('latest_year', 2025)} vs {momentum.get('prior_year', 2024)} performance:**
+                    **Your {momentum.get('latest_year', 2026)} vs {momentum.get('prior_year', 2025)} performance:**
                     - **Overall change**: {momentum['year_over_year_change']:+.1f} points average
                     - **Measures compared**: {momentum.get('total_measures_compared', 0)} satisfaction measures
                     """)

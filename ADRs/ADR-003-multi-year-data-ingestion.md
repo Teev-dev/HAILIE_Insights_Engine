@@ -277,12 +277,15 @@ def calculate_momentum(provider_code):
 
 ```bash
 # Load 2024 baseline data
-python build_analytics_db_v2.py --file 2024_TSM_Data.xlsx --year 2024
+python build_analytics_db_v2.py --excel-path 2024_TSM_Data.xlsx --year 2024
 
 # Load 2025 current data
-python build_analytics_db_v2.py --file 2025_TSM_Full_Data_v1.0_FINAL.xlsx --year 2025
+python build_analytics_db_v2.py --excel-path 2025_TSM_Full_Data_v1.0_FINAL.xlsx --year 2025
 
-# Result: Database contains both years, UI shows 2025, momentum compares them
+# Load 2026 current data
+python build_analytics_db_v2.py --excel-path 2026_TSM_Full_Dataset_FINAL.xlsx --year 2026
+
+# Result: Database contains all three years, UI shows latest, momentum compares last two
 ```
 
 ### Year Detection Algorithm
