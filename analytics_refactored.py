@@ -112,17 +112,17 @@ class TSMAnalytics:
     
     def calculate_momentum(self, df: pd.DataFrame, provider_code: str, provider_name: Optional[str] = None, dataset_type: Optional[str] = None) -> Dict:
         """
-        Calculate year-over-year momentum: compare 2025 vs 2024 performance
+        Calculate year-over-year momentum: compare 2026 vs 2025 performance
         Identifies which measures improved/declined and overall trajectory
         """
         try:
             if not dataset_type:
                 dataset_type = self.data_processor.get_provider_dataset_type(provider_code, provider_name)
-            provider_2024 = self.data_processor.get_provider_scores(provider_code, year=2024, dataset_type=dataset_type)
             provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025, dataset_type=dataset_type)
+            provider_2026 = self.data_processor.get_provider_scores(provider_code, year=2026, dataset_type=dataset_type)
             
             # Check if we have data for both years
-            if provider_2024.empty or provider_2025.empty:
+            if provider_2025.empty or provider_2026.empty:
                 return {
                     'direction': "insufficient_data",
                     'momentum_text': "Insufficient multi-year data",
@@ -131,24 +131,24 @@ class TSMAnalytics:
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
-                    'latest_year': 2025,
-                    'prior_year': 2024,
+                    'latest_year': 2026,
+                    'prior_year': 2025,
                     'disabled': True
                 }
             
             # Convert to dictionaries for easier comparison
-            scores_2024 = dict(zip(provider_2024['tp_measure'], provider_2024['score']))
             scores_2025 = dict(zip(provider_2025['tp_measure'], provider_2025['score']))
+            scores_2026 = dict(zip(provider_2026['tp_measure'], provider_2026['score']))
             
             # Calculate changes for each measure
             measure_changes = {}
             for tp_measure in self.tp_codes:
-                if tp_measure in scores_2024 and tp_measure in scores_2025:
-                    change = scores_2025[tp_measure] - scores_2024[tp_measure]
+                if tp_measure in scores_2025 and tp_measure in scores_2026:
+                    change = scores_2026[tp_measure] - scores_2025[tp_measure]
                     measure_changes[tp_measure] = {
                         'change': change,
-                        'score_2024': scores_2024[tp_measure],
                         'score_2025': scores_2025[tp_measure],
+                        'score_2026': scores_2026[tp_measure],
                         'description': self.tp_descriptions.get(tp_measure, tp_measure)
                     }
             
@@ -161,8 +161,8 @@ class TSMAnalytics:
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
-                    'latest_year': 2025,
-                    'prior_year': 2024,
+                    'latest_year': 2026,
+                    'prior_year': 2025,
                     'disabled': True
                 }
             
@@ -205,8 +205,8 @@ class TSMAnalytics:
                 'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']}
                                      for tp, data in declined[:3]],
                 'total_measures_compared': len(measure_changes),
-                'latest_year': 2025,
-                'prior_year': 2024,
+                'latest_year': 2026,
+                'prior_year': 2025,
                 'disabled': False
             }
             
@@ -219,8 +219,8 @@ class TSMAnalytics:
                 'year_over_year_change': 0,
                 'improved_measures': [],
                 'declined_measures': [],
-                'latest_year': 2025,
-                'prior_year': 2024,
+                'latest_year': 2026,
+                'prior_year': 2025,
                 'disabled': True
             }
     

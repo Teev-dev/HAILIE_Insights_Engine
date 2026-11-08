@@ -31,7 +31,41 @@ class EnhancedAnalyticsETL:
             self.year = year if year is not None else 2024
         
         # Configure skiprows and column mappings based on year
-        if self.year == 2025:
+        if self.year == 2026:
+            # 2026 LCRA matches 2025 positions; LCHO header moved down by one row
+            # (so skiprows bumps from 9 to 10) but TP column indices are unchanged.
+            self.lcra_skiprows = 10
+            self.lcho_skiprows = 10
+            self.lcra_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                26: 'TP01',
+                33: 'TP02',
+                34: 'TP03',
+                35: 'TP04',
+                36: 'TP05',
+                37: 'TP06',
+                38: 'TP07',
+                39: 'TP08',
+                40: 'TP09',
+                41: 'TP10',
+                42: 'TP11',
+                43: 'TP12',
+            }
+            self.lcho_column_mapping = {
+                0: 'provider_name',
+                1: 'provider_code',
+                25: 'TP01',
+                32: 'TP05',
+                33: 'TP06',
+                34: 'TP07',
+                35: 'TP08',
+                36: 'TP09',
+                37: 'TP10',
+                38: 'TP11',
+                39: 'TP12',
+            }
+        elif self.year == 2025:
             self.lcra_skiprows = 10
             self.lcho_skiprows = 9
             # 2025 column mappings
@@ -111,23 +145,31 @@ class EnhancedAnalyticsETL:
         try:
             # Read with proper skip rows
             coverage_df = pd.read_excel(self.excel_path, sheet_name='Table_Coverage', skiprows=3)
-            
-            # Set column names
-            coverage_df.columns = ['landlord_name', 'landlord_code', 'landlord_type', 
-                                 'tsm24_lcra_perception', 'tsm24_lcho_perception', 
-                                 'tsm24_combined_perception', 'tsm24_management_info',
-                                 'tsm24_perception_not_inc', 'tsm24_man_info_not_inc']
-            
+
+            # Rename only the 6 columns we use, by position. The 2024/2025 workbooks have 9
+            # Table_Coverage columns (including Perception_Not_Inc and Man_Info_Not_Inc,
+            # which this ETL never reads); 2026 dropped those two sheets and columns, leaving 7.
+            # Positional rename keeps this robust across all three.
+            cols = coverage_df.columns.tolist()
+            coverage_df = coverage_df.rename(columns={
+                cols[0]: 'landlord_name',
+                cols[1]: 'landlord_code',
+                cols[2]: 'landlord_type',
+                cols[3]: 'tsm_lcra_perception',
+                cols[4]: 'tsm_lcho_perception',
+                cols[5]: 'tsm_combined_perception',
+            })
+
             # Clean the data
             coverage_df['landlord_code'] = coverage_df['landlord_code'].astype(str).str.strip()
             coverage_df = coverage_df.dropna(subset=['landlord_code'])
             coverage_df = coverage_df[coverage_df['landlord_code'] != '']
-            
+
             # Create dataset type mapping
             coverage_df['dataset_type'] = coverage_df.apply(
-                lambda row: 'COMBINED' if row['tsm24_combined_perception'] == 'Yes'
-                else 'LCRA' if row['tsm24_lcra_perception'] == 'Yes'
-                else 'LCHO' if row['tsm24_lcho_perception'] == 'Yes'
+                lambda row: 'COMBINED' if row['tsm_combined_perception'] == 'Yes'
+                else 'LCRA' if row['tsm_lcra_perception'] == 'Yes'
+                else 'LCHO' if row['tsm_lcho_perception'] == 'Yes'
                 else None, axis=1
             )
             

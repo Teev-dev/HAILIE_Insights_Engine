@@ -17,10 +17,14 @@ from config import DB_PATH
 # Known providers to validate (code, expected_dataset, year)
 TEST_PROVIDERS = [
     # LCRA providers
+    ("L4004", "LCRA", 2026),
+    ("L4229", "LCRA", 2026),
     ("L4004", "LCRA", 2025),
     ("L4229", "LCRA", 2025),
     ("L4004", "LCRA", 2024),
     # LCHO-only providers (not in LCRA)
+    ("4636", "LCHO", 2026),
+    ("4668", "LCHO", 2026),
     ("4636", "LCHO", 2025),
     ("4668", "LCHO", 2025),
 ]
@@ -50,10 +54,10 @@ def validate():
     # 2. Check multi-year data exists
     years = con.execute("SELECT DISTINCT year FROM raw_scores ORDER BY year").df()["year"].tolist()
     print(f"\n  Years in database: {years}")
-    if 2024 in years and 2025 in years:
+    if 2024 in years and 2025 in years and 2026 in years:
         print("  [OK] Multi-year data present")
     else:
-        print("  [FAIL] Expected both 2024 and 2025 data")
+        print("  [FAIL] Expected 2024, 2025, and 2026 data")
         failures += 1
 
     # 3. Check provider counts per dataset
@@ -66,8 +70,8 @@ def validate():
     """).df()
     print(counts.to_string(index=False))
 
-    # 3b. Validate LCHO provider counts (should be ~56 for 2024, ~59 for 2025)
-    for check_year, min_expected in [(2024, 50), (2025, 50)]:
+    # 3b. Validate LCHO provider counts (observed: ~56 for 2024, ~59 for 2025, ~60 for 2026)
+    for check_year, min_expected in [(2024, 50), (2025, 50), (2026, 50)]:
         lcho_row = counts[(counts["year"] == check_year) & (counts["dataset_type"] == "LCHO")]
         if lcho_row.empty:
             print(f"  [FAIL] No LCHO providers found for {check_year}")
