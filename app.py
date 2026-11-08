@@ -382,7 +382,7 @@ def main():
             return
 
         # Get the dataset type for this provider (use the name without the code part)
-        dataset_type = data_processor.get_provider_dataset_type(provider_code, provider_name_only)
+        dataset_type = data_processor.get_provider_dataset_type(provider_name_only)
         if not dataset_type:
             st.error(f"Could not determine dataset type for provider '{provider_code}'")
             return
