@@ -125,18 +125,19 @@ logger.info(f"Loading data for provider {provider_code}")
 
 ### Year defaults — IMPORTANT
 
-All query methods in `data_processor_enhanced.py` default to `year=2025`. These must be updated when new TSM data is ingested:
+All query methods in `data_processor_enhanced.py` default to the latest-ingested year (currently `year=2026`). These must be updated when new TSM data is ingested. Line numbers drift as the file evolves — grep is the source of truth:
 
-- `get_provider_percentiles` (line 123)
-- `get_dataset_correlations` (line 156)
-- `get_provider_scores` (line 245)
-- `get_peer_comparison_data` (line 271)
-- `get_dataset_summary_stats` (line 310)
-- `get_measure_distribution` (line 341)
-- `get_all_providers_with_scores` (line 370)
-- `get_measure_statistics` (line 495)
-- **Hardcoded SQL** on line 461: `WHERE ... year = 2025` (not a default parameter — must be edited directly)
-- `analytics_refactored.py` line 129: `year=2025` in momentum calculation
+```bash
+grep -rn "year.*=.*2026\|year = 2026\|latest_year.*2026\|prior_year.*2025\|CURRENT_DATA_YEAR" --include="*.py"
+```
+
+Sites that change every refresh:
+
+- `data_processor_enhanced.py` — 8 method default parameters (`year: int = YYYY`), 1 hardcoded SQL literal in `get_provider_dataset_type` (`WHERE … year = YYYY` — not a parameter default, grep for `AND year =`), plus docstrings and comments.
+- `analytics_refactored.py` — `calculate_momentum()` has ~18 literal year references across four return branches (success / insufficient_data / no_comparison / error): the docstring, two `get_provider_scores(..., year=YYYY, ...)` calls, `provider_N-1`/`provider_N` + `scores_N-1`/`scores_N` local vars, the per-measure `score_N-1`/`score_N` dict keys, and `latest_year`/`prior_year` in every return.
+- `dashboard.py` — two `.get()` fallback literals: `latest_year` and `prior_year`.
+- `app.py` — `CURRENT_DATA_YEAR` constant.
+- `validate_etl.py` — `TEST_PROVIDERS`, the multi-year assertion, and the LCHO count loop.
 
 See `MAINTENANCE.md` for the full annual update procedure.
 

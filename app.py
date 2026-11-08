@@ -18,7 +18,7 @@ import os
 # User-facing year label for the currently-loaded TSM dataset.
 # Query-layer year defaults (data_processor_enhanced.py, analytics_refactored.py)
 # are updated separately per MAINTENANCE.md — do not point them at this constant.
-CURRENT_DATA_YEAR = 2025
+CURRENT_DATA_YEAR = 2026
 
 # Sentry is a no-op unless SENTRY_DSN is set in the environment.
 # send_default_pii=False keeps IP/User headers out of events — this codebase

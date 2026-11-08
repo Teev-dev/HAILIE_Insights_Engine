@@ -12,7 +12,7 @@ The UK Government publishes new TSM data annually, typically around November. Mo
 2. **Place** it in `data/source/`
 3. **Run ETL:**
    ```bash
-   python build_analytics_db_v2.py --file data/source/NEW_FILE.xlsx --year YYYY
+   python build_analytics_db_v2.py --excel-path data/source/NEW_FILE.xlsx --year YYYY
    ```
 4. **Verify** record counts:
    ```bash
@@ -31,27 +31,45 @@ The UK Government publishes new TSM data annually, typically around November. Mo
 
 ## Year Default Update Checklist
 
-When ingesting a new year of data (e.g., 2026 data arriving November 2026), update all year defaults from `2025` to `2026`:
+When ingesting a new year of data, update all year defaults from the previous year (N-1) to the new year (N). Line numbers drift as the file evolves — grep is the source of truth. Example from the 2026 refresh:
 
 ### data_processor_enhanced.py
 
-| Line | Method | Change |
-|------|--------|--------|
-| 123  | `get_provider_percentiles` | `year: int = 2025` → `year: int = 2026` |
-| 156  | `get_dataset_correlations` | `year: int = 2025` → `year: int = 2026` |
-| 245  | `get_provider_scores` | `year: int = 2025` → `year: int = 2026` |
-| 271  | `get_peer_comparison_data` | `year: int = 2025` → `year: int = 2026` |
-| 310  | `get_dataset_summary_stats` | `year: int = 2025` → `year: int = 2026` |
-| 341  | `get_measure_distribution` | `year: int = 2025` → `year: int = 2026` |
-| 370  | `get_all_providers_with_scores` | `year: int = 2025` → `year: int = 2026` |
-| 461  | `get_provider_dataset_type` (SQL) | `year = 2025` → `year = 2026` (hardcoded in SQL string, not a parameter default) |
-| 495  | `get_measure_statistics` | `year: int = 2025` → `year: int = 2026` |
+| Method | Change |
+|--------|--------|
+| `get_provider_percentiles` | `year: int = N-1` → `year: int = N` |
+| `get_dataset_correlations` | `year: int = N-1` → `year: int = N` |
+| `get_provider_scores` | `year: int = N-1` → `year: int = N` |
+| `get_peer_comparison_data` | `year: int = N-1` → `year: int = N` |
+| `get_dataset_summary_stats` | `year: int = N-1` → `year: int = N` |
+| `get_measure_distribution` | `year: int = N-1` → `year: int = N` |
+| `get_all_providers_with_scores` | `year: int = N-1` → `year: int = N` |
+| `get_provider_dataset_type` (SQL) | `year = N-1` → `year = N` (hardcoded in SQL string, not a parameter default — grep for `AND year =`) |
+| `get_measure_statistics` | `year: int = N-1` → `year: int = N` |
+
+Also update the five `Defaults to year YYYY (latest data)` docstrings and the `# Get provider summary data for the specific dataset (default to YYYY)` comment.
 
 ### analytics_refactored.py
 
-| Line | Context | Change |
-|------|---------|--------|
-| 129  | Momentum calculation | `year=2025` → `year=2026` |
+`calculate_momentum()` has ~18 literal year references across four return branches (success / insufficient_data / no_comparison / error). Update together:
+
+- Docstring: `compare N vs N-1 performance`
+- Call sites: `get_provider_scores(..., year=N-1, ...)` + `get_provider_scores(..., year=N, ...)`
+- Local variables: `provider_N-1`/`provider_N` and `scores_N-1`/`scores_N`
+- Dict keys returned per measure: `score_N-1`/`score_N`
+- `latest_year: N` and `prior_year: N-1` in all four return branches
+
+### app.py
+
+`CURRENT_DATA_YEAR = N` constant (near the top of the file).
+
+### dashboard.py
+
+Two `.get()` fallback literals: `.get('latest_year', N)` and `.get('prior_year', N-1)`. Grep catches both.
+
+### validate_etl.py
+
+Extend `TEST_PROVIDERS` with new-year entries, the LCHO count loop, and the multi-year assertion.
 
 ### Quick search command
 
@@ -70,8 +88,9 @@ If the database becomes corrupted or you need a clean rebuild from all available
 rm data/hailie_analytics_v2.duckdb
 
 # Rebuild from each year's source data
-python build_analytics_db_v2.py --file data/source/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx --year 2024
-python build_analytics_db_v2.py --file data/source/2025_TSM_Full_Data_v1.0_FINAL.xlsx --year 2025
+python build_analytics_db_v2.py --excel-path data/source/2024_TSM_Full_Data_v1.1_FINAL_1756577982265.xlsx --year 2024
+python build_analytics_db_v2.py --excel-path data/source/2025_TSM_Full_Data_v1.0_FINAL.xlsx --year 2025
+python build_analytics_db_v2.py --excel-path data/source/2026_TSM_Full_Dataset_FINAL.xlsx --year 2026
 ```
 
 Repeat for each year of data available in `data/source/`.

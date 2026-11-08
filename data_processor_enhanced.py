@@ -96,7 +96,7 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching dataset type - provider name not formatted correctly")
             return None
 
-    def get_provider_percentiles(self, provider_code: str, year: int = 2025, dataset_type: Optional[str] = None) -> pd.DataFrame:
+    def get_provider_percentiles(self, provider_code: str, year: int = 2026, dataset_type: Optional[str] = None) -> pd.DataFrame:
         """
         Get pre-calculated percentile ranks for a specific provider
         within their appropriate peer group (LCRA or LCHO).
@@ -129,10 +129,10 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching percentiles: {str(e)}")
             return pd.DataFrame()
 
-    def get_dataset_correlations(self, dataset_type: str, year: int = 2025) -> pd.DataFrame:
+    def get_dataset_correlations(self, dataset_type: str, year: int = 2026) -> pd.DataFrame:
         """
         Get correlations for a specific dataset type
-        Defaults to year 2025 (latest data)
+        Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -217,7 +217,7 @@ class EnhancedTSMDataProcessor:
 
         return options
 
-    def get_provider_scores(self, provider_code: str, year: int = 2025, dataset_type: Optional[str] = None) -> pd.DataFrame:
+    def get_provider_scores(self, provider_code: str, year: int = 2026, dataset_type: Optional[str] = None) -> pd.DataFrame:
         """
         Get raw scores for a specific provider for a given year.
 
@@ -249,10 +249,10 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching provider scores: {str(e)}")
             return pd.DataFrame()
 
-    def get_peer_comparison_data(self, provider_code: str, provider_name: str, tp_measure: str, year: int = 2025) -> pd.DataFrame:
+    def get_peer_comparison_data(self, provider_code: str, provider_name: str, tp_measure: str, year: int = 2026) -> pd.DataFrame:
         """
         Get comparison data for a specific measure within the same dataset
-        Defaults to year 2025 (latest data)
+        Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -290,10 +290,10 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching peer comparison data: {str(e)}")
             return pd.DataFrame()
 
-    def get_dataset_summary_stats(self, dataset_type: str, year: int = 2025) -> Dict:
+    def get_dataset_summary_stats(self, dataset_type: str, year: int = 2026) -> Dict:
         """
         Get summary statistics for a specific dataset
-        Defaults to year 2025 (latest data)
+        Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -321,10 +321,10 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching summary stats: {str(e)}")
             return {}
 
-    def get_measure_distribution(self, tp_measure: str, dataset_type: str, year: int = 2025) -> pd.DataFrame:
+    def get_measure_distribution(self, tp_measure: str, dataset_type: str, year: int = 2026) -> pd.DataFrame:
         """
         Get the distribution of scores for a specific measure within a dataset
-        Defaults to year 2025 (latest data)
+        Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -350,12 +350,12 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching measure distribution: {str(e)}")
             return pd.DataFrame()
 
-    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None, year: int = 2025) -> pd.DataFrame:
+    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None, year: int = 2026) -> pd.DataFrame:
         """
         Get all providers with their scores in wide format
         Needed for TSMAnalytics rankings calculation
         Now supports filtering by dataset type for isolated peer comparisons
-        Defaults to year 2025 (latest data)
+        Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
@@ -436,11 +436,11 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Provider {provider_code} not found in database")
             return None
 
-        # Get provider summary data for the specific dataset (default to 2025)
+        # Get provider summary data for the specific dataset (default to 2026)
         query = """
         SELECT *
         FROM provider_summary
-        WHERE provider_code = ? AND dataset_type = ? AND year = 2025
+        WHERE provider_code = ? AND dataset_type = ? AND year = 2026
         """
 
         try:
@@ -467,11 +467,11 @@ class EnhancedTSMDataProcessor:
                 self._connection = None
 
 
-    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None, year: int = 2025) -> Optional[Dict]:
+    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None, year: int = 2026) -> Optional[Dict]:
         """
         Get statistical summary for a specific measure
         Optionally filtered by dataset type
-        Defaults to year 2025 (latest data)
+        Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
         if not self._connection:
