@@ -74,10 +74,14 @@ class EnhancedTSMDataProcessor:
         """Route internal diagnostics to the stdout/Sentry pipeline."""
         _report_internal_error(str(message))
 
-    def get_provider_dataset_type(self, provider_code: str, provider_name: str) -> Optional[str]:
+    def get_provider_dataset_type(self, provider_name: str) -> Optional[str]:
         """
         Get the dataset type for a specific provider (LCRA, LCHO, or COMBINED)
-        Now uses provider name suffix to determine dataset type when available
+
+        Args: 
+            provider_name: Name of the provider. The dataset type is included in this string as a suffix.
+        Returns:
+            The dataset type of the passed provider (LCRA, LCHO, or COMBINED)
         """
         self._ensure_connection()
         if not self._connection:
@@ -255,7 +259,7 @@ class EnhancedTSMDataProcessor:
             return pd.DataFrame()
             
         # Get provider's dataset type
-        dataset_type = self.get_provider_dataset_type(provider_code, provider_name)
+        dataset_type = self.get_provider_dataset_type(provider_name)
         if not dataset_type:
             return pd.DataFrame()
 
@@ -412,17 +416,22 @@ class EnhancedTSMDataProcessor:
         else:
             return self.tp_codes
 
-    def load_default_data(self, provider_code: Optional[str] = None, provider_name: Optional[str] = None) -> Optional[pd.DataFrame]:
+    def load_default_data(self, provider_code: str, provider_name: str) -> Optional[pd.DataFrame]:
         """
         Load data for a specific provider with automatic dataset detection
-        Now uses provider_name to determine dataset type when available
+
+        Args:
+            provider_code: Code for the selected provider
+            provider_name: Name of the selected provider
+        Returns:
+            A DataFrame containing a summary of the selected provider
         """
         self._ensure_connection()
-        if not provider_code or not self._connection:
+        if not self._connection:
             return None
 
-        # Get provider's dataset type (use provider_name if available)
-        dataset_type = self.get_provider_dataset_type(provider_code, provider_name)
+        # Get provider's dataset type
+        dataset_type = self.get_provider_dataset_type(provider_name)
         if not dataset_type:
             self._log_error(f"Provider {provider_code} not found in database")
             return None
