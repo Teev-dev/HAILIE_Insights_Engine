@@ -12,6 +12,7 @@ from mobile_utils import detect_mobile, mobile_friendly_columns, render_mobile_i
 from contextlib import contextmanager
 from config import DB_PATH, FEEDBACK_FORM_ENABLED
 from tsm_measures import LCHO_EXCLUDED
+from tooltip_definitions import WHATS_NEW_MESSAGE
 import html
 import os
 
@@ -401,21 +402,13 @@ def main():
             st.error("Unable to load provider data. Please try again later.")
             return
 
-        st.success(f"Loaded {dataset_type} analytics for provider: {provider_code}")
-
         # Dismissible changelog toast — appears once per session for returning users
         if 'dismissed_changelog' not in st.session_state:
             st.session_state.dismissed_changelog = False
 
         if not st.session_state.dismissed_changelog:
             with st.container():
-                st.info("""
-                **What's new** — thanks for the feedback. We've:
-                - Given the app a fresh new look — cleaner layout, clearer charts, and updated HAILIE branding throughout.
-                - Added your organisation's name next to its code in the summary, so it's easier to see at a glance who you're looking at.
-                - Made it easy to tell us about a data issue or suggest a new feature, right here in the app — just scroll to the form near the bottom of the page.
-                - Tidied up the settings panel on the left so everything fits neatly on screen.
-                """)
+                st.info(WHATS_NEW_MESSAGE)
                 if st.button("Dismiss", key="dismiss_changelog"):
                     st.session_state.dismissed_changelog = True
                     st.rerun()

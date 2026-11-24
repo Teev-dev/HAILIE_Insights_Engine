@@ -5,6 +5,14 @@
 Tooltip definitions for complex data metrics in the HAILIE TSM Dashboard
 """
 
+# Dismissible "What's new" notice shown above the executive summary (app.py).
+WHATS_NEW_MESSAGE = """\
+**What's new**: the 2026 results are here.
+- Your dashboard now uses the 2026 tenant satisfaction results, so your ranking, scores and top priority all reflect the latest data.
+- Momentum now shows how your 2026 results compare with 2025, where results are available for both years.
+- Labels on the Priority Matrix chart are now placed so they no longer overlap each other, the points or the quadrant labels.
+"""
+
 
 class TooltipDefinitions:
     """
