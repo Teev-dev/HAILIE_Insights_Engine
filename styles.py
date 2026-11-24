@@ -865,6 +865,12 @@ def get_main_css():
         }
     }
 
+    /* Hide the anchor-link icon Streamlit attaches to every heading. This is
+       a single-page dashboard, so the links serve no purpose. */
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+
     /* Executive summary grid: the three cards share a row, so stretch each
        one to the height of the tallest. Every wrapper between the column and
        the card has to pass the height down. */

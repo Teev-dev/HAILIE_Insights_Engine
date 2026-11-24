@@ -50,6 +50,12 @@ class CardMarkupTests(unittest.TestCase):
         self.assertNotIn(".metric-card:hover", css)
         self.assertNotIn(".feature-card:hover", css)
 
+    def test_heading_anchor_icons_are_hidden(self):
+        css = _read("styles.py")
+        rule = css.split('[data-testid="stHeaderActionElements"] {', 1)
+        self.assertEqual(len(rule), 2)
+        self.assertIn("display: none", rule[1].split("}", 1)[0])
+
 
 if __name__ == "__main__":
     unittest.main()
