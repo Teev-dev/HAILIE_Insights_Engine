@@ -135,7 +135,7 @@ def render_features_overview():
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon-professional rank-icon"></div>
-                <h3 class="feature-title">Your Rank</h3>
+                <p class="feature-title">Your Rank</p>
                 <p class="feature-description">
                     See exactly how your housing provider compares to peers with quartile-based scoring. 
                     Get clear visual indicators showing your competitive position.
@@ -143,7 +143,7 @@ def render_features_overview():
             </div>
             <div class="feature-card">
                 <div class="feature-icon-professional momentum-icon"></div>
-                <h3 class="feature-title">Your Momentum</h3>
+                <p class="feature-title">Your Momentum</p>
                 <p class="feature-description">
                     Track your 12-month performance trajectory. Understand if you're improving, 
                     stable, or declining across key satisfaction measures.
@@ -151,7 +151,7 @@ def render_features_overview():
             </div>
             <div class="feature-card">
                 <div class="feature-icon-professional priority-icon"></div>
-                <h3 class="feature-title">Your Priority</h3>
+                <p class="feature-title">Your Priority</p>
                 <p class="feature-description">
                     Identify the single most critical area for improvement based on data-driven 
                     correlation analysis with overall tenant satisfaction.

@@ -156,29 +156,16 @@ class ExecutiveDashboard:
         # data lookups below — only the heading text changes.
         provider_display = f"{provider_name} ({provider_code})" if provider_name else provider_code
 
+        st.markdown("## Executive Summary")
+        st.markdown(f"**Provider:** {provider_display}")
+
         if not is_mobile:
-            col_header1, col_header2 = st.columns([4, 1], gap="medium")
-            with col_header1:
-                st.markdown("## Executive Summary")
-                st.markdown(f"**Provider:** {provider_display}")
-            with col_header2:
-                # Add overall help for the executive summary
-                with st.expander("Understanding Your Dashboard", expanded=False):
-                    st.markdown("""
-                    **Your dashboard shows three key insights:**
-
-                    **Your Rank**: How you compare to other housing providers
-                    **Your Momentum**: Your performance trend over time  
-                    **Your Priority**: Most important area to focus on
-
-                    Click the help icons (?) next to each metric for detailed explanations.
-                    """)
+            # Overall help for the executive summary. Full width so it lines
+            # up with the outer edges of the three-card grid below.
+            with st.expander("Understanding Your Dashboard", expanded=False):
+                st.markdown(tooltips.get_dashboard_overview())
         else:
-            # Mobile: Simpler header
-            st.markdown("## Executive Summary")
-            st.markdown(f"**Provider:** {provider_display}")
-
-        st.markdown("---")
+            st.markdown("---")
 
         # Check for errors
         if "error" in rankings:
@@ -203,12 +190,16 @@ class ExecutiveDashboard:
 
         provider_ranking = rankings[provider_code]
 
-        # Create responsive columns for the key metrics - mobile-friendly
+        # Lay the key metrics out on a three-column grid: one row of cards,
+        # then one row of "how it works" expanders, so the expanders line up
+        # whatever the height of the card above them.
         if is_mobile:
-            # Mobile: Single column layout with native components
+            # Mobile: single column, each card followed by its own expander
             cols = [st.container(), st.container(), st.container()]
+            help_cols = cols
         else:
-            cols = st.columns([1, 1, 1], gap="medium")
+            cols = st.columns(3, gap="medium")
+            help_cols = st.columns(3, gap="medium")
 
         # YOUR RANK
         with cols[0]:
@@ -244,8 +235,8 @@ class ExecutiveDashboard:
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Add expandable help section
-            with st.expander("How Your Rank Works", expanded=False):
+            # Expandable help, in the grid row beneath the cards
+            with help_cols[0].expander("How Your Rank Works", expanded=False):
                 st.markdown(metric_tooltips['ranking']['content'])
                 st.markdown(f"""
                 **Your specific ranking details:**
@@ -341,8 +332,8 @@ class ExecutiveDashboard:
                     
                     st.markdown(card_html, unsafe_allow_html=True)
 
-            # Add expandable help section for momentum
-            with st.expander("How Momentum Works", expanded=False):
+            # Expandable help, in the grid row beneath the cards
+            with help_cols[1].expander("How Momentum Works", expanded=False):
                 st.markdown(metric_tooltips['momentum']['content'])
                 if momentum.get('disabled', False):
                     st.markdown("""
@@ -427,8 +418,8 @@ class ExecutiveDashboard:
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Add expandable help section for priority
-            with st.expander("How Priority Works", expanded=False):
+            # Expandable help, in the grid row beneath the cards
+            with help_cols[2].expander("How Priority Works", expanded=False):
                 st.markdown(metric_tooltips['priority']['content'])
                 st.markdown(f"""
                 **Your priority details:**

@@ -20,6 +20,19 @@ class TooltipDefinitions:
     """
 
     @staticmethod
+    def get_dashboard_overview():
+        """Text for the "Understanding Your Dashboard" expander."""
+        return """
+**Your dashboard shows three key insights:**
+
+- **Your Rank**: how you compare with other housing providers
+- **Your Momentum**: how your results have changed since last year
+- **Your Priority**: the most important area to focus on
+
+For a fuller explanation, open the dropdown underneath each card.
+"""
+
+    @staticmethod
     def get_metric_tooltips():
         """Get tooltips for main dashboard metrics"""
         return {
