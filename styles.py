@@ -469,19 +469,8 @@ def get_main_css():
     }
 
     @media (hover: hover) {
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-xl);
-        }
-
         .feature-card-clickable:hover {
             border-top-color: var(--primary-dark);
-        }
-    }
-
-    @media (max-width: 767px) {
-        .feature-card:hover {
-            transform: translateY(-2px);
         }
     }
 
@@ -515,11 +504,6 @@ def get_main_css():
         font-weight: bold;
         color: white;
         font-size: 1.5rem;
-    }
-
-    .feature-card:hover .feature-icon,
-    .feature-card:hover .feature-icon-professional {
-        transform: scale(1.1);
     }
 
     /* Professional icon styles for features — HAILIE teal family, with
@@ -881,10 +865,30 @@ def get_main_css():
         }
     }
 
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        border-color: #D1D5DB;
+    /* Hide the anchor-link icon Streamlit attaches to every heading. This is
+       a single-page dashboard, so the links serve no purpose. */
+    [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+
+    /* Executive summary grid: the three cards share a row, so stretch each
+       one to the height of the tallest. Every wrapper between the column and
+       the card has to pass the height down. */
+    [data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"] .metric-card) {
+        align-items: stretch;
+    }
+
+    [data-testid="stColumn"] div:has(> .metric-card),
+    [data-testid="stColumn"] div:has(> div > .metric-card),
+    [data-testid="stColumn"] div:has(> div > div > .metric-card),
+    [data-testid="stColumn"] div:has(> div > div > div > .metric-card) {
+        height: 100%;
+    }
+
+    [data-testid="stColumn"] .metric-card {
+        height: 100%;
+        box-sizing: border-box;
+        margin-bottom: 0;
     }
 
     /* Clean white theme for quartile cards - remove colored backgrounds */
