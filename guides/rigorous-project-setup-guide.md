@@ -31,7 +31,7 @@ Derived from production practices used in the Chronos project coordination platf
 
 ## 1. Philosophy: Why This Guide Exists
 
-The UK housing sector has a dependency problem. Critical operations — allocations, repairs, compliance, resident engagement — run on proprietary systems that housing organisations don't control, can't adapt, and pay increasing licence fees to maintain. When a vendor decides to sunset a product or raise prices, the sector has no alternative.
+The UK housing sector has a dependency problem. Critical operations — allocations, repairs, compliance, resident engagement — all run on proprietary systems that housing organisations don't control, can't adapt, and pay increasing licence fees to maintain. When a vendor decides to sunset a product or raise prices, the sector has no alternative.
 
 **Open-source, sector-built software changes this.** But only if it's done with enough rigour to be trusted in production, and enough accessibility that housing professionals — not just professional developers — can contribute to and maintain it.
 
