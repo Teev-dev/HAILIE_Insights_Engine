@@ -552,6 +552,14 @@ def main():
                 else:
                     st.warning("No score data available for this provider")
 
+            with st.expander("Comparisons", expanded=False):
+
+                # Get comparison data for the selected provider's priority measure
+                priority_measure = priority["priority_measure"]
+                comparison_data = data_processor.get_peer_comparison_data(provider_code, provider_name_only, priority_measure)
+
+                dashboard.render_comparisons(provider_code, priority_measure, comparison_data)
+
         # Report a data issue / feature request — provider context attached.
         # Hidden by default until email delivery is configured (see
         # FEEDBACK_FORM_ENABLED in config.py).

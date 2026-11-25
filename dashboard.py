@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import json
 from typing import Dict, Any
 from tooltip_definitions import TooltipDefinitions
 from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
@@ -853,6 +854,7 @@ class ExecutiveDashboard:
             else:
                 st.warning("Priority analysis not available")
 
+
     def render_data_quality(self, df: pd.DataFrame, data_processor):
         """
         Render data quality report
@@ -1159,6 +1161,57 @@ class ExecutiveDashboard:
             st.table(table_df)
         else:
             st.info("Priority matrix data not available")
+
+
+    def render_comparisons(self, selected_provider_code, priority_measure, comparison_df: pd.DataFrame):
+        """
+        Render the comparison section.
+        Currently, there is only a table. More views will be
+        added in the future in separate tabs.
+
+        The table is for all providers. 
+        The selected provider's row is anchored above the table so it
+        can be referenced no matter the scroll position of the table.
+
+        By default, comparisons will be with respect to the priority
+        metric for the selected provider, but there will be a drop down
+        menu for selecting the other metrics.
+
+        The dataframe passed to this function contains records of
+        providers, pulled from our DuckDB database. Thus, we know
+        the dataframe will never be empty, and such checks are not
+        needed.
+        """
+        # table_tab, map_tab = st.tabs(["Table View", "Map View"])
+        #
+        # with table_tab:
+        st.markdown(f"### Comparison table - Your priority: {priority_measure}")
+
+        target_row = comparison_df[comparison_df["provider_code"] == selected_provider_code]
+
+        # Display the selected provider's row at the top of the table so it can always be referenced
+        st.dataframe(
+            target_row.style.apply(
+                lambda row: ["background-color: #ffeaa7; font-weight: bold"] * len(row),
+                axis=1
+            ),
+            height=75,
+            hide_index=True
+        )
+        # Small horizontal spacer
+        st.markdown(
+            """<hr style="margin-top: 0.25rem; margin-bottom: 0.25rem; border: none; border-top: 1px solid #00000000;" />""",
+            unsafe_allow_html=True
+        )
+        # Display the full table, with the selected provider's row highlighted
+        st.dataframe(
+            comparison_df.style.apply(
+                lambda row: ["background-color: #ffeaa7; font-weight: bold" if row["provider_code"] == selected_provider_code else "" for _ in row],
+                axis=1
+            ),
+            hide_index=True
+        )
+
 
     def render_feedback_form(self, provider_code: str = None, dataset_type: str = None):
         """Render the "report a data issue / feature request" form.

@@ -90,7 +90,6 @@ class GetPeerComparisonData(unittest.TestCase):
 
     def test_combined_entry_tp12_2025(self):
         self.build_test("COMBINED", "TP12", 2025)
-        
 
 
 if __name__ == "__main__":
