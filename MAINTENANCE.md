@@ -22,12 +22,15 @@ The UK Government publishes new TSM data annually, typically around November. Mo
    ```bash
    python diagnose_duplicates.py
    ```
+   The ETL also loads `provider_metadata` (landlord type, size band, predominant region) from the same workbook; peer-group filtering reads it. To reload only that table for a year, without recalculating scores or percentiles, add `--metadata-only`.
 6. **Update year defaults** (see checklist below)
 7. **Test locally:**
    ```bash
    streamlit run app.py
    ```
 8. **Deploy** (rebuild Docker image or copy database to Railway volume)
+
+   **Note:** when `DATA_PATH` points at a persistent volume, the baked-in database is only copied there if no database exists yet (`config.py` auto-seed). A rebuilt image does **not** replace the volume's database. After any change to the database (new year, new table such as `provider_metadata`), copy the new file to the volume. Until then the app keeps working on the old database, but features that need the new data are unavailable: without `provider_metadata` the peer group size/region selectors are hidden.
 
 ## Year Default Update Checklist
 
@@ -46,6 +49,9 @@ When ingesting a new year of data, update all year defaults from the previous ye
 | `get_all_providers_with_scores` | `year: int = N-1` → `year: int = N` |
 | `get_provider_dataset_type` (SQL) | `year = N-1` → `year = N` (hardcoded in SQL string, not a parameter default — grep for `AND year =`) |
 | `get_measure_statistics` | `year: int = N-1` → `year: int = N` |
+| `get_provider_metadata` | `year: int = N-1` → `year: int = N` |
+| `get_peer_filter_options` | `year: int = N-1` → `year: int = N` |
+| `get_peer_group_scores` | `year: int = N-1` → `year: int = N` |
 
 Also update the five `Defaults to year YYYY (latest data)` docstrings and the `# Get provider summary data for the specific dataset (default to YYYY)` comment.
 

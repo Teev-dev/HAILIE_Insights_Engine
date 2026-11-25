@@ -50,6 +50,16 @@ def _corr_label(strength: float) -> str:
     return "Negligible"
 
 
+def _ordinal(value: float) -> str:
+    """Whole-number ordinal for display, e.g. 21.4 -> '21st'."""
+    n = int(round(value))
+    if 10 <= n % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
 def _add_point_labels(fig: go.Figure, xs: list[float], ys: list[float], labels: list[str]):
     """ Add labels to the priority matrix scatterplot points. 
     Collision avoidance is implemented by defining bounding boxes around each point,
@@ -1256,3 +1266,315 @@ class ExecutiveDashboard:
                 st.success(result.user_message)
             else:
                 st.error(result.user_message)
+
+    # ------------------------------------------------------------------
+    # Peer group filtering (size band / region)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _strip_dataset_suffix(provider_name: str) -> str:
+        """Drop the ' - LCRA' style suffix the ETL appends to provider names."""
+        for suffix in (" - LCRA", " - LCHO", " - COMBINED"):
+            if provider_name.endswith(suffix):
+                return provider_name[: -len(suffix)]
+        return provider_name
+
+    @staticmethod
+    def describe_peer_group(dataset_type: str, size_band: str | None = None, region: str | None = None) -> str:
+        """Plain-text description of a peer group, e.g.
+        'LCRA providers, 5,000-40,000 homes, predominant region East Midlands'."""
+        parts = [f"{dataset_type} providers"]
+        if size_band:
+            parts.append(f"{size_band} homes")
+        if region:
+            parts.append(f"predominant region {region}")
+        return ", ".join(parts)
+
+    def render_peer_group_filter(self, filter_options: Dict, own_metadata: Dict | None = None,
+                                 key_prefix: str = "peer") -> tuple:
+        """
+        Render the size-band and region selectors.
+
+        Returns (size_band, region); each is None when "all" is chosen. When
+        own_metadata is given, the provider's own band and region are marked
+        so "landlords like me" is one click away.
+        """
+        tooltips = TooltipDefinitions()
+        own_metadata = own_metadata or {}
+        bands = {o['value']: o['provider_count'] for o in filter_options.get('size_bands', [])}
+        regions = {o['value']: o['provider_count'] for o in filter_options.get('regions', [])}
+
+        if not bands and not regions:
+            return None, None
+
+        st.markdown("#### Peer group")
+        st.caption(tooltips.get_peer_group_intro())
+
+        def band_label(value):
+            if value is None:
+                return "All sizes"
+            label = f"{value} homes ({bands[value]} providers)"
+            return f"{label} - your size band" if value == own_metadata.get('size_band') else label
+
+        def region_label(value):
+            if value is None:
+                return "All regions"
+            label = f"{value} ({regions[value]} providers)"
+            return f"{label} - your region" if value == own_metadata.get('region') else label
+
+        if detect_mobile():
+            cols = [st.container(), st.container()]
+        else:
+            cols = st.columns(2, gap="medium")
+
+        with cols[0]:
+            size_band = st.selectbox(
+                "Landlord size",
+                options=[None] + list(bands),
+                format_func=band_label,
+                key=f"{key_prefix}_size_band",
+                help="Size band published by the regulator: homes owned across the landlord group.",
+            )
+        with cols[1]:
+            region = st.selectbox(
+                "Region",
+                options=[None] + list(regions),
+                format_func=region_label,
+                key=f"{key_prefix}_region",
+                help="The landlord's predominant region as published by the regulator. "
+                     "Landlords spread across several regions are recorded as Mixed.",
+            )
+
+        with st.expander("How peer groups work", expanded=False):
+            st.markdown(tooltips.get_peer_group_help())
+
+        return size_band, region
+
+    def render_peer_group_notice(self, peer_group: Dict, dataset_type: str, selected_count: int = 1):
+        """Tell the user which peer group is in force, and why if a filter was not applied."""
+        if not peer_group:
+            return
+
+        subject = "you" if selected_count == 1 else "the providers you selected"
+
+        if peer_group.get('fallback'):
+            requested = self.describe_peer_group(
+                dataset_type, peer_group.get('requested_size_band'), peer_group.get('requested_region'))
+            matched = peer_group.get('filtered_group_size', 0)
+            noun = "provider falls" if matched == 1 else "providers fall"
+            st.warning(
+                f"Only {matched} {noun} in the group \"{requested}\" (including {subject}). "
+                f"Groups smaller than {peer_group.get('min_peer_group_size')} "
+                f"are not used, because one landlord's result would move every position sharply. "
+                f"Showing all {peer_group.get('peer_group_size', 0)} {dataset_type} providers instead."
+            )
+            return
+
+        if peer_group.get('is_filtered'):
+            description = html.escape(self.describe_peer_group(
+                dataset_type, peer_group.get('size_band'), peer_group.get('region')))
+            size = html.escape(str(peer_group.get('peer_group_size', 0)))
+            st.markdown(
+                f'<div class="peer-group-banner"><strong>Peer group:</strong> {description} '
+                f'&mdash; {size} providers including {html.escape(subject)}. '
+                f'Rank, percentiles and peer averages below use this group only.</div>',
+                unsafe_allow_html=True,
+            )
+
+    # ------------------------------------------------------------------
+    # Multi-provider (group executive) comparison
+    # ------------------------------------------------------------------
+
+    COMPARE_COLORS = ['#0B5C70', '#D8A62A', '#6C7A89']
+
+    COMPARE_ERROR_MESSAGES = {
+        'too_few_providers': "Select at least two providers to compare.",
+        'too_many_providers': "You can compare up to three providers at a time.",
+        'duplicate_providers': "The same provider has been selected more than once.",
+        'mixed_dataset_types': (
+            "These providers cannot be placed side by side: some of the results you selected are for "
+            "rented housing (LCRA) and some for shared ownership (LCHO). The two are measured on "
+            "different questions against different peer groups. Choose providers of the same type."
+        ),
+    }
+
+    def render_provider_comparison(self, comparison: Dict):
+        """Render two or three providers side by side."""
+        tooltips = TooltipDefinitions()
+
+        if not comparison:
+            st.warning("No comparison data available.")
+            return
+
+        if "error" in comparison:
+            message = self.COMPARE_ERROR_MESSAGES.get(comparison["error"])
+            if message:
+                st.warning(message)
+            else:
+                _report_internal_error("provider comparison error", comparison.get("error"))
+                st.error("We couldn't build this comparison right now. Try different providers or refresh.")
+            return
+
+        providers = comparison['providers']
+        dataset_type = comparison['dataset_type']
+        peer_group = comparison.get('peer_group', {})
+        is_mobile = detect_mobile()
+        labels = {
+            p['provider_code']: self._strip_dataset_suffix(str(p['provider_name']))
+            for p in providers
+        }
+
+        st.markdown("## Group Comparison")
+        self.render_peer_group_notice(peer_group, dataset_type, selected_count=len(providers))
+        if not peer_group.get('is_filtered'):
+            st.caption(
+                f"Each provider is ranked among all {peer_group.get('peer_group_size', 0)} "
+                f"{dataset_type} providers."
+            )
+
+        with st.expander("Understanding the comparison", expanded=False):
+            st.markdown(tooltips.get_comparison_overview())
+
+        # --- One summary card per provider ---
+        if is_mobile:
+            cols = [st.container() for _ in providers]
+        else:
+            cols = st.columns(len(providers), gap="medium")
+
+        for i, (col, provider) in enumerate(zip(cols, providers)):
+            ranking = provider['ranking']
+            momentum = provider['momentum']
+            priority = provider['priority']
+            accent = self.COMPARE_COLORS[i % len(self.COMPARE_COLORS)]
+
+            safe_name = html.escape(labels[provider['provider_code']])
+            safe_code = html.escape(str(provider['provider_code']))
+            quartile_color = html.escape(str(ranking['quartile_color']))
+            quartile_name = html.escape(str(ranking['quartile']))
+
+            mom_color = html.escape(str(momentum.get('momentum_color', '#64748B')))
+            mom_text = html.escape(str(momentum.get('momentum_text', 'Unavailable')))
+            if momentum.get('disabled', False):
+                mom_detail = "No prior-year results to compare"
+            else:
+                mom_detail = (f"{momentum.get('latest_year', 2026)} vs {momentum.get('prior_year', 2025)}, "
+                              f"{momentum.get('total_measures_compared', 0)} measures")
+
+            if "error" in priority:
+                _report_internal_error("comparison priority error", priority.get("error"))
+                priority_headline = "Unavailable"
+                priority_detail = ""
+                priority_color = "#64748B"
+            else:
+                priority_headline = html.escape(str(priority.get('priority_measure', 'N/A')))
+                priority_detail = (f"{html.escape(str(priority.get('priority_description', '')))} "
+                                   f"({html.escape(str(priority.get('priority_level', '')))} priority, "
+                                   f"{_ordinal(priority.get('percentile', 0))} percentile)")
+                priority_color = html.escape(str(priority.get('priority_color', '#0B5C70')))
+
+            with col:
+                st.markdown(f"""
+                <div class="metric-card compare-card" style="--compare-accent: {accent};">
+                    <p class="compare-name">{safe_name}</p>
+                    <p class="compare-code">{safe_code}</p>
+                    <div class="compare-section">
+                        <p class="compare-section-label">Rank</p>
+                        <p class="compare-headline">#{ranking['rank']} <span style="font-size: 0.95rem; font-weight: 500; color: #6C7A89;">of {ranking['total_providers']}</span></p>
+                        <p class="compare-detail" style="color: {quartile_color}; font-weight: 600;">{quartile_name} quartile ({_ordinal(ranking['percentile'])} percentile)</p>
+                        <p class="compare-detail">Average score {ranking['score']:.1f} across {ranking['measures_count']} measures</p>
+                    </div>
+                    <div class="compare-section">
+                        <p class="compare-section-label">Momentum</p>
+                        <p class="compare-headline" style="font-size: 1.15rem; color: {mom_color};">{mom_text}</p>
+                        <p class="compare-detail">{html.escape(mom_detail)}</p>
+                    </div>
+                    <div class="compare-section">
+                        <p class="compare-section-label">Priority</p>
+                        <p class="compare-headline" style="font-size: 1.15rem; color: {priority_color};">{priority_headline}</p>
+                        <p class="compare-detail">{priority_detail}</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # --- What the group has in common, and where it diverges ---
+        measures = comparison.get('measures', [])
+        insights = []
+        widest = comparison.get('widest_gap')
+        if widest and widest.get('spread'):
+            high = ", ".join(labels[c] for c in widest['highest'])
+            low = ", ".join(labels[c] for c in widest['lowest'])
+            insights.append(
+                f"**Widest gap:** {widest['description']} ({widest['measure']}) - "
+                f"{widest['spread']:.1f} points between {high} and {low}."
+            )
+        descriptions = {m['measure']: m['description'] for m in measures}
+        below = comparison.get('shared_below_median', [])
+        if below:
+            listed = "; ".join(f"{descriptions[tp]} ({tp})" for tp in below)
+            insights.append(f"**Below the peer median for every provider:** {listed}.")
+        above = comparison.get('shared_above_median', [])
+        if above:
+            listed = "; ".join(f"{descriptions[tp]} ({tp})" for tp in above)
+            insights.append(f"**At or above the peer median for every provider:** {listed}.")
+
+        if insights:
+            st.markdown("### Across the group")
+            for line in insights:
+                st.markdown(f"- {line}")
+
+        if not measures:
+            st.warning("No measure-level results are available for these providers.")
+            return
+
+        # --- Measure-by-measure chart ---
+        st.markdown("### Measure by measure")
+        measure_codes = [m['measure'] for m in measures]
+        fig = go.Figure()
+        for i, provider in enumerate(providers):
+            code = provider['provider_code']
+            scores = [m['values'][code]['score'] for m in measures]
+            fig.add_trace(go.Bar(
+                name=labels[code],
+                x=measure_codes,
+                y=scores,
+                marker_color=self.COMPARE_COLORS[i % len(self.COMPARE_COLORS)],
+                customdata=[m['description'] for m in measures],
+                hovertemplate="%{customdata}<br>%{y:.1f}%<extra>%{fullData.name}</extra>",
+            ))
+        fig.update_layout(
+            title="Scores by measure",
+            xaxis_title="TSM Measures",
+            yaxis_title="Score (%)",
+            barmode='group',
+            height=420,
+            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
+            **PLOTLY_LAYOUT,
+        )
+        fig.update_layout(margin=dict(l=60, r=20, t=90, b=60))
+        st.plotly_chart(fig, width='stretch')
+
+        # --- Tables: scores, and position within the peer group ---
+        def build_table(field: str, suffix: str) -> pd.DataFrame:
+            rows = []
+            for m in measures:
+                row = {'Measure': m['measure'], 'Description': m['description']}
+                for provider in providers:
+                    code = provider['provider_code']
+                    value = m['values'][code][field]
+                    row[labels[code]] = f"{value:.1f}{suffix}" if value is not None else "N/A"
+                if field == 'score':
+                    row['Highest'] = ", ".join(labels[c] for c in m['highest']) or "-"
+                    row['Gap (pts)'] = f"{m['spread']:.1f}" if m['spread'] is not None else "-"
+                rows.append(row)
+            return pd.DataFrame(rows)
+
+        # Tall enough to show every measure without an inner scrollbar.
+        table_height = 35 * (len(measures) + 1) + 3
+
+        scores_tab, percentiles_tab = st.tabs(["Scores", "Position in peer group"])
+        with scores_tab:
+            st.caption("Published satisfaction scores (%). Gap is the difference between the highest and lowest of the providers shown.")
+            st.dataframe(build_table('score', ''), hide_index=True, width='stretch', height=table_height)
+        with percentiles_tab:
+            st.caption("Percentile within the peer group for each measure. Higher is better.")
+            st.dataframe(build_table('percentile', ''), hide_index=True, width='stretch', height=table_height)

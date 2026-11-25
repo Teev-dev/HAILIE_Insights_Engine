@@ -155,6 +155,41 @@ def validate():
         print(f"  [FAIL] {len(bad_dupes)} providers appear as COMBINED alongside LCRA/LCHO")
         failures += 1
 
+    # 7. Provider metadata (size band / region) drives peer-group filtering.
+    # Every scored provider needs a metadata row; a few legitimately have no
+    # band or region recorded by the regulator.
+    print("\n  Checking provider metadata coverage...")
+    if "provider_metadata" not in tables:
+        print("  [FAIL] Table 'provider_metadata' missing "
+              "(run build_analytics_db_v2.py --metadata-only for each year)")
+        failures += 1
+    else:
+        coverage = con.execute("""
+            SELECT rs.year,
+                   COUNT(*) AS providers,
+                   COUNT(*) FILTER (WHERE pm.provider_code IS NULL) AS no_row,
+                   COUNT(*) FILTER (WHERE pm.size_band IS NULL) AS no_band,
+                   COUNT(*) FILTER (WHERE pm.region IS NULL) AS no_region
+            FROM (SELECT DISTINCT provider_code, dataset_type, year FROM raw_scores) rs
+            LEFT JOIN provider_metadata pm
+                ON rs.provider_code = pm.provider_code
+                AND rs.dataset_type = pm.dataset_type
+                AND rs.year = pm.year
+            GROUP BY rs.year
+            ORDER BY rs.year
+        """).fetchall()
+        for year, providers, no_row, no_band, no_region in coverage:
+            if no_row > 0:
+                print(f"  [FAIL] {year}: {no_row} scored providers have no metadata row")
+                failures += 1
+            elif max(no_band, no_region) > 0.05 * providers:
+                print(f"  [FAIL] {year}: {no_band} providers without a size band, "
+                      f"{no_region} without a region (of {providers})")
+                failures += 1
+            else:
+                print(f"  [OK] {year}: metadata for all {providers} providers "
+                      f"({no_band} without size band, {no_region} without region)")
+
     con.close()
 
     print("\n" + "=" * 60)

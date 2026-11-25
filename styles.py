@@ -891,6 +891,66 @@ def get_main_css():
         margin-bottom: 0;
     }
 
+    /* Multi-provider comparison cards: one per provider, same grid behaviour
+       as the executive summary cards above. */
+    .compare-card {
+        border-top: 4px solid var(--compare-accent, #0B5C70);
+    }
+
+    .compare-card .compare-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1F2933;
+        margin: 0 0 0.15rem 0;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .compare-card .compare-code {
+        font-size: 0.8rem;
+        color: #6C7A89;
+        margin: 0 0 0.75rem 0;
+    }
+
+    .compare-card .compare-section {
+        border-top: 1px solid #E5E7EB;
+        padding-top: 0.6rem;
+        margin-top: 0.6rem;
+    }
+
+    .compare-card .compare-section-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #6C7A89;
+        margin: 0 0 0.2rem 0;
+    }
+
+    .compare-card .compare-headline {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #0B5C70;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .compare-card .compare-detail {
+        font-size: 0.9rem;
+        color: #475569;
+        margin: 0.15rem 0 0 0;
+    }
+
+    .peer-group-banner {
+        background: #F3F8F9;
+        border-left: 4px solid #0B5C70;
+        border-radius: 4px;
+        padding: 0.6rem 0.9rem;
+        margin: 0.5rem 0 1rem 0;
+        font-size: 0.95rem;
+        color: #1F2933;
+    }
+
     /* Clean white theme for quartile cards - remove colored backgrounds */
     .quartile-top,
     .quartile-high,

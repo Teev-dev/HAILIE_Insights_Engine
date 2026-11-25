@@ -11,6 +11,7 @@ WHATS_NEW_MESSAGE = """\
 - Your dashboard now uses the 2026 tenant satisfaction results, so your ranking, scores and top priority all reflect the latest data.
 - Momentum now shows how your 2026 results compare with 2025, where results are available for both years.
 - Labels on the Priority Matrix chart are now placed so they no longer overlap each other, the points or the quadrant labels.
+- You can now narrow your peer group to landlords of a similar size or region, and compare up to three providers side by side.
 """
 
 
@@ -30,6 +31,50 @@ class TooltipDefinitions:
 - **Your Priority**: the most important area to focus on
 
 For a fuller explanation, open the dropdown underneath each card.
+"""
+
+    @staticmethod
+    def get_peer_group_intro():
+        """Caption above the peer group size / region selectors."""
+        return ("By default the comparison is with every provider that reports the same "
+                "measures. Narrow it to landlords of a similar size or region if that is a "
+                "fairer benchmark.")
+
+    @staticmethod
+    def get_peer_group_help():
+        """Text for the "How peer groups work" expander."""
+        return """
+**Where size and region come from**
+
+Both are published by the Regulator of Social Housing alongside each landlord's results:
+
+- **Size** is the landlord group's size band, by number of homes owned.
+- **Region** is the landlord's predominant region. Landlords spread across several regions are recorded as **Mixed**.
+
+**What changes when you narrow the peer group**
+
+- **Your Rank**, your percentiles and the peer averages are recalculated using only the landlords in the group you chose, plus you.
+- **Your Priority** uses your position within that group to judge where you have most room to improve.
+- **Your Momentum** does not change. It compares your own results with last year's.
+- The link between each measure and overall satisfaction is still measured across all landlords, because a small group is not enough to measure it reliably.
+
+**Small groups**
+
+If a group would contain too few landlords, a single result could move everyone's position sharply. In that case the full peer group is used instead and the dashboard tells you so.
+"""
+
+    @staticmethod
+    def get_comparison_overview():
+        """Text for the "Understanding the comparison" expander."""
+        return """
+**Compare two or three providers side by side**
+
+This view is for executives responsible for more than one registered provider.
+
+- Every provider is ranked within the **same peer group**, so positions can be read across the columns.
+- **Scores** are each provider's published results. **Percentiles** show where each provider sits within the peer group.
+- Providers must report the same set of measures to be compared. Rented-housing results and shared-ownership results are measured differently, so they cannot be placed side by side.
+- For the full analysis of any one provider, switch back to the single provider view.
 """
 
     @staticmethod

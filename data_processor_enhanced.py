@@ -14,6 +14,9 @@ from typing import Any, Optional, Dict, List, Tuple
 from config import DB_PATH
 from tsm_measures import TP_CODES, TP_DESCRIPTIONS, LCHO_EXCLUDED
 
+# Regulator size bands (homes owned, LCRA and LCHO combined), smallest first.
+SIZE_BAND_ORDER = ['<5,000', '5,000-40,000', '>40,000']
+
 
 def _report_internal_error(context: str, payload: Any = None) -> None:
     """Route error details to Sentry/stdout only — never to the UI.
@@ -350,12 +353,17 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Error fetching measure distribution: {str(e)}")
             return pd.DataFrame()
 
-    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None, year: int = 2026) -> pd.DataFrame:
+    def get_all_providers_with_scores(self, dataset_type: Optional[str] = None, year: int = 2026,
+                                      size_band: Optional[str] = None, region: Optional[str] = None,
+                                      include_provider_codes: Optional[List[str]] = None) -> pd.DataFrame:
         """
         Get all providers with their scores in wide format
         Needed for TSMAnalytics rankings calculation
         Now supports filtering by dataset type for isolated peer comparisons
         Defaults to year 2026 (latest data)
+
+        size_band / region narrow the peer group within dataset_type (see
+        _peer_group_clause); they are ignored when dataset_type is not given.
         """
         self._ensure_connection()
         if not self._connection:
@@ -372,6 +380,9 @@ class EnhancedTSMDataProcessor:
                 for tp in tp_cols:
                     pivot_cols.append(f"MAX(CASE WHEN tp_measure = '{tp}' THEN score END) AS {tp}")
 
+                peer_clause, peer_params = self._peer_group_clause(
+                    dataset_type, year, size_band, region, include_provider_codes)
+
                 query = f"""
                     SELECT 
                         provider_code,
@@ -379,12 +390,11 @@ class EnhancedTSMDataProcessor:
                         {', '.join(pivot_cols)}
                     FROM raw_scores
                     WHERE dataset_type = ? AND year = ?
-
-
+                    {peer_clause}
                     GROUP BY provider_code, provider_name
                 """
 
-                df = self._connection.execute(query, [dataset_type, year]).df()
+                df = self._connection.execute(query, [dataset_type, year] + peer_params).df()
             else:
                 # Legacy behavior - get all providers
                 query = """
@@ -404,6 +414,126 @@ class EnhancedTSMDataProcessor:
 
         except Exception as e:
             _report_internal_error("fetching providers with scores", e)
+            return pd.DataFrame()
+
+    def _peer_group_clause(self, dataset_type: str, year: int,
+                           size_band: Optional[str] = None, region: Optional[str] = None,
+                           include_provider_codes: Optional[List[str]] = None) -> Tuple[str, List]:
+        """
+        Build a SQL fragment narrowing raw_scores to a size-band / region peer group.
+
+        Returns ("", []) when no filter is requested, so unfiltered queries are
+        byte-for-byte what they were before peer filtering existed. The
+        sub-select is always scoped to dataset_type, so a filter can never pull
+        in providers of another type (LCRA/LCHO isolation). Providers listed in
+        include_provider_codes stay in the group even if they fall outside the
+        filter, so a provider is always benchmarked against the chosen peers
+        plus itself.
+        """
+        if not size_band and not region:
+            return "", []
+
+        sub = "SELECT provider_code FROM provider_metadata WHERE dataset_type = ? AND year = ?"
+        params: List = [dataset_type, year]
+        if size_band:
+            sub += " AND size_band = ?"
+            params.append(size_band)
+        if region:
+            sub += " AND region = ?"
+            params.append(region)
+
+        clause = f"provider_code IN ({sub})"
+        if include_provider_codes:
+            placeholders = ", ".join("?" for _ in include_provider_codes)
+            clause += f" OR provider_code IN ({placeholders})"
+            params.extend(include_provider_codes)
+        return f" AND ({clause})", params
+
+    def get_provider_metadata(self, provider_code: str, dataset_type: str, year: int = 2026) -> Dict:
+        """
+        Get the regulator-published landlord type, size band and predominant
+        region for a provider. Defaults to year 2026 (latest data).
+        Values are None where the regulator records none.
+        """
+        self._ensure_connection()
+        if not self._connection:
+            return {}
+
+        query = """
+        SELECT landlord_type, size_band, region
+        FROM provider_metadata
+        WHERE provider_code = ? AND dataset_type = ? AND year = ?
+        """
+        try:
+            row = self._connection.execute(query, [provider_code, dataset_type, year]).fetchone()
+            if row:
+                return {'landlord_type': row[0], 'size_band': row[1], 'region': row[2]}
+            return {}
+        except Exception as e:
+            self._log_error(f"Error fetching provider metadata: {str(e)}")
+            return {}
+
+    def get_peer_filter_options(self, dataset_type: str, year: int = 2026) -> Dict[str, List[Dict]]:
+        """
+        Get the size bands and regions available within a dataset, with the
+        number of providers that have scores in each. Defaults to year 2026
+        (latest data). Size bands are ordered smallest to largest; regions
+        alphabetically with 'Mixed' last.
+        """
+        self._ensure_connection()
+        empty = {'size_bands': [], 'regions': []}
+        if not self._connection:
+            return empty
+
+        query = """
+        SELECT pm.{column} AS value, COUNT(DISTINCT pm.provider_code) AS provider_count
+        FROM provider_metadata pm
+        WHERE pm.dataset_type = ? AND pm.year = ? AND pm.{column} IS NOT NULL
+            AND pm.provider_code IN (
+                SELECT provider_code FROM raw_scores
+                WHERE dataset_type = ? AND year = ? AND score IS NOT NULL
+            )
+        GROUP BY pm.{column}
+        """
+        params = [dataset_type, year, dataset_type, year]
+        try:
+            bands = self._connection.execute(query.format(column='size_band'), params).fetchall()
+            regions = self._connection.execute(query.format(column='region'), params).fetchall()
+        except Exception as e:
+            self._log_error(f"Error fetching peer filter options: {str(e)}")
+            return empty
+
+        band_order = {band: i for i, band in enumerate(SIZE_BAND_ORDER)}
+        bands = sorted(bands, key=lambda r: (band_order.get(r[0], len(band_order)), r[0]))
+        regions = sorted(regions, key=lambda r: (r[0] == 'Mixed', r[0]))
+        return {
+            'size_bands': [{'value': v, 'provider_count': int(n)} for v, n in bands],
+            'regions': [{'value': v, 'provider_count': int(n)} for v, n in regions],
+        }
+
+    def get_peer_group_scores(self, dataset_type: str, year: int = 2026,
+                              size_band: Optional[str] = None, region: Optional[str] = None,
+                              include_provider_codes: Optional[List[str]] = None) -> pd.DataFrame:
+        """
+        Get long-format scores (provider_code, tp_measure, score) for every
+        provider in a peer group: the whole dataset, or the subset matching
+        size_band / region. Defaults to year 2026 (latest data).
+        """
+        self._ensure_connection()
+        if not self._connection:
+            return pd.DataFrame()
+
+        query = """
+        SELECT provider_code, tp_measure, score
+        FROM raw_scores
+        WHERE dataset_type = ? AND year = ? AND score IS NOT NULL
+        """
+        peer_clause, peer_params = self._peer_group_clause(
+            dataset_type, year, size_band, region, include_provider_codes)
+        try:
+            return self._connection.execute(query + peer_clause, [dataset_type, year] + peer_params).df()
+        except Exception as e:
+            self._log_error(f"Error fetching peer group scores: {str(e)}")
             return pd.DataFrame()
 
     def get_applicable_measures(self, dataset_type: str) -> List[str]:
@@ -467,10 +597,12 @@ class EnhancedTSMDataProcessor:
                 self._connection = None
 
 
-    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None, year: int = 2026) -> Optional[Dict]:
+    def get_measure_statistics(self, tp_measure: str, dataset_type: Optional[str] = None, year: int = 2026,
+                               size_band: Optional[str] = None, region: Optional[str] = None,
+                               include_provider_codes: Optional[List[str]] = None) -> Optional[Dict]:
         """
         Get statistical summary for a specific measure
-        Optionally filtered by dataset type
+        Optionally filtered by dataset type, and within it by size band / region
         Defaults to year 2026 (latest data)
         """
         self._ensure_connection()
@@ -490,6 +622,10 @@ class EnhancedTSMDataProcessor:
             WHERE tp_measure = ? AND dataset_type = ? AND year = ? AND score IS NOT NULL
             """
             params = [tp_measure, dataset_type, year]
+            peer_clause, peer_params = self._peer_group_clause(
+                dataset_type, year, size_band, region, include_provider_codes)
+            query += peer_clause
+            params += peer_params
         else:
             query = """
             SELECT 
