@@ -941,6 +941,19 @@ def get_main_css():
         margin: 0.15rem 0 0 0;
     }
 
+    /* A selected provider with no results for the comparison year: the card
+       keeps its place in the row but is visibly out of the comparison. */
+    .compare-card.compare-card-unavailable {
+        border-top-color: #CBD5E1;
+        background: #F1F5F9;
+        opacity: 0.6;
+        filter: grayscale(1);
+    }
+
+    .compare-card.compare-card-unavailable .compare-headline {
+        color: #6C7A89;
+    }
+
     .peer-group-banner {
         background: #F3F8F9;
         border-left: 4px solid #0B5C70;

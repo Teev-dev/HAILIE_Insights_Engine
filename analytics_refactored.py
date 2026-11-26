@@ -21,6 +21,11 @@ from tsm_measures import TP_CODES, TP_DESCRIPTIONS
 # and the full dataset peer group is used instead.
 MIN_PEER_GROUP_SIZE = 10
 
+# Latest year of TSM data. Used when no year is bound to TSMAnalytics, and as
+# "the current year" for the multi-provider comparison. Update with the other
+# year defaults at each annual refresh (see MAINTENANCE.md).
+LATEST_DATA_YEAR = 2026
+
 # Multi-provider (group) view limits.
 MIN_COMPARE_PROVIDERS = 2
 MAX_COMPARE_PROVIDERS = 3
@@ -31,11 +36,26 @@ class TSMAnalytics:
     Handles analytics retrieval from pre-calculated DuckDB analytics
     """
 
-    def __init__(self, data_processor):
+    def __init__(self, data_processor, year: Optional[int] = None):
+        """
+        year binds every calculation to one year of results. Leave it unset for
+        the latest year. Set it to a provider's own latest year when that
+        provider is missing from the latest data, so its scores are only ever
+        compared with peers, percentiles and correlations from the same year.
+        """
         self.data_processor = data_processor  # Instance of refactored TSMDataProcessor
+        self.year = year
         self.tp_codes = list(TP_CODES)
         self.tp_descriptions = dict(TP_DESCRIPTIONS)
-    
+
+    def _year_kwargs(self) -> Dict:
+        """Keyword arguments that pin a data-processor call to the bound year.
+
+        Empty when no year is bound, so the processor's own latest-year default
+        applies and unbound behaviour is exactly what it was before.
+        """
+        return {} if self.year is None else {'year': self.year}
+
     def resolve_peer_group(self, provider_codes: List[str], dataset_type: str,
                            size_band: Optional[str] = None, region: Optional[str] = None) -> Dict:
         """
@@ -52,7 +72,8 @@ class TSMAnalytics:
 
         def group_size(band, reg):
             scores = self.data_processor.get_peer_group_scores(
-                dataset_type, size_band=band, region=reg, include_provider_codes=provider_codes)
+                dataset_type, size_band=band, region=reg, include_provider_codes=provider_codes,
+                **self._year_kwargs())
             return 0 if scores.empty else int(scores['provider_code'].nunique())
 
         if size_band or region:
@@ -79,7 +100,8 @@ class TSMAnalytics:
         the two agree exactly when the filter is empty.
         """
         if not size_band and not region:
-            percentiles_df = self.data_processor.get_provider_percentiles(provider_code, dataset_type=dataset_type)
+            percentiles_df = self.data_processor.get_provider_percentiles(
+                provider_code, dataset_type=dataset_type, **self._year_kwargs())
             if percentiles_df is None or percentiles_df.empty:
                 return {}
             return dict(zip(percentiles_df['tp_measure'], percentiles_df['percentile_rank']))
@@ -88,7 +110,8 @@ class TSMAnalytics:
         if provider_code not in include:
             include.append(provider_code)
         peer_scores = self.data_processor.get_peer_group_scores(
-            dataset_type, size_band=size_band, region=region, include_provider_codes=include)
+            dataset_type, size_band=size_band, region=region, include_provider_codes=include,
+            **self._year_kwargs())
         if peer_scores is None or peer_scores.empty:
             return {}
 
@@ -115,7 +138,7 @@ class TSMAnalytics:
             # Get all providers with their scores, filtered by dataset and peer group
             filtered_df = self.data_processor.get_all_providers_with_scores(
                 dataset_type, size_band=size_band, region=region,
-                include_provider_codes=include_provider_codes)
+                include_provider_codes=include_provider_codes, **self._year_kwargs())
 
             if filtered_df.empty:
                 return {"error": "No provider data available"}
@@ -193,17 +216,21 @@ class TSMAnalytics:
     
     def calculate_momentum(self, df: pd.DataFrame, provider_code: str, provider_name: Optional[str] = None, dataset_type: Optional[str] = None) -> Dict:
         """
-        Calculate year-over-year momentum: compare 2026 vs 2025 performance
+        Calculate year-over-year momentum: compare the latest year with the
+        year before it. The latest year is the one bound to this instance, or
+        LATEST_DATA_YEAR when none is bound.
         Identifies which measures improved/declined and overall trajectory
         """
+        latest_year = self.year if self.year is not None else LATEST_DATA_YEAR
+        prior_year = latest_year - 1
         try:
             if not dataset_type:
                 dataset_type = self.data_processor.get_provider_dataset_type(provider_name)
-            provider_2025 = self.data_processor.get_provider_scores(provider_code, year=2025, dataset_type=dataset_type)
-            provider_2026 = self.data_processor.get_provider_scores(provider_code, year=2026, dataset_type=dataset_type)
+            provider_prior = self.data_processor.get_provider_scores(provider_code, year=prior_year, dataset_type=dataset_type)
+            provider_latest = self.data_processor.get_provider_scores(provider_code, year=latest_year, dataset_type=dataset_type)
             
             # Check if we have data for both years
-            if provider_2025.empty or provider_2026.empty:
+            if provider_prior.empty or provider_latest.empty:
                 return {
                     'direction': "insufficient_data",
                     'momentum_text': "Insufficient multi-year data",
@@ -212,24 +239,24 @@ class TSMAnalytics:
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
-                    'latest_year': 2026,
-                    'prior_year': 2025,
+                    'latest_year': latest_year,
+                    'prior_year': prior_year,
                     'disabled': True
                 }
             
             # Convert to dictionaries for easier comparison
-            scores_2025 = dict(zip(provider_2025['tp_measure'], provider_2025['score']))
-            scores_2026 = dict(zip(provider_2026['tp_measure'], provider_2026['score']))
+            scores_prior = dict(zip(provider_prior['tp_measure'], provider_prior['score']))
+            scores_latest = dict(zip(provider_latest['tp_measure'], provider_latest['score']))
             
             # Calculate changes for each measure
             measure_changes = {}
             for tp_measure in self.tp_codes:
-                if tp_measure in scores_2025 and tp_measure in scores_2026:
-                    change = scores_2026[tp_measure] - scores_2025[tp_measure]
+                if tp_measure in scores_prior and tp_measure in scores_latest:
+                    change = scores_latest[tp_measure] - scores_prior[tp_measure]
                     measure_changes[tp_measure] = {
                         'change': change,
-                        'score_2025': scores_2025[tp_measure],
-                        'score_2026': scores_2026[tp_measure],
+                        'score_prior': scores_prior[tp_measure],
+                        'score_latest': scores_latest[tp_measure],
                         'description': self.tp_descriptions.get(tp_measure, tp_measure)
                     }
             
@@ -242,8 +269,8 @@ class TSMAnalytics:
                     'year_over_year_change': 0,
                     'improved_measures': [],
                     'declined_measures': [],
-                    'latest_year': 2026,
-                    'prior_year': 2025,
+                    'latest_year': latest_year,
+                    'prior_year': prior_year,
                     'disabled': True
                 }
             
@@ -286,8 +313,8 @@ class TSMAnalytics:
                 'declined_measures': [{'code': tp, 'description': data['description'], 'change': data['change']}
                                      for tp, data in declined[:3]],
                 'total_measures_compared': len(measure_changes),
-                'latest_year': 2026,
-                'prior_year': 2025,
+                'latest_year': latest_year,
+                'prior_year': prior_year,
                 'disabled': False
             }
             
@@ -300,8 +327,8 @@ class TSMAnalytics:
                 'year_over_year_change': 0,
                 'improved_measures': [],
                 'declined_measures': [],
-                'latest_year': 2026,
-                'prior_year': 2025,
+                'latest_year': latest_year,
+                'prior_year': prior_year,
                 'disabled': True
             }
     
@@ -325,7 +352,8 @@ class TSMAnalytics:
             if not dataset_type:
                 dataset_type = 'LCRA'  # Default fallback
 
-            provider_scores_df = self.data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
+            provider_scores_df = self.data_processor.get_provider_scores(
+                provider_code, dataset_type=dataset_type, **self._year_kwargs())
 
             if provider_scores_df.empty:
                 return {"error": "No scores found for priority analysis"}
@@ -336,7 +364,7 @@ class TSMAnalytics:
                 provider_code, dataset_type, size_band, region, include_provider_codes)
             
             # Get pre-calculated correlations with TP01 for the specific dataset
-            correlations_df = self.data_processor.get_dataset_correlations(dataset_type)
+            correlations_df = self.data_processor.get_dataset_correlations(dataset_type, **self._year_kwargs())
             correlation_dict = {}
             if not correlations_df.empty:
                 correlation_dict = dict(zip(correlations_df['tp_measure'], 
@@ -436,7 +464,8 @@ class TSMAnalytics:
             if not dataset_type:
                 return {"error": "Could not determine dataset type"}
 
-            provider_scores_df = self.data_processor.get_provider_scores(provider_code, dataset_type=dataset_type)
+            provider_scores_df = self.data_processor.get_provider_scores(
+                provider_code, dataset_type=dataset_type, **self._year_kwargs())
 
             if provider_scores_df is None or provider_scores_df.empty:
                 return {"error": "No scores found for this provider"}
@@ -467,7 +496,7 @@ class TSMAnalytics:
                 # Get measure statistics for the same dataset type
                 stats = self.data_processor.get_measure_statistics(
                     tp_measure, dataset_type, size_band=size_band, region=region,
-                    include_provider_codes=include)
+                    include_provider_codes=include, **self._year_kwargs())
                 
                 if stats is None:
                     stats = {}
@@ -502,6 +531,12 @@ class TSMAnalytics:
         percentiles are not comparable. Every provider is ranked in the same
         peer group (the dataset, or a size/region subset plus the selected
         providers), so positions can be read across the columns.
+
+        The comparison is always of one year: the bound year, or the latest. A
+        selected provider with no results for that year is not an error. It is
+        listed under 'unavailable' with its own latest year and left out of
+        the comparison, which is built from the remaining providers (even if
+        only one). 'selection_order' keeps the order the user chose.
         """
         try:
             if len(selections) < MIN_COMPARE_PROVIDERS:
@@ -514,9 +549,39 @@ class TSMAnalytics:
                 return {"error": "mixed_dataset_types"}
             dataset_type = dataset_types.pop()
 
-            codes = [sel['provider_code'] for sel in selections]
-            if len(set(codes)) != len(codes):
+            selection_order = [sel['provider_code'] for sel in selections]
+            if len(set(selection_order)) != len(selection_order):
                 return {"error": "duplicate_providers"}
+
+            comparison_year = self.year if self.year is not None else LATEST_DATA_YEAR
+            unavailable = []
+            compared = []
+            for sel in selections:
+                latest_year = self.data_processor.get_latest_year(sel['provider_code'], dataset_type)
+                if latest_year is None or latest_year < comparison_year:
+                    unavailable.append({
+                        'provider_code': sel['provider_code'],
+                        'provider_name': sel.get('provider_name') or sel['provider_code'],
+                        'latest_year': latest_year,
+                    })
+                else:
+                    compared.append(sel)
+            selections = compared
+            codes = [sel['provider_code'] for sel in selections]
+
+            if not selections:
+                return {
+                    'dataset_type': dataset_type,
+                    'comparison_year': comparison_year,
+                    'selection_order': selection_order,
+                    'unavailable': unavailable,
+                    'peer_group': {},
+                    'providers': [],
+                    'measures': [],
+                    'widest_gap': None,
+                    'shared_below_median': [],
+                    'shared_above_median': [],
+                }
 
             peer_group = self.resolve_peer_group(codes, dataset_type, size_band, region)
             band, reg = peer_group['size_band'], peer_group['region']
@@ -535,7 +600,8 @@ class TSMAnalytics:
                 if code not in rankings:
                     return {"error": f"No ranking data found for provider {code}"}
 
-                scores_df = self.data_processor.get_provider_scores(code, dataset_type=dataset_type)
+                scores_df = self.data_processor.get_provider_scores(
+                    code, dataset_type=dataset_type, **self._year_kwargs())
                 scores_by_provider[code] = {
                     tp: float(score)
                     for tp, score in zip(scores_df['tp_measure'], scores_df['score'])
@@ -581,20 +647,27 @@ class TSMAnalytics:
                     'spread': (high - low) if complete else None,
                 })
 
-            with_spread = [m for m in measures if m['spread'] is not None]
+            # "Across the group" findings need at least two providers to compare.
+            is_group = len(codes) >= MIN_COMPARE_PROVIDERS
+            with_spread = [m for m in measures if m['spread'] is not None] if is_group else []
             widest_gap = max(with_spread, key=lambda m: m['spread']) if with_spread else None
             # Measures where every provider sits in the lower half of the peer group.
             shared_below_median = [
                 m['measure'] for m in measures
-                if all(v['percentile'] is not None and v['percentile'] < 50 for v in m['values'].values())
+                if is_group and all(
+                    v['percentile'] is not None and v['percentile'] < 50 for v in m['values'].values())
             ]
             shared_above_median = [
                 m['measure'] for m in measures
-                if all(v['percentile'] is not None and v['percentile'] >= 50 for v in m['values'].values())
+                if is_group and all(
+                    v['percentile'] is not None and v['percentile'] >= 50 for v in m['values'].values())
             ]
 
             return {
                 'dataset_type': dataset_type,
+                'comparison_year': comparison_year,
+                'selection_order': selection_order,
+                'unavailable': unavailable,
                 'peer_group': peer_group,
                 'providers': providers,
                 'measures': measures,

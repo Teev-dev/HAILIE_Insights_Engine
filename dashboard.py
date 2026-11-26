@@ -10,7 +10,13 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Dict, Any
-from tooltip_definitions import TooltipDefinitions
+from tooltip_definitions import (
+    TooltipDefinitions,
+    comparison_unavailable_notice,
+    former_names_caption,
+    prior_year_dialog_title,
+    prior_year_notice,
+)
 from mobile_utils import detect_mobile, mobile_friendly_columns, should_show_component
 
 class Direction(Enum):
@@ -144,10 +150,90 @@ PLOTLY_LAYOUT = dict(
 )
 
 
+def _prior_year_dialog_body(message: str, button_label: str):
+    """Contents of the notice for a provider with no results for the latest year."""
+    st.write(message)
+    if st.button(button_label, type="primary"):
+        st.rerun()
+
+
 class ExecutiveDashboard:
     """
     Renders the executive dashboard with key metrics
     """
+
+    # ------------------------------------------------------------------
+    # Providers with no results for the latest year
+    # ------------------------------------------------------------------
+
+    PRIOR_YEAR_DIALOG_STATE_KEY = "prior_year_notice_shown_for"
+
+    @staticmethod
+    def should_open_prior_year_dialog(state, selection_key: str, is_prior_year: bool) -> bool:
+        """
+        Decide whether to open the prior-year notice on this run.
+
+        It opens once each time a provider without latest-year results is
+        selected, not on every rerun (changing a peer filter reruns the page).
+        Selecting a provider that has latest-year results resets it, so going
+        back to the earlier provider shows the notice again. state is
+        st.session_state, or any dict in tests.
+        """
+        key = ExecutiveDashboard.PRIOR_YEAR_DIALOG_STATE_KEY
+        if not is_prior_year:
+            if key in state:
+                del state[key]
+            return False
+        if state.get(key) == selection_key:
+            return False
+        state[key] = selection_key
+        return True
+
+    def render_prior_year_dialog(self, provider_name: str, data_year: int, current_year: int,
+                                 provider_code: str | None = None):
+        """Open the dialog telling the user this provider has no latest-year results."""
+        message = prior_year_notice(
+            self._strip_dataset_suffix(provider_name), data_year, current_year, provider_code)
+        dialog = st.dialog(prior_year_dialog_title(current_year))(_prior_year_dialog_body)
+        dialog(message, f"Show {data_year} results")
+
+    def render_prior_year_notice(self, provider_name: str, data_year: int, current_year: int,
+                                 provider_code: str | None = None):
+        """Persistent on-page version of the prior-year notice (stays after the dialog closes)."""
+        st.warning(prior_year_notice(
+            self._strip_dataset_suffix(provider_name), data_year, current_year, provider_code))
+
+    def render_former_names(self, names: list | None):
+        """Caption naming a renamed provider's earlier names; nothing if it was never renamed."""
+        caption = former_names_caption(names or [])
+        if caption:
+            st.caption(caption)
+
+    @staticmethod
+    def build_provider_option_labels(options: list, history: Dict) -> Dict[str, str]:
+        """
+        Display label for each provider dropdown option.
+
+        Options look like "Name - LCRA (CODE)" and are returned unchanged as
+        the keys, so everything that parses them keeps working. A provider the
+        regulator kept under one code through a rename gets its earlier names
+        appended to the label, so searching for the old name still finds it.
+        history is EnhancedTSMDataProcessor.get_provider_history().
+        """
+        labels = {}
+        for option in options:
+            label = option
+            if option.endswith(")") and " (" in option:
+                name_part, code = option[:-1].rsplit(" (", 1)
+                for suffix in ("LCRA", "LCHO", "COMBINED"):
+                    if name_part.endswith(f" - {suffix}"):
+                        names = history.get((code, suffix), {}).get('names', [])
+                        former = [n['name'] for n in reversed(names[:-1])]
+                        if former:
+                            label = f"{option}, formerly {', '.join(former)}"
+                        break
+            labels[option] = label
+        return labels
 
     def render_executive_summary(self, provider_code: str, rankings: Dict, momentum: Dict, priority: Dict, include_confidence: bool = True, provider_name: str | None = None):
         """
@@ -1398,6 +1484,38 @@ class ExecutiveDashboard:
         ),
     }
 
+    def _render_unavailable_compare_card(self, provider: Dict, label: str, comparison_year: int):
+        """Greyed-out card, with the reason above it, for a provider that has no
+        results for the comparison year."""
+        code = str(provider['provider_code'])
+        latest_year = provider.get('latest_year')
+        st.warning(comparison_unavailable_notice(label, latest_year, comparison_year, code))
+
+        safe_name = html.escape(label)
+        safe_code = html.escape(code)
+        safe_year = html.escape(str(comparison_year))
+        latest_line = (f"Most recent results: {html.escape(str(latest_year))}"
+                       if latest_year else "No results available")
+        st.markdown(f"""
+        <div class="metric-card compare-card compare-card-unavailable">
+            <p class="compare-name">{safe_name}</p>
+            <p class="compare-code">{safe_code}</p>
+            <div class="compare-section">
+                <p class="compare-section-label">Rank</p>
+                <p class="compare-headline" style="font-size: 1.15rem;">No {safe_year} results</p>
+                <p class="compare-detail">{latest_line}</p>
+            </div>
+            <div class="compare-section">
+                <p class="compare-section-label">Momentum</p>
+                <p class="compare-headline" style="font-size: 1.15rem;">Not available</p>
+            </div>
+            <div class="compare-section">
+                <p class="compare-section-label">Priority</p>
+                <p class="compare-headline" style="font-size: 1.15rem;">Not available</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
     def render_provider_comparison(self, comparison: Dict):
         """Render two or three providers side by side."""
         tooltips = TooltipDefinitions()
@@ -1419,14 +1537,20 @@ class ExecutiveDashboard:
         dataset_type = comparison['dataset_type']
         peer_group = comparison.get('peer_group', {})
         is_mobile = detect_mobile()
+        # Providers with no results for the comparison year keep their place in
+        # the row of cards, greyed out, and are left out of everything else.
+        unavailable = {u['provider_code']: u for u in comparison.get('unavailable', [])}
+        comparison_year = comparison.get('comparison_year')
+        by_code = {p['provider_code']: p for p in providers}
+        card_order = comparison.get('selection_order') or list(by_code)
         labels = {
             p['provider_code']: self._strip_dataset_suffix(str(p['provider_name']))
-            for p in providers
+            for p in list(providers) + list(unavailable.values())
         }
 
         st.markdown("## Group Comparison")
         self.render_peer_group_notice(peer_group, dataset_type, selected_count=len(providers))
-        if not peer_group.get('is_filtered'):
+        if providers and not peer_group.get('is_filtered'):
             st.caption(
                 f"Each provider is ranked among all {peer_group.get('peer_group_size', 0)} "
                 f"{dataset_type} providers."
@@ -1437,11 +1561,21 @@ class ExecutiveDashboard:
 
         # --- One summary card per provider ---
         if is_mobile:
-            cols = [st.container() for _ in providers]
+            cols = [st.container() for _ in card_order]
         else:
-            cols = st.columns(len(providers), gap="medium")
+            cols = st.columns(len(card_order), gap="medium")
 
-        for i, (col, provider) in enumerate(zip(cols, providers)):
+        compared_codes = [p['provider_code'] for p in providers]
+        for col, code in zip(cols, card_order):
+            if code in unavailable:
+                with col:
+                    self._render_unavailable_compare_card(unavailable[code], labels[code], comparison_year)
+                continue
+
+            provider = by_code[code]
+            # Accent follows the provider's position among those compared, so
+            # the card matches its bars in the chart below.
+            i = compared_codes.index(code)
             ranking = provider['ranking']
             momentum = provider['momentum']
             priority = provider['priority']
@@ -1495,6 +1629,9 @@ class ExecutiveDashboard:
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+        if not providers:
+            return
 
         # --- What the group has in common, and where it diverges ---
         measures = comparison.get('measures', [])
@@ -1562,7 +1699,7 @@ class ExecutiveDashboard:
                     code = provider['provider_code']
                     value = m['values'][code][field]
                     row[labels[code]] = f"{value:.1f}{suffix}" if value is not None else "N/A"
-                if field == 'score':
+                if field == 'score' and len(providers) > 1:
                     row['Highest'] = ", ".join(labels[c] for c in m['highest']) or "-"
                     row['Gap (pts)'] = f"{m['spread']:.1f}" if m['spread'] is not None else "-"
                 rows.append(row)
@@ -1573,7 +1710,10 @@ class ExecutiveDashboard:
 
         scores_tab, percentiles_tab = st.tabs(["Scores", "Position in peer group"])
         with scores_tab:
-            st.caption("Published satisfaction scores (%). Gap is the difference between the highest and lowest of the providers shown.")
+            if len(providers) > 1:
+                st.caption("Published satisfaction scores (%). Gap is the difference between the highest and lowest of the providers shown.")
+            else:
+                st.caption("Published satisfaction scores (%).")
             st.dataframe(build_table('score', ''), hide_index=True, width='stretch', height=table_height)
         with percentiles_tab:
             st.caption("Percentile within the peer group for each measure. Higher is better.")

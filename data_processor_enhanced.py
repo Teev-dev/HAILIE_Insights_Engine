@@ -175,6 +175,67 @@ class EnhancedTSMDataProcessor:
             _report_internal_error("checking provider existence", e)
             return False
 
+    def get_latest_year(self, provider_code: str, dataset_type: str) -> Optional[int]:
+        """
+        Most recent year a provider has scores for within one dataset type.
+
+        Some providers stop appearing in the regulator's data (usually after a
+        merger) but stay selectable. Callers pass this year to every other
+        query so such a provider is compared with the peers of its own latest
+        year. Always per dataset type: a provider can lapse in one dataset and
+        continue in the other. Returns None when there are no scores at all.
+        """
+        self._ensure_connection()
+        if not self._connection:
+            return None
+
+        try:
+            row = self._connection.execute(
+                "SELECT MAX(year) FROM raw_scores WHERE provider_code = ? AND dataset_type = ?",
+                [provider_code, dataset_type]).fetchone()
+            return int(row[0]) if row and row[0] is not None else None
+        except Exception as e:
+            self._log_error(f"Error fetching latest year: {str(e)}")
+            return None
+
+    def get_provider_history(self) -> Dict[Tuple[str, str], Dict]:
+        """
+        Latest year and name history for every (provider_code, dataset_type).
+
+        Returns {(code, dataset_type): {'latest_year': int, 'names': [...]}}
+        where names are oldest first, each {'name', 'first_year', 'last_year'}
+        with the ' - LCRA' style dataset suffix removed. A provider code that
+        the regulator kept through a rename has more than one name.
+        """
+        self._ensure_connection()
+        if not self._connection:
+            return {}
+
+        query = """
+        SELECT
+            provider_code,
+            dataset_type,
+            regexp_replace(provider_name, ' - (LCRA|LCHO|COMBINED)$', '') AS name,
+            MIN(year) AS first_year,
+            MAX(year) AS last_year
+        FROM raw_scores
+        GROUP BY 1, 2, 3
+        ORDER BY provider_code, dataset_type, first_year, last_year
+        """
+        try:
+            rows = self._connection.execute(query).fetchall()
+        except Exception as e:
+            self._log_error(f"Error fetching provider history: {str(e)}")
+            return {}
+
+        history: Dict[Tuple[str, str], Dict] = {}
+        for code, dataset_type, name, first_year, last_year in rows:
+            entry = history.setdefault((code, dataset_type), {'latest_year': int(last_year), 'names': []})
+            entry['latest_year'] = max(entry['latest_year'], int(last_year))
+            entry['names'].append(
+                {'name': name, 'first_year': int(first_year), 'last_year': int(last_year)})
+        return history
+
     def get_all_provider_codes(self) -> List[Dict[str, str]]:
         """Get all unique provider codes and names with dataset info"""
         self._ensure_connection()
@@ -546,13 +607,14 @@ class EnhancedTSMDataProcessor:
         else:
             return self.tp_codes
 
-    def load_default_data(self, provider_code: str, provider_name: str) -> Optional[pd.DataFrame]:
+    def load_default_data(self, provider_code: str, provider_name: str, year: int = 2026) -> Optional[pd.DataFrame]:
         """
         Load data for a specific provider with automatic dataset detection
 
         Args:
             provider_code: Code for the selected provider
             provider_name: Name of the selected provider
+            year: Year of results to load. Defaults to year 2026 (latest data)
         Returns:
             A DataFrame containing a summary of the selected provider
         """
@@ -566,15 +628,15 @@ class EnhancedTSMDataProcessor:
             self._log_error(f"Provider {provider_code} not found in database")
             return None
 
-        # Get provider summary data for the specific dataset (default to 2026)
+        # Get provider summary data for the specific dataset and year
         query = """
         SELECT *
         FROM provider_summary
-        WHERE provider_code = ? AND dataset_type = ? AND year = 2026
+        WHERE provider_code = ? AND dataset_type = ? AND year = ?
         """
 
         try:
-            result = self._connection.execute(query, [provider_code, dataset_type]).df()
+            result = self._connection.execute(query, [provider_code, dataset_type, year]).df()
             if not result.empty:
                 # Add metadata
                 result['loaded_dataset'] = dataset_type
