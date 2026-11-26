@@ -234,6 +234,43 @@ class PriorYearAnalyticsTests(unittest.TestCase):
         self.assertEqual(momentum["total_measures_compared"], 12)
 
 
+class TiedRankTests(unittest.TestCase):
+    """Providers with the same average score share a rank."""
+
+    def setUp(self):
+        self.dp = EnhancedTSMDataProcessor()
+        self.rankings = TSMAnalytics(self.dp).calculate_rankings(None, dataset_type="LCRA")
+
+    def tearDown(self):
+        self.dp.close()
+
+    def test_tied_providers_share_rank_percentile_and_quartile(self):
+        home, moat = self.rankings["L3076"], self.rankings["L0386"]  # Home Group, Moat Homes
+        self.assertAlmostEqual(home["score"], moat["score"], places=9)
+        for field in ("rank", "percentile", "quartile"):
+            self.assertEqual(home[field], moat[field], field)
+
+    def test_ranks_either_side_of_a_tie_are_preserved(self):
+        ordered = sorted(self.rankings.values(), key=lambda r: (r["rank"], -r["score"]))
+        ranks = [r["rank"] for r in ordered]
+        self.assertEqual(ranks[0], 1)
+        ties = 0
+        for position, entry in enumerate(ordered, start=1):
+            if position > 1 and round(entry["score"], 9) == round(ordered[position - 2]["score"], 9):
+                self.assertEqual(entry["rank"], ordered[position - 2]["rank"])
+                ties += 1
+            else:
+                # Everyone not in a tie keeps the position they hold in the ordering.
+                self.assertEqual(entry["rank"], position)
+        self.assertGreater(ties, 0)
+
+    def test_ranks_do_not_change_between_calls(self):
+        for _ in range(5):
+            again = TSMAnalytics(self.dp).calculate_rankings(None, dataset_type="LCRA")
+            self.assertEqual({c: r["rank"] for c, r in again.items()},
+                             {c: r["rank"] for c, r in self.rankings.items()})
+
+
 class CompareWithUnavailableProviderTests(unittest.TestCase):
     ACIS = sel(ACIS, "Acis Group Limited", "LCRA")
     A2D = sel("L4240", "A2Dominion Housing Group Limited", "LCRA")

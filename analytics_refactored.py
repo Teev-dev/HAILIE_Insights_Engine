@@ -180,9 +180,19 @@ class TSMAnalytics:
             
             total_providers = len(scores_list)
             
+            # Providers with the same average score share a rank. The providers
+            # either side keep the positions they would have had anyway: two
+            # providers tied at 86th are both 86th and the next is 88th. Scores
+            # are compared to nine decimal places so floating-point noise in
+            # the average cannot split a genuine tie.
             rankings = {}
+            rank = 0
+            previous_score = None
             for i, (provider, score) in enumerate(scores_list):
-                rank = i + 1
+                tie_key = round(float(score), 9)
+                if tie_key != previous_score:
+                    rank = i + 1
+                    previous_score = tie_key
                 percentile = (total_providers - rank) / total_providers * 100
                 
                 # Determine quartile
