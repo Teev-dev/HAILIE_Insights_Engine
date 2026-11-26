@@ -468,7 +468,106 @@ class EnhancedAnalyticsETL:
         self.log(f"✅ Created mapping for {len(mapping_df)} providers")
         return mapping_df
         
-    def load_to_duckdb(self, raw_scores_df, percentiles_df, correlations_df, mapping_df, all_data):
+    # Regulator placeholders that mean "no size band / region recorded".
+    METADATA_MISSING_VALUES = {'', 'nan', 'Not applicable', '[X]', 'Merged during year'}
+    METADATA_SHEETS = {'LCRA': 'LCRA', 'LCHO': 'LCHO', 'COMBINED': 'Combined'}
+
+    def extract_provider_metadata(self):
+        """Extract landlord type, size band and predominant region per provider.
+
+        These are the regulator's own categories, read from the leading columns
+        of each Perception sheet. They drive peer-group filtering and are never
+        derived or re-banded here. The header row is located by its labels
+        rather than a fixed offset, and the expected labels are asserted so a
+        column shift in a future release fails loudly instead of silently
+        loading the wrong column.
+        """
+        self.log("🏷️ Extracting provider metadata (size band, region)...")
+        frames = []
+
+        for dataset_type, sheet_part in self.METADATA_SHEETS.items():
+            sheet_name = f'TSM{str(self.year)[2:]}_{sheet_part}_Perception'
+            try:
+                df = pd.read_excel(self.excel_path, sheet_name=sheet_name, header=None)
+            except ValueError:
+                self.log(f"⚠️ Sheet {sheet_name} not found, skipping metadata for {dataset_type}")
+                continue
+
+            header_rows = df.index[df[1].astype(str).str.strip() == 'Landlord code']
+            if len(header_rows) == 0:
+                raise ValueError(f"Could not find header row in {sheet_name}")
+            header_row = header_rows[0]
+            headers = [str(h).strip().lower() for h in df.iloc[header_row, :6]]
+            if ('landlord type' not in headers[2]
+                    or 'group size' not in headers[4]
+                    or 'region' not in headers[5]):
+                raise ValueError(f"Unexpected metadata columns in {sheet_name}: {headers}")
+
+            meta = df.iloc[header_row + 1:, [1, 2, 4, 5]].copy()
+            meta.columns = ['provider_code', 'landlord_type', 'size_band', 'region']
+            meta = meta[meta['provider_code'].notna()]
+            meta['provider_code'] = meta['provider_code'].astype(str).str.strip()
+            meta = meta[meta['provider_code'] != '']
+
+            for col in ['landlord_type', 'size_band', 'region']:
+                meta[col] = meta[col].astype(str).str.strip()
+                meta[col] = meta[col].where(~meta[col].isin(self.METADATA_MISSING_VALUES), None)
+            # The 2024 workbook writes the top band without a thousands separator.
+            meta['size_band'] = meta['size_band'].replace({'>40000': '>40,000'})
+
+            meta['dataset_type'] = dataset_type
+            meta['year'] = self.year
+            frames.append(meta)
+
+        if not frames:
+            raise ValueError("No provider metadata could be extracted")
+
+        metadata_df = pd.concat(frames, ignore_index=True)
+        metadata_df = metadata_df.drop_duplicates(subset=['provider_code', 'dataset_type', 'year'])
+        metadata_df = metadata_df[['provider_code', 'dataset_type', 'year',
+                                   'landlord_type', 'size_band', 'region']]
+        self.log(f"✅ Extracted metadata for {len(metadata_df)} provider/dataset rows")
+        return metadata_df
+
+    def load_provider_metadata(self, metadata_df, con=None):
+        """Write provider metadata for this year, replacing any existing rows.
+
+        Touches only the provider_metadata table, so it can be run on its own
+        (see --metadata-only) without recalculating scores or percentiles.
+        """
+        own_connection = con is None
+        if own_connection:
+            con = duckdb.connect(self.db_path)
+        try:
+            con.execute("""
+                CREATE TABLE IF NOT EXISTS provider_metadata (
+                    provider_code VARCHAR,
+                    dataset_type VARCHAR,
+                    year BIGINT,
+                    landlord_type VARCHAR,
+                    size_band VARCHAR,
+                    region VARCHAR
+                )
+            """)
+            con.execute("DELETE FROM provider_metadata WHERE year = ?", [self.year])
+            con.execute("INSERT INTO provider_metadata SELECT * FROM metadata_df")
+            con.execute("CREATE INDEX IF NOT EXISTS idx_metadata_provider ON provider_metadata(provider_code, dataset_type, year)")
+            self.log(f"  ✓ Loaded {len(metadata_df)} rows into provider_metadata for {self.year}")
+        finally:
+            if own_connection:
+                con.close()
+
+    def run_metadata_only(self):
+        """Backfill provider_metadata for this year without touching other tables."""
+        self.log(f"🚀 Loading provider metadata only ({self.year})")
+        try:
+            self.load_provider_metadata(self.extract_provider_metadata())
+            return True
+        except Exception as e:
+            self.log(f"❌ Metadata load failed: {str(e)}")
+            return False
+
+    def load_to_duckdb(self, raw_scores_df, percentiles_df, correlations_df, mapping_df, all_data, metadata_df=None):
         """Load all DataFrames into DuckDB database with enhanced schema"""
         self.log(f"💾 Writing to DuckDB database: {self.db_path}")
         
@@ -539,6 +638,9 @@ class EnhancedAnalyticsETL:
                 con.execute("INSERT INTO provider_dataset_mapping SELECT * FROM mapping_df")
                 self.log(f"  ✓ Updated provider_dataset_mapping with {len(mapping_df)} providers")
             
+            if metadata_df is not None:
+                self.load_provider_metadata(metadata_df, con=con)
+
             # Create indexes for performance
             con.execute("CREATE INDEX IF NOT EXISTS idx_raw_scores_provider ON raw_scores(provider_code, dataset_type)")
             con.execute("CREATE INDEX IF NOT EXISTS idx_percentiles_provider ON calculated_percentiles(provider_code, dataset_type)")
@@ -612,13 +714,17 @@ class EnhancedAnalyticsETL:
             # Phase 5: Create provider mapping
             provider_mapping = self.create_provider_dataset_mapping(coverage_df, all_data)
             
-            # Phase 6: Load to database
+            # Phase 6: Extract provider metadata (size band, region) for peer filtering
+            provider_metadata = self.extract_provider_metadata()
+
+            # Phase 7: Load to database
             self.load_to_duckdb(
                 all_raw_scores,
                 calculated_percentiles,
                 calculated_correlations,
                 provider_mapping,
-                all_data
+                all_data,
+                metadata_df=provider_metadata
             )
             
             self.log("=" * 60)
@@ -650,10 +756,13 @@ def main():
     parser.add_argument('--excel-path', type=str, help='Path to Excel file')
     parser.add_argument('--year', type=int, help='Year of the data (e.g., 2024, 2025)')
     
+    parser.add_argument('--metadata-only', action='store_true',
+                        help='Only (re)load provider_metadata (size band, region) for the given year')
+
     args = parser.parse_args()
-    
+
     etl = EnhancedAnalyticsETL(excel_path=args.excel_path, year=args.year)
-    success = etl.run()
+    success = etl.run_metadata_only() if args.metadata_only else etl.run()
     
     # Exit with appropriate code
     sys.exit(0 if success else 1)

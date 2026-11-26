@@ -11,7 +11,149 @@ WHATS_NEW_MESSAGE = """\
 - Your dashboard now uses the 2026 tenant satisfaction results, so your ranking, scores and top priority all reflect the latest data.
 - Momentum now shows how your 2026 results compare with 2025, where results are available for both years.
 - Labels on the Priority Matrix chart are now placed so they no longer overlap each other, the points or the quadrant labels.
+- You can now narrow your peer group to landlords of a similar size or region, and compare up to three providers side by side.
 """
+
+# ---------------------------------------------------------------------------
+# Providers that are no longer in the latest year of data
+# ---------------------------------------------------------------------------
+#
+# Landlords that have left the regulator's dataset stay selectable and are
+# shown with their most recent results. Where the reason is a merger, the
+# notice says so and names the landlord that now reports. Keyed by provider
+# code; successor_code is the provider code the combined landlord reports
+# under, which must be present in the latest year of data.
+#
+# Hand-maintained. tests/test_prior_year_providers.py fails at the next data
+# refresh if an entry has gone stale or a newly lapsed provider has no entry
+# (see MAINTENANCE.md). Each sentence was checked against the trade press or
+# the regulator's register in November 2026; sources are in the comments.
+PROVIDER_SUCCESSION_NOTES = {
+    # insidehousing.co.uk/news/essex-based-landlords-make-merger-official-96536
+    'L3535': {
+        'successor_code': 'L4331',
+        'note': "Estuary Housing Association merged with Chelmer Housing Partnership in spring 2026 "
+                "to form Delta Housing. The combined landlord is listed as Delta Housing Limited.",
+    },
+    # insidehousing.co.uk/news/bromford-and-flagship-complete-merger-90757
+    # insidehousing.co.uk/news/bromford-flagship-and-livewest-confirm-merger-completion-95463
+    '4651': {
+        'successor_code': 'L4449',
+        'note': "Flagship merged with Bromford in February 2025, and the group merged with LiveWest "
+                "in January 2026. The combined landlord is listed as Bromford Flagship LiveWest Limited.",
+    },
+    # insidehousing.co.uk/news/merger-to-create-37000-home-landlord-completes-89811
+    'L4277': {
+        'successor_code': '5060',
+        'note': "Longhurst Group merged with Grand Union Housing Group in December 2024. "
+                "The combined landlord is listed as Amplius Living.",
+    },
+    # abri.co.uk/media-hub/abri-completes-partnership-with-octavia
+    'L0717': {
+        'successor_code': 'L4172',
+        'note': "Octavia Housing joined Abri Group in December 2024. "
+                "The group is listed as Abri Group Limited.",
+    },
+    # placesforpeople.co.uk/news/all-news/origin-housing-now-fully-integrated-into-places-for-people
+    'L0871': {
+        'successor_code': 'L4236',
+        'note': "Origin Housing joined Places for People in April 2024 and was fully integrated "
+                "in April 2026. The group is listed as Places for People Group Limited.",
+    },
+    # insidehousing.co.uk/news/new-27000-home-group-created-as-landlords-complete-merger-94424
+    # gov.uk/government/publications/paradigm-housing-group-limited (renamed Lifestone Homes Limited)
+    'L4370': {
+        'successor_code': 'L4215',
+        'note': "Settle merged with Paradigm Housing Group in October 2025. "
+                "The combined landlord is listed as Lifestone Homes Limited.",
+    },
+    # housingtoday.co.uk/news/shepherds-bush-folded-into-guinness-as-full-merger-completes/5135253.article
+    'LH0050': {
+        'successor_code': '4729',
+        'note': "Shepherds Bush Housing Association joined The Guinness Partnership in December 2023 "
+                "and transferred to it fully in March 2025. "
+                "The group is listed as The Guinness Partnership Limited.",
+    },
+    # abri.co.uk/media-hub/abri-and-silva-complete-partnership
+    'L4513': {
+        'successor_code': 'L4172',
+        'note': "Silva Homes joined Abri Group in October 2023. "
+                "The group is listed as Abri Group Limited.",
+    },
+    # housingtoday.co.uk/news/mtvh-changes-parent-company-in-move-to-simplify-structure/5133641.article
+    'L0514': {
+        'successor_code': 'L0726',
+        'note': "Thames Valley Housing Association is part of Metropolitan Thames Valley Housing. "
+                "Following a structural change on 31 December 2024, the charitable Metropolitan "
+                "Housing Trust became the parent company, with Thames Valley Housing Association "
+                "operating as a subsidiary. The group is listed as Metropolitan Housing Trust Limited.",
+    },
+    # insidehousing.co.uk/news/housing-associations-complete-merger-to-form-33000-home-landlord-89927
+    'LH4220': {
+        'successor_code': 'L4491',
+        'note': "The Wrekin Housing Group merged with Housing Plus Group in January 2025. "
+                "The combined landlord is listed as The Housing Plus Group Limited.",
+    },
+    # hyde-housing.co.uk/news/corporate-and-financial/tower-hamlets-community-housing-thch-joins-the-hyde-group
+    'L4260': {
+        'successor_code': 'LH0032',
+        'note': "Tower Hamlets Community Housing joined the Hyde Group in April 2025. "
+                "The group is listed as Hyde Housing Association Limited.",
+    },
+}
+
+
+def succession_note(provider_code):
+    """The merger sentence for a provider that has left the data, or None."""
+    entry = PROVIDER_SUCCESSION_NOTES.get(provider_code)
+    return entry['note'] if entry else None
+
+
+def prior_year_dialog_title(current_year):
+    """Title of the notice shown when a provider has no results for the latest year."""
+    return f"No {current_year} results for this provider"
+
+
+def prior_year_notice(provider_name, data_year, current_year, provider_code=None):
+    """Notice shown when a provider's most recent results are from an earlier year."""
+    text = (
+        f"{provider_name} is not in the regulator's {current_year} tenant satisfaction data. "
+        f"You are seeing its most recent results, from {data_year}. "
+        f"Its rank and comparisons use other landlords' {data_year} results."
+    )
+    note = succession_note(provider_code)
+    return f"{text}\n\n{note}" if note else text
+
+
+def comparison_unavailable_notice(provider_name, latest_year, current_year, provider_code=None):
+    """Message above a comparison card for a provider with no results for the latest year."""
+    text = f"{provider_name} has no {current_year} results, so it is not part of this comparison."
+    if latest_year:
+        text += (f" Its most recent results are from {latest_year}: "
+                 "choose Single provider to see them.")
+    note = succession_note(provider_code)
+    return f"{text} {note}" if note else text
+
+
+def former_names_caption(names):
+    """
+    Caption naming the earlier names of a renamed provider, or None.
+
+    names: oldest first, each {'name', 'first_year', 'last_year'}; the last
+    entry is the current name.
+    """
+    former = names[:-1] if names else []
+    if not former:
+        return None
+
+    def describe(entry):
+        if entry['first_year'] == entry['last_year']:
+            return f"{entry['name']} ({entry['first_year']})"
+        return f"{entry['name']} ({entry['first_year']} to {entry['last_year']})"
+
+    parts = [describe(entry) for entry in former]
+    listed = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
+    return f"Previously reported as {listed}."
 
 
 class TooltipDefinitions:
@@ -30,6 +172,50 @@ class TooltipDefinitions:
 - **Your Priority**: the most important area to focus on
 
 For a fuller explanation, open the dropdown underneath each card.
+"""
+
+    @staticmethod
+    def get_peer_group_intro():
+        """Caption above the peer group size / region selectors."""
+        return ("By default the comparison is with every provider that reports the same "
+                "measures. Narrow it to landlords of a similar size or region if that is a "
+                "fairer benchmark.")
+
+    @staticmethod
+    def get_peer_group_help():
+        """Text for the "How peer groups work" expander."""
+        return """
+**Where size and region come from**
+
+Both are published by the Regulator of Social Housing alongside each landlord's results:
+
+- **Size** is the landlord group's size band, by number of homes owned.
+- **Region** is the landlord's predominant region. Landlords spread across several regions are recorded as **Mixed**.
+
+**What changes when you narrow the peer group**
+
+- **Your Rank**, your percentiles and the peer averages are recalculated using only the landlords in the group you chose, plus you.
+- **Your Priority** uses your position within that group to judge where you have most room to improve.
+- **Your Momentum** does not change. It compares your own results with last year's.
+- The link between each measure and overall satisfaction is still measured across all landlords, because a small group is not enough to measure it reliably.
+
+**Small groups**
+
+If a group would contain too few landlords, a single result could move everyone's position sharply. In that case the full peer group is used instead and the dashboard tells you so.
+"""
+
+    @staticmethod
+    def get_comparison_overview():
+        """Text for the "Understanding the comparison" expander."""
+        return """
+**Compare two or three providers side by side**
+
+This view is for executives responsible for more than one registered provider.
+
+- Every provider is ranked within the **same peer group**, so positions can be read across the columns.
+- **Scores** are each provider's published results. **Percentiles** show where each provider sits within the peer group.
+- Providers must report the same set of measures to be compared. Rented-housing results and shared-ownership results are measured differently, so they cannot be placed side by side.
+- For the full analysis of any one provider, switch back to the single provider view.
 """
 
     @staticmethod

@@ -22,12 +22,15 @@ The UK Government publishes new TSM data annually, typically around November. Mo
    ```bash
    python diagnose_duplicates.py
    ```
+   The ETL also loads `provider_metadata` (landlord type, size band, predominant region) from the same workbook; peer-group filtering reads it. To reload only that table for a year, without recalculating scores or percentiles, add `--metadata-only`.
 6. **Update year defaults** (see checklist below)
 7. **Test locally:**
    ```bash
    streamlit run app.py
    ```
 8. **Deploy** (rebuild Docker image or copy database to Railway volume)
+
+   **Note:** when `DATA_PATH` points at a persistent volume, the baked-in database is only copied there if no database exists yet (`config.py` auto-seed). A rebuilt image does **not** replace the volume's database. After any change to the database (new year, new table such as `provider_metadata`), copy the new file to the volume. Until then the app keeps working on the old database, but features that need the new data are unavailable: without `provider_metadata` the peer group size/region selectors are hidden.
 
 ## Year Default Update Checklist
 
@@ -44,20 +47,17 @@ When ingesting a new year of data, update all year defaults from the previous ye
 | `get_dataset_summary_stats` | `year: int = N-1` → `year: int = N` |
 | `get_measure_distribution` | `year: int = N-1` → `year: int = N` |
 | `get_all_providers_with_scores` | `year: int = N-1` → `year: int = N` |
-| `get_provider_dataset_type` (SQL) | `year = N-1` → `year = N` (hardcoded in SQL string, not a parameter default — grep for `AND year =`) |
+| `load_default_data` | `year: int = N-1` → `year: int = N` |
 | `get_measure_statistics` | `year: int = N-1` → `year: int = N` |
+| `get_provider_metadata` | `year: int = N-1` → `year: int = N` |
+| `get_peer_filter_options` | `year: int = N-1` → `year: int = N` |
+| `get_peer_group_scores` | `year: int = N-1` → `year: int = N` |
 
-Also update the five `Defaults to year YYYY (latest data)` docstrings and the `# Get provider summary data for the specific dataset (default to YYYY)` comment.
+Also update the `Defaults to year YYYY (latest data)` docstrings.
 
 ### analytics_refactored.py
 
-`calculate_momentum()` has ~18 literal year references across four return branches (success / insufficient_data / no_comparison / error). Update together:
-
-- Docstring: `compare N vs N-1 performance`
-- Call sites: `get_provider_scores(..., year=N-1, ...)` + `get_provider_scores(..., year=N, ...)`
-- Local variables: `provider_N-1`/`provider_N` and `scores_N-1`/`scores_N`
-- Dict keys returned per measure: `score_N-1`/`score_N`
-- `latest_year: N` and `prior_year: N-1` in all four return branches
+`LATEST_DATA_YEAR = N` constant (near the top of the file). `calculate_momentum()` and the multi-provider comparison take their year from it; nothing else in the file names a year.
 
 ### app.py
 
@@ -66,6 +66,10 @@ Also update the five `Defaults to year YYYY (latest data)` docstrings and the `#
 ### dashboard.py
 
 Two `.get()` fallback literals: `.get('latest_year', N)` and `.get('prior_year', N-1)`. Grep catches both.
+
+### tooltip_definitions.py
+
+Review `PROVIDER_SUCCESSION_NOTES` (see "Providers missing from the new year" below).
 
 ### validate_etl.py
 
@@ -78,6 +82,21 @@ grep -rn "year.*=.*2025\|year = 2025" *.py
 ```
 
 This should return zero results after the update is complete.
+
+## Providers missing from the new year
+
+Each year some landlords drop out of the regulator's dataset, usually because they merged into another landlord. They stay in the provider dropdown. Selecting one shows a notice and its most recent results, compared with the peers of that same year; the app works this out from the data (`get_latest_year` against `CURRENT_DATA_YEAR`), so no code change is needed for them to keep working.
+
+What does need a human each year is the merger wording in `PROVIDER_SUCCESSION_NOTES` (`tooltip_definitions.py`): one sourced sentence per lapsed provider, naming the landlord that now reports. After ingesting the new year, run:
+
+```bash
+python -m unittest tests.test_prior_year_providers
+```
+
+- `test_every_lapsed_dropdown_provider_is_accounted_for` fails if a provider has newly lapsed. Find out what happened to it (trade press, the regulator's register), then either add a note with the successor's provider code, or add the provider to the test's list of lapsed providers with no known successor.
+- `test_succession_notes_point_from_lapsed_to_current_providers` fails if a provider with a note is back in the data, or its successor has itself left the data. Remove or update the note.
+
+Providers the regulator keeps under the same code through a rename need nothing: the dropdown shows the new name with "formerly ..." appended, and year-over-year comparisons carry on across the rename.
 
 ## Database Rebuild from Source
 
